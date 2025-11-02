@@ -16,7 +16,7 @@ public class Course {
         this.room = room;
         this.timeStart = timeStart;
         this.timeEnd = timeEnd;
-        this.dayOfWeek = dayOfWeek;
+        this .dayOfWeek = dayOfWeek;
     }
 
     public int getId() { return id; }
@@ -26,5 +26,4 @@ public class Course {
     public String getTimeStart() { return timeStart; }
     public String getTimeEnd() { return timeEnd; }
     public String getDayOfWeek() {return dayOfWeek;}
-    public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
 }

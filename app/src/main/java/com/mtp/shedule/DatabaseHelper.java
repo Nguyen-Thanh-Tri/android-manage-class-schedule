@@ -115,4 +115,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    //Xóa 1 card
+    public void deleteCourse(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("Course", "id=?", new String[]{String.valueOf(id)});
+        db.close();
+    }
 }
