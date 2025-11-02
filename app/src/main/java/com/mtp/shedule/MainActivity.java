@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (selectedFragment != null) {
                 replaceFragment(selectedFragment);
+                navigationView.setCheckedItem(id);
             }
 
             drawerLayout.closeDrawer(GravityCompat.START);

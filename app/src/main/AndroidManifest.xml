@@ -24,6 +24,10 @@
             android:name=".AddCourseActivity"
             android:exported="true">
         </activity>
+        <activity
+            android:name=".AddExamActivity"
+            android:exported="true">
+        </activity>
     </application>
 
 </manifest>
