@@ -1,6 +1,7 @@
 package com.mtp.shedule;
 
 import android.os.Bundle;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -8,7 +9,6 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.mtp.shedule.fragment.ExamsFragment;
 import com.mtp.shedule.fragment.SettingsFragment;
@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
+    private TextView toolbarTitle;
     private Fragment currentFragment;
 
     @Override
@@ -29,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         // ---------------- Toolbar ----------------
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        toolbarTitle = findViewById(R.id.toolbar_title);
 
         // ---------------- Drawer Layout ----------------
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             Fragment newFragment = null;
+            String title = item.getTitle().toString(); // lấy title từ menu item
 
             if (id == R.id.nav_timetable && !(currentFragment instanceof TimeTableFragment)) {
                 newFragment = new TimeTableFragment();
@@ -66,6 +69,10 @@ public class MainActivity extends AppCompatActivity {
             if (newFragment != null) {
                 replaceFragment(newFragment);
                 navigationView.setCheckedItem(id);
+
+                // Cập nhật tiêu đề Toolbar
+                TextView toolbarTitle = findViewById(R.id.toolbar_title);
+                toolbarTitle.setText(title);
             }
 
             drawerLayout.closeDrawer(GravityCompat.START);
