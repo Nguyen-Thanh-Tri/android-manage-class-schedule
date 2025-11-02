@@ -6,11 +6,15 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import com.mtp.shedule.entity.CourseEntity;
+import com.mtp.shedule.entity.ExamEntity;
 import com.mtp.shedule.dao.CourseDao;
+import com.mtp.shedule.dao.ExamDao;
 
-@Database(entities = {CourseEntity.class}, version = 1)
+@Database(
+         entities = {CourseEntity.class, ExamEntity.class}, version = 2)
 public abstract class CourseDatabase extends RoomDatabase {
     public abstract CourseDao courseDao();
+    public abstract ExamDao examDao();
 
     private static volatile CourseDatabase instance;
 
@@ -20,6 +24,7 @@ public abstract class CourseDatabase extends RoomDatabase {
                 if (instance == null) {
                     instance = Room.databaseBuilder(context.getApplicationContext(),
                                     CourseDatabase.class, "course_database")
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }
