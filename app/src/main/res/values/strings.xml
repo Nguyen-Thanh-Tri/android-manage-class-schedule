@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Shedule</string>
-    <string name="title_main_activity">Time Table</string>
+    <string name="main_screen_title">Time Table</string>
+
 </resources>
