@@ -60,7 +60,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    // ✅ Lấy toàn bộ danh sách môn học
+    //  Lấy toàn bộ danh sách môn học
     public List<Course> getAllCourses() {
         List<Course> courseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -82,5 +82,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return courseList;
+    }
+    //Xóa 1 card
+    public void deleteCourse(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("Course", "id=?", new String[]{String.valueOf(id)});
+        db.close();
     }
 }

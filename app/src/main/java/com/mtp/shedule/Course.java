@@ -1,12 +1,12 @@
 package com.mtp.shedule;
 
 public class Course {
-    private int id;
-    private String title;
-    private String teacher;
-    private String room;
-    private String timeStart;
-    private String timeEnd;
+    public int id;
+    public String title;
+    public String teacher;
+    public String room;
+    public String timeStart;
+    public String timeEnd;
 
     public Course(int id, String title, String teacher, String room, String timeStart, String timeEnd) {
         this.id = id;
