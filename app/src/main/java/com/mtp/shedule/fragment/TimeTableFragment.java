@@ -1,5 +1,6 @@
-package com.mtp.shedule;
+package com.mtp.shedule.fragment;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,6 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.mtp.shedule.AddCourseActivity;
+import com.mtp.shedule.CourseAdapter;
+import com.mtp.shedule.R;
+import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.entity.CourseEntity;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -23,8 +29,8 @@ public class TimeTableFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private CourseAdapter courseAdapter;
-    private DatabaseHelper dbHelper;
-    private List<Course> courseList = new ArrayList<>();
+    private CourseDatabase db;
+    private final List<CourseEntity> courseList = new ArrayList<>();
 
     private FloatingActionButton fabAdd;
     private MaterialButton[] dayButtons;
@@ -39,14 +45,15 @@ public class TimeTableFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_timetable, container, false);
 
+
+
         recyclerView = view.findViewById(R.id.recyclerViewCourses);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        dbHelper = new DatabaseHelper(getContext());
 
         courseAdapter = new CourseAdapter(getContext(), courseList);
         recyclerView.setAdapter(courseAdapter);
 
+        db = CourseDatabase.getInstance(getContext());
 
         // ---------------- Floating Action Button ----------------
         fabAdd = view.findViewById(R.id.fabAdd);
@@ -97,10 +104,13 @@ public class TimeTableFragment extends Fragment {
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void loadCoursesByDay(String day){
-        courseList.clear();
-        courseList.addAll(dbHelper.getCoursesByDay(day));
-        courseAdapter.notifyDataSetChanged();
+        db.courseDao().getCoursesByDay(day).observe(getViewLifecycleOwner(), courses -> {
+            courseList.clear();
+            courseList.addAll(courses);
+            courseAdapter.notifyDataSetChanged();
+        });
     }
 
     @Override
@@ -108,6 +118,7 @@ public class TimeTableFragment extends Fragment {
         super.onResume();
         int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
         int index = (today == Calendar.SUNDAY) ? 6 : today - 2;
+        highlightDay(index);
         loadCoursesByDay(dayButtons[index].getText().toString());
     }
 }

@@ -1,6 +1,5 @@
 package com.mtp.shedule;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -11,6 +10,10 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.mtp.shedule.fragment.ExamsFragment;
+import com.mtp.shedule.fragment.SettingsFragment;
+import com.mtp.shedule.fragment.TeachersFragment;
+import com.mtp.shedule.fragment.TimeTableFragment;
 
 public class MainActivity extends AppCompatActivity {
 

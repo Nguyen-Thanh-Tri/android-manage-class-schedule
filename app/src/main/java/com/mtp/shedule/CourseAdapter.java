@@ -12,14 +12,19 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.entity.CourseEntity;
+
 import java.util.List;
 
 public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseViewHolder> {
 
-    public List<Course> courseList;
+    public List<CourseEntity> courseList;
     public Context context;
+    private CourseDatabase db;
 
-    public CourseAdapter(Context context, List<Course> courseList) {
+
+    public CourseAdapter(Context context, List<CourseEntity> courseList) {
         this.context = context;
         this.courseList = courseList;
     }
@@ -34,7 +39,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull CourseViewHolder holder, int position) {
-        Course course = courseList.get(position);
+        CourseEntity course = courseList.get(position);
         holder.tvCourseTitle.setText(course.getTitle());
         holder.tvTeacher.setText(course.getTeacher());
         holder.tvRoom.setText(course.getRoom());
@@ -47,14 +52,14 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
                     .setTitle("DELETE")
                     .setMessage("Are you sure? \"" + course.getTitle() + "\" No?")
                     .setPositiveButton("Delete", (dialog, which) -> {
-                        DatabaseHelper db = new DatabaseHelper(v.getContext());
-                        db.deleteCourse(course.getId()); // Xóa khỏi DB
-
-                        // Xóa khỏi danh sách hiện tại và cập nhật RecyclerView
-                        courseList.remove(holder.getAdapterPosition());
-                        notifyItemRemoved(holder.getAdapterPosition());
-
-                        Toast.makeText(v.getContext(), "Delete successfully", Toast.LENGTH_SHORT).show();
+                        new Thread(() -> {
+                            db.courseDao().delete(course); // ← Entity
+                            holder.itemView.post(() -> {
+                                courseList.remove(holder.getAdapterPosition());
+                                notifyItemRemoved(holder.getAdapterPosition());
+                                Toast.makeText(v.getContext(), "Deleted successfully", Toast.LENGTH_SHORT).show();
+                            });
+                        }).start();
                     })
                     .setNegativeButton("Cancel", null)
                     .show();
@@ -66,8 +71,6 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
     public int getItemCount() {
         return courseList.size();
     }
-
-
 
     public static class CourseViewHolder extends RecyclerView.ViewHolder {
         TextView tvCourseTitle, tvTeacher, tvRoom, tvTime;
