@@ -8,158 +8,54 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <FrameLayout
-        android:id="@+id/fragment_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-            <LinearLayout
-                android:orientation="vertical"
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Thanh trên cùng (AppBar + Title) -->
+            <com.google.android.material.appbar.AppBarLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <!-- Thanh trên cùng (AppBar + Title) -->
-                <com.google.android.material.appbar.AppBarLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#FFA500">
-
-                    <androidx.appcompat.widget.Toolbar
-                        android:id="@+id/toolbar"
-                        android:layout_width="match_parent"
-                        android:layout_height="?attr/actionBarSize"
-                        android:background="#FFA500"
-                        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-                        app:titleTextColor="@android:color/white"
-                        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                        app:contentInsetStartWithNavigation="0dp"
-                        app:navigationIcon="@drawable/ic_menu">
-
-
-                        <!-- Tiêu đề căn giữa -->
-                        <TextView
-                            android:id="@+id/toolbar_title"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="@string/main_screen_title"
-                            android:textColor="@android:color/white"
-                            android:textSize="20sp"
-                            android:textStyle="bold" />
-                    </androidx.appcompat.widget.Toolbar>
-
-                </com.google.android.material.appbar.AppBarLayout>
-
-                <!-- Thanh chọn ngày trong tuần -->
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:scrollbars="none">
-
-                    <LinearLayout
-                        android:id="@+id/ll_days"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnMonday"
-                            android:text="Monday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="35dp"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="8dp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnTuesday"
-                            android:text="Tuesday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="35dp"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="8dp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnWednesday"
-                            android:text="Wednesday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="35dp"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="8dp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnThursday"
-                            android:text="Thursday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="35dp"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="8dp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnFriday"
-                            android:text="Friday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="35dp"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="8dp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSaturday"
-                            android:text="Saturday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="35dp"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="8dp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSunday"
-                            android:text="Sunday"
-                            android:layout_width="wrap_content"
-                            android:layout_height="35dp"
-                            android:textSize="10sp"
-                            android:layout_marginEnd="8dp"
-                            style="@style/Widget.Material3.Button.OutlinedButton"/>
-
-                    </LinearLayout>
-                </HorizontalScrollView>
-
-                <!-- Phần nội dung chính -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerViewCourses"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:padding="8dp" />
-            </LinearLayout>
-
-
-            <!-- Nút Floating Add -->
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fabAdd"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="16dp"
-                app:srcCompat="@android:drawable/ic_input_add"
-                android:contentDescription="Add new event"/>
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+                android:background="#FFA500">
 
-<!--    <include-->
-<!--        layout="@layout/menu_layout"-->
-<!--        android:id="@+id/navigation_menu"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="match_parent"-->
-<!--        android:layout_gravity="start"-->
-<!--        android:fitsSystemWindows="true"/>-->
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="#FFA500"
+                    android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                    app:titleTextColor="@android:color/white"
+                    app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+                    app:contentInsetStartWithNavigation="0dp"
+                    app:navigationIcon="@drawable/ic_menu">
+
+
+                    <!-- Tiêu đề căn giữa -->
+                    <TextView
+                        android:id="@+id/toolbar_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="@string/main_screen_title"
+                        android:textColor="@android:color/white"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                </androidx.appcompat.widget.Toolbar>
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <FrameLayout
+                android:id="@+id/fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </LinearLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigation_view"
