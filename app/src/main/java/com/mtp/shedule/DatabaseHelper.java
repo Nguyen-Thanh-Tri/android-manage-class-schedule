@@ -12,7 +12,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "timetable.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String TABLE_COURSE = "course";
 
@@ -22,6 +22,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_ROOM = "room";
     private static final String COLUMN_START = "start_time";
     private static final String COLUMN_END = "end_time";
+    private static final String COLUMN_DAY = "day_of_week";
+
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -36,14 +38,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         COLUMN_TEACHER + " TEXT, " +
                         COLUMN_ROOM + " TEXT, " +
                         COLUMN_START + " TEXT, " +
-                        COLUMN_END + " TEXT)";
+                        COLUMN_END + " TEXT," +
+                        COLUMN_DAY + " TEXT)";
         db.execSQL(CREATE_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_COURSE);
-        onCreate(db);
+//        if (oldVersion < 2) {
+//            db.execSQL("ALTER TABLE course ADD COLUMN day_of_week INTEGER DEFAULT 1");
+//        }
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + TABLE_COURSE + " ADD COLUMN " + COLUMN_DAY + " TEXT DEFAULT '1'");
+        }
     }
 
     // ✅ Thêm môn học
@@ -55,12 +62,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_ROOM, course.getRoom());
         values.put(COLUMN_START, course.getTimeStart());
         values.put(COLUMN_END, course.getTimeEnd());
+        values.put(COLUMN_DAY, course.getDayOfWeek());
 
         db.insert(TABLE_COURSE, null, values);
         db.close();
     }
 
-    // ✅ Lấy toàn bộ danh sách môn học
+    //  Lấy toàn bộ danh sách môn học
     public List<Course> getAllCourses() {
         List<Course> courseList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -74,7 +82,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         cursor.getString(2),
                         cursor.getString(3),
                         cursor.getString(4),
-                        cursor.getString(5)
+                        cursor.getString(5),
+                        cursor.getString(6)
                 );
                 courseList.add(course);
             } while (cursor.moveToNext());
@@ -83,4 +92,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return courseList;
     }
+
+    public ArrayList<Course> getCoursesByDay(String day){
+        ArrayList<Course> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_COURSE + " WHERE " + COLUMN_DAY + "=?", new String[]{day});
+
+        if(cursor.moveToFirst()){
+            do{
+                list.add(new Course(
+                        cursor.getInt(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6)
+                ));
+            } while(cursor.moveToNext());
+        }
+        cursor.close();
+        return list;
+    }
+
 }

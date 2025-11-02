@@ -1,6 +1,7 @@
 package com.mtp.shedule;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 
@@ -8,12 +9,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -22,51 +27,19 @@ public class MainActivity extends AppCompatActivity {
     DatabaseHelper dbHelper;
     FloatingActionButton fabAdd;
     CourseAdapter courseAdapter;
-    CourseAdapter adapter;
     DrawerLayout drawerLayout;
     Toolbar toolbar;
     List<Course> courseList = new ArrayList<>();
+    Fragment currentFragment;
+    LinearLayout llDays;
+    MaterialButton[] dayButtons;
 
-    private LinearLayout menuTimeTable, menuExams, menuTeachers, menuSettings;
 
-    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-//
-//        recyclerView = findViewById(R.id.recyclerViewCourses);
-//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//
-//        loadCoursesFromDatabase(); // load từ SQLite hoặc Room
-//
-//        adapter = new CourseAdapter(this, courseList);
-//        recyclerView.setAdapter(adapter);
-//    }
-    //    private void loadCoursesFromDatabase() {
-//        // Ví dụ dữ liệu tĩnh
-//        courseList.add(new Course(1, "Android Development", "Ritesh Deshmukh", "704", "08:00", "10:00"));
-//        courseList.add(new Course(2, "Design Thinking", "Kriti Sanon", "203", "13:30", "15:00"));
-//        courseList.add(new Course(3, "Data Visualization", "Sunny Deol", "316", "16:30", "17:30"));
-//    }
 
     //Thêm 1 card
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // ---------------- Toolbar & Drawer ----------------
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        drawerLayout = findViewById(R.id.drawer_layout);
-
-        toolbar.setNavigationOnClickListener(v -> {
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else {
-                drawerLayout.openDrawer(GravityCompat.START);
-            }
-        });
 
         // ---------------- RecyclerView setup ----------------
         recyclerView = findViewById(R.id.recyclerViewCourses);
@@ -85,30 +58,106 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // ---------------- Menu items click ----------------
-        menuTimeTable = findViewById(R.id.menu_timetable);
-        menuExams = findViewById(R.id.menu_exams);
-        menuTeachers = findViewById(R.id.menu_teachers);
-        menuSettings = findViewById(R.id.menu_settings);
+        // ---------------- Toolbar & Drawer ----------------
+        // ẩn và hiện menu
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        menuTimeTable.setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
+        drawerLayout = findViewById(R.id.drawer_layout);
+
+        toolbar.setNavigationOnClickListener(v -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
         });
 
-        menuExams.setOnClickListener(v -> {
+        // ---------------- Navigation Drawer ----------------
+        //chuyển đổi giữa các fragment
+        NavigationView navigationView = findViewById(R.id.navigation_view);
+
+        if (savedInstanceState == null) {
+            currentFragment = new TimeTableFragment();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, currentFragment)
+                    .commit();
+            navigationView.setCheckedItem(R.id.nav_timetable);
+        }
+
+        navigationView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_timetable) {
+                // load fragment TimeTable
+            } else if (id == R.id.nav_exams) {
+                // load fragment Exams
+            } else if (id == R.id.nav_teachers) {
+                // load fragment Teachers
+            } else if (id == R.id.nav_settings) {
+                // load fragment Settings
+            }
+
             drawerLayout.closeDrawer(GravityCompat.START);
-            // TODO: chuyển sang màn Exams nếu có
+            return true;
         });
 
-        menuTeachers.setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            // TODO: mở danh sách giảng viên
-        });
 
-        menuSettings.setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            //
-        });
+        llDays = findViewById(R.id.ll_days);
+        dayButtons = new MaterialButton[]{
+                findViewById(R.id.btnMonday),
+                findViewById(R.id.btnTuesday),
+                findViewById(R.id.btnWednesday),
+                findViewById(R.id.btnThursday),
+                findViewById(R.id.btnFriday),
+                findViewById(R.id.btnSaturday),
+                findViewById(R.id.btnSunday)
+        };
+
+        // --- Xác định thứ hôm nay ---
+        int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
+        // Calendar.SUNDAY = 1, MONDAY = 2...
+        int index = (today == Calendar.SUNDAY) ? 6 : today - 2; // 0-based index: Mon=0 ... Sun=6
+
+        highlightDay(index);
+        loadCoursesByDay(dayButtons[index].getText().toString());
+
+        // --- set click listener cho từng button ---
+        for (int i = 0; i < dayButtons.length; i++) {
+            int finalI = i;
+            dayButtons[i].setOnClickListener(v -> {
+                highlightDay(finalI);
+                String day = dayButtons[finalI].getText().toString();
+                loadCoursesByDay(day);
+            });
+        }
+    }
+
+
+
+    private void highlightDay(int index){
+        for(int i = 0; i < dayButtons.length; i++){
+            if(i == index){
+                dayButtons[i].setBackgroundColor(getResources().getColor(R.color.orange)); // hoặc #FFA500
+                dayButtons[i].setTextColor(getResources().getColor(android.R.color.white));
+            } else {
+                dayButtons[i].setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                dayButtons[i].setTextColor(getResources().getColor(android.R.color.black));
+            }
+        }
+
+    }
+
+    // --- Load môn học theo ngày ---
+    private void loadCoursesByDay(String day){
+        courseList.clear();
+        courseList.addAll(dbHelper.getCoursesByDay(day)); // db.getCoursesByDay trả về list theo dayOfWeek
+        if(courseAdapter == null){
+            courseAdapter = new CourseAdapter(this,courseList);
+            recyclerView.setAdapter(courseAdapter);
+        } else {
+            courseAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
@@ -119,6 +168,5 @@ public class MainActivity extends AppCompatActivity {
         courseList.addAll(dbHelper.getAllCourses());
         courseAdapter.notifyDataSetChanged();
     }
-
 
 }
