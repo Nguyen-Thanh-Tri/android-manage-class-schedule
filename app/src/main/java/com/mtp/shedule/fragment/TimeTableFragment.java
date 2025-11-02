@@ -3,6 +3,7 @@ package com.mtp.shedule.fragment;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,9 +36,10 @@ public class TimeTableFragment extends Fragment {
 
     private FloatingActionButton fabAdd;
     private MaterialButton[] dayButtons;
+    private LiveData<List<CourseEntity>> currentLiveData;
 
     public TimeTableFragment() {
-        // Required empty public constructor
+
     }
 
     @Nullable
@@ -44,8 +47,6 @@ public class TimeTableFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_timetable, container, false);
-
-
 
         recyclerView = view.findViewById(R.id.recyclerViewCourses);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -55,12 +56,6 @@ public class TimeTableFragment extends Fragment {
 
         db = CourseDatabase.getInstance(getContext());
 
-        // ---------------- Floating Action Button ----------------
-        fabAdd = view.findViewById(R.id.fabAdd);
-        fabAdd.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), AddCourseActivity.class);
-            startActivity(intent);
-        });
 
         // Day buttons
         dayButtons = new MaterialButton[]{
@@ -73,12 +68,21 @@ public class TimeTableFragment extends Fragment {
                 view.findViewById(R.id.btnSunday)
         };
 
+
         // Highlight today
         int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
         int index = (today == Calendar.SUNDAY) ? 6 : today - 2;
-
         highlightDay(index);
         loadCoursesByDay(dayButtons[index].getText().toString());
+
+
+// ---------------- Floating Action Button -Thêm lịch học ----------------
+        fabAdd = view.findViewById(R.id.fabAdd);
+        fabAdd.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), AddCourseActivity.class);
+            startActivity(intent);
+        });
+
 
         // Click listeners for day buttons
         for (int i = 0; i < dayButtons.length; i++) {
@@ -95,18 +99,26 @@ public class TimeTableFragment extends Fragment {
     private void highlightDay(int index){
         for(int i = 0; i < dayButtons.length; i++){
             if(i == index){
-                dayButtons[i].setBackgroundColor(getResources().getColor(R.color.orange));
-                dayButtons[i].setTextColor(getResources().getColor(android.R.color.white));
+                dayButtons[i].setBackgroundColor(getResources().getColor(R.color.orange, null));
+                dayButtons[i].setTextColor(getResources().getColor(android.R.color.white, null));
             } else {
-                dayButtons[i].setBackgroundColor(getResources().getColor(android.R.color.transparent));
-                dayButtons[i].setTextColor(getResources().getColor(android.R.color.black));
+                dayButtons[i].setBackgroundColor(getResources().getColor(android.R.color.transparent, null));
+                dayButtons[i].setTextColor(getResources().getColor(android.R.color.black, null));
             }
         }
     }
 
     @SuppressLint("NotifyDataSetChanged")
     private void loadCoursesByDay(String day){
-        db.courseDao().getCoursesByDay(day).observe(getViewLifecycleOwner(), courses -> {
+        // Nếu đã có LiveData cũ, gỡ bỏ Observer khỏi nó.
+        if (currentLiveData != null) {
+            currentLiveData.removeObservers(getViewLifecycleOwner());
+        }
+        // Lấy LiveData mới và lưu vào biến
+        currentLiveData = db.courseDao().getCoursesByDay(day);
+
+        //  Gắn Observer mới vào LiveData mới
+        currentLiveData.observe(getViewLifecycleOwner(), courses -> {
             courseList.clear();
             courseList.addAll(courses);
             courseAdapter.notifyDataSetChanged();
@@ -119,6 +131,6 @@ public class TimeTableFragment extends Fragment {
         int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
         int index = (today == Calendar.SUNDAY) ? 6 : today - 2;
         highlightDay(index);
-        loadCoursesByDay(dayButtons[index].getText().toString());
+//        loadCoursesByDay(dayButtons[index].getText().toString());
     }
 }
