@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private Toolbar toolbar;
-    private FloatingActionButton fabAdd;
+    private Fragment currentFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,20 +51,20 @@ public class MainActivity extends AppCompatActivity {
 
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
-            Fragment selectedFragment = null;
+            Fragment newFragment = null;
 
-            if (id == R.id.nav_timetable) {
-                selectedFragment = new TimeTableFragment();
-            } else if (id == R.id.nav_exams) {
-                selectedFragment = new ExamsFragment();
-            } else if (id == R.id.nav_teachers) {
-                selectedFragment = new TeachersFragment();
-            } else if (id == R.id.nav_settings) {
-                selectedFragment = new SettingsFragment();
+            if (id == R.id.nav_timetable && !(currentFragment instanceof TimeTableFragment)) {
+                newFragment = new TimeTableFragment();
+            } else if (id == R.id.nav_exams && !(currentFragment instanceof ExamsFragment)) {
+                newFragment = new ExamsFragment();
+            } else if (id == R.id.nav_teachers && !(currentFragment instanceof TeachersFragment)) {
+                newFragment = new TeachersFragment();
+            } else if (id == R.id.nav_settings && !(currentFragment instanceof SettingsFragment)) {
+                newFragment = new SettingsFragment();
             }
 
-            if (selectedFragment != null) {
-                replaceFragment(selectedFragment);
+            if (newFragment != null) {
+                replaceFragment(newFragment);
             }
 
             drawerLayout.closeDrawer(GravityCompat.START);
