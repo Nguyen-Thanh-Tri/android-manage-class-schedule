@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_timetable"
+            android:title="Time Table"
+            android:icon="@drawable/time_table" />
+        <item
+            android:id="@+id/nav_exams"
+            android:title="Exams"
+            android:icon="@drawable/exams" />
+        <item
+            android:id="@+id/nav_teachers"
+            android:title="Teachers"
+            android:icon="@drawable/teachers" />
+        <item
+            android:id="@+id/nav_settings"
+            android:title="Settings"
+            android:icon="@drawable/settings" />
+    </group>
+</menu>

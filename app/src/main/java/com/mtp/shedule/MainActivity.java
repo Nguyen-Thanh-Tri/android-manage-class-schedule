@@ -1,63 +1,82 @@
 package com.mtp.shedule;
 
-import android.content.Intent;
 import android.os.Bundle;
+
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.navigation.NavigationView;
+import com.mtp.shedule.fragment.ExamsFragment;
+import com.mtp.shedule.fragment.SettingsFragment;
+import com.mtp.shedule.fragment.TeachersFragment;
+import com.mtp.shedule.fragment.TimeTableFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    RecyclerView recyclerView;
-    DatabaseHelper dbHelper;
-    FloatingActionButton fabAdd;
-    CourseAdapter courseAdapter;
-    CourseAdapter adapter;
-    List<Course> courseList = new ArrayList<>();
+    private DrawerLayout drawerLayout;
+    private Toolbar toolbar;
+    private FloatingActionButton fabAdd;
 
     @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-//
-//        recyclerView = findViewById(R.id.recyclerViewCourses);
-//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//
-//        loadCoursesFromDatabase(); // load từ SQLite hoặc Room
-//
-//        adapter = new CourseAdapter(this, courseList);
-//        recyclerView.setAdapter(adapter);
-//    }
-
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        recyclerView = findViewById(R.id.recyclerViewCourses);
-        fabAdd = findViewById(R.id.fabAdd);
+        // ---------------- Toolbar ----------------
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        dbHelper = new DatabaseHelper(this);
-        courseList = dbHelper.getAllCourses(); // Lấy dữ liệu từ SQLite
+        // ---------------- Drawer Layout ----------------
+        drawerLayout = findViewById(R.id.drawer_layout);
+        toolbar.setNavigationOnClickListener(v -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        courseAdapter = new CourseAdapter(this, courseList);
-        recyclerView.setAdapter(courseAdapter);
+        // ---------------- Navigation Drawer ----------------
+        NavigationView navigationView = findViewById(R.id.navigation_view);
 
-        fabAdd.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AddCourseActivity.class);
-            startActivity(intent);
+        // Load fragment mặc định (TimeTableFragment)
+        if (savedInstanceState == null) {
+            replaceFragment(new TimeTableFragment());
+            navigationView.setCheckedItem(R.id.nav_timetable);
+        }
+
+        navigationView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            Fragment selectedFragment = null;
+
+            if (id == R.id.nav_timetable) {
+                selectedFragment = new TimeTableFragment();
+            } else if (id == R.id.nav_exams) {
+                selectedFragment = new ExamsFragment();
+            } else if (id == R.id.nav_teachers) {
+                selectedFragment = new TeachersFragment();
+            } else if (id == R.id.nav_settings) {
+                selectedFragment = new SettingsFragment();
+            }
+
+            if (selectedFragment != null) {
+                replaceFragment(selectedFragment);
+            }
+
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return true;
         });
     }
 
-    private void loadCoursesFromDatabase() {
-        // Ví dụ dữ liệu tĩnh
-        courseList.add(new Course(1, "Android Development", "Ritesh Deshmukh", "704", "08:00", "10:00"));
-        courseList.add(new Course(2, "Design Thinking", "Kriti Sanon", "203", "13:30", "15:00"));
-        courseList.add(new Course(3, "Data Visualization", "Sunny Deol", "316", "16:30", "17:30"));
+    // ---------------- Helper method thay fragment ----------------
+    private void replaceFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
     }
 }

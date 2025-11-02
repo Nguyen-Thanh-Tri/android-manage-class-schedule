@@ -34,20 +34,26 @@
             android:inputType="text"
             android:layout_marginTop="12dp" />
 
+        <Spinner
+            android:id="@+id/spinnerDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
         <EditText
             android:id="@+id/etStartTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Start Time (e.g. 08:00)"
-            android:inputType="time"
+            android:hint="Start Time"
+            android:focusable="false"
             android:layout_marginTop="12dp" />
 
         <EditText
             android:id="@+id/etEndTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="End Time (e.g. 10:00)"
-            android:inputType="time"
+            android:hint="End Time"
+            android:focusable="false"
             android:layout_marginTop="12dp" />
 
         <Button
