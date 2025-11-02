@@ -7,9 +7,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.ExamEntity;
-import com.mtp.shedule.dao.ExamDao;
 
 public class AddExamActivity extends AppCompatActivity {
     private void showDatePicker(EditText editText) {
@@ -36,7 +35,7 @@ public class AddExamActivity extends AppCompatActivity {
     }
     private EditText etSubject, etDate, etTime, etLocation;
     private Button btnSave;
-    private CourseDatabase db;
+    private ConnDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +48,7 @@ public class AddExamActivity extends AppCompatActivity {
         etLocation = findViewById(R.id.etExamLocation);
         btnSave = findViewById(R.id.btnSaveExam);
 
-        db = CourseDatabase.getInstance(this);
+        db = ConnDatabase.getInstance(this);
 
     // DatePicker for Exam Date
     etDate.setOnClickListener(v -> showDatePicker(etDate));

@@ -1,4 +1,4 @@
-package com.mtp.shedule;
+package com.mtp.shedule.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -8,19 +8,20 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.R;
+import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.ExamEntity;
 import java.util.List;
 
 public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder> {
     private List<ExamEntity> examList;
     private Context context;
-    private CourseDatabase db;
+    private ConnDatabase db;
 
     public ExamAdapter(Context context, List<ExamEntity> examList) {
         this.context = context;
         this.examList = examList;
-        this.db = CourseDatabase.getInstance(context);
+        this.db = ConnDatabase.getInstance(context);
     }
 
     @NonNull

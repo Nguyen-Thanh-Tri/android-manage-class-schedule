@@ -1,4 +1,4 @@
-package com.mtp.shedule;
+package com.mtp.shedule.adapter;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -12,7 +12,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.R;
+import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.CourseEntity;
 
 import java.util.List;
@@ -21,13 +22,13 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
 
     public List<CourseEntity> courseList;
     public Context context;
-    private CourseDatabase db;
+    private ConnDatabase db;
 
 
     public CourseAdapter(Context context, List<CourseEntity> courseList) {
         this.context = context;
         this.courseList = courseList;
-        this.db = CourseDatabase.getInstance(context);
+        this.db = ConnDatabase.getInstance(context);
     }
 
     @NonNull

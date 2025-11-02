@@ -3,7 +3,6 @@ package com.mtp.shedule.fragment;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,9 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mtp.shedule.AddCourseActivity;
-import com.mtp.shedule.CourseAdapter;
+import com.mtp.shedule.adapter.CourseAdapter;
 import com.mtp.shedule.R;
-import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.CourseEntity;
 
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ public class TimeTableFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private CourseAdapter courseAdapter;
-    private CourseDatabase db;
+    private ConnDatabase db;
     private final List<CourseEntity> courseList = new ArrayList<>();
 
     private FloatingActionButton fabAdd;
@@ -54,7 +53,7 @@ public class TimeTableFragment extends Fragment {
         courseAdapter = new CourseAdapter(getContext(), courseList);
         recyclerView.setAdapter(courseAdapter);
 
-        db = CourseDatabase.getInstance(getContext());
+        db = ConnDatabase.getInstance(getContext());
 
 
         // Day buttons

@@ -11,19 +11,19 @@ import com.mtp.shedule.dao.CourseDao;
 import com.mtp.shedule.dao.ExamDao;
 
 @Database(
-         entities = {CourseEntity.class, ExamEntity.class}, version = 2)
-public abstract class CourseDatabase extends RoomDatabase {
+        entities = {CourseEntity.class, ExamEntity.class}, version = 2)
+public abstract class ConnDatabase extends RoomDatabase {
     public abstract CourseDao courseDao();
     public abstract ExamDao examDao();
 
-    private static volatile CourseDatabase instance;
+    private static volatile ConnDatabase instance;
 
-    public static CourseDatabase getInstance(Context context) {
+    public static ConnDatabase getInstance(Context context) {
         if (instance == null) {
-            synchronized (CourseDatabase.class) {
+            synchronized (ConnDatabase.class) {
                 if (instance == null) {
                     instance = Room.databaseBuilder(context.getApplicationContext(),
-                                    CourseDatabase.class, "course_database")
+                                    ConnDatabase.class, "course_database")
                             .fallbackToDestructiveMigration()
                             .build();
                 }
@@ -32,4 +32,3 @@ public abstract class CourseDatabase extends RoomDatabase {
         return instance;
     }
 }
-
