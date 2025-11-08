@@ -15,11 +15,13 @@ import com.mtp.shedule.fragment.SettingsFragment;
 import com.mtp.shedule.fragment.TeachersFragment;
 import com.mtp.shedule.fragment.TimeTableFragment;
 
+import java.util.Objects;
+
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
-    private Toolbar toolbar;
-    private TextView toolbarTitle;
+    Toolbar toolbar;
+    TextView toolbarTitle;
     private Fragment currentFragment;
 
     @Override
@@ -54,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             Fragment newFragment = null;
-            String title = item.getTitle().toString(); // lấy title từ menu item
+            String title = Objects.requireNonNull(item.getTitle()).toString(); // lấy title từ menu item
 
             if (id == R.id.nav_timetable && !(currentFragment instanceof TimeTableFragment)) {
                 newFragment = new TimeTableFragment();
