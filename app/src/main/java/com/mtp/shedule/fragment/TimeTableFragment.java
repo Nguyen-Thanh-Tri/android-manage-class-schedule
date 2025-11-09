@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mtp.shedule.AddCourseActivity;
-import com.mtp.shedule.CourseAdapter;
+import com.mtp.shedule.adapter.CourseAdapter;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.CourseDatabase;
 import com.mtp.shedule.entity.CourseEntity;

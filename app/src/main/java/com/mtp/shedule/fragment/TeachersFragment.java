@@ -12,7 +12,7 @@ import android.widget.Button;
 
 import com.mtp.shedule.R;
 import com.mtp.shedule.Teacher;
-import com.mtp.shedule.TeacherAdapter;
+import com.mtp.shedule.adapter.TeacherAdapter;
 import com.mtp.shedule.AddTeacherActivity;
 
 import java.util.ArrayList;

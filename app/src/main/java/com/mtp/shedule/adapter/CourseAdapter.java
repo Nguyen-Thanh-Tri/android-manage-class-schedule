@@ -1,4 +1,4 @@
-package com.mtp.shedule;
+package com.mtp.shedule.adapter;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.mtp.shedule.R;
 import com.mtp.shedule.database.CourseDatabase;
 import com.mtp.shedule.entity.CourseEntity;
 
