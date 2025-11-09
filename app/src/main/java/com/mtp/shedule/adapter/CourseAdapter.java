@@ -28,6 +28,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
     public CourseAdapter(Context context, List<CourseEntity> courseList) {
         this.context = context;
         this.courseList = courseList;
+        this.db = CourseDatabase.getInstance(context);
     }
 
     @NonNull
