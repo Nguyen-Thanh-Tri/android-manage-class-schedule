@@ -1,11 +1,12 @@
 package com.mtp.shedule;
 
+import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import android.app.TimePickerDialog;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -34,8 +35,7 @@ public class AddCourseDialog extends DialogFragment {
     Button btnSave, btnCancel, btnSelectColor;
     private ConnDatabase db;
 
-    private int selectedColor = Color.parseColor("#4285F4");
-    private int selectedColorId = R.drawable.gradient_bg_red;
+    private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
 
     @Nullable
     @Override
@@ -72,20 +72,18 @@ public class AddCourseDialog extends DialogFragment {
 
 
         // Cập nhật màu nút ngay lần đầu mở dialog
-        btnSelectColor.setBackgroundResource(selectedColorId);
+        btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
 
         btnSelectColor.setOnClickListener(v ->{
             SelectColorDialog dialog = new SelectColorDialog();
 
             // Truyền mã màu INT để SelectColorDialog đánh dấu ô màu đúng
-            dialog.setSelectedColor(selectedColor);
+            dialog.setSelectedColorIndex(selectedColorIndex);
 
-            dialog.setOnColorSelectedListener(drawableResId -> {
-                // Cập nhật Drawable ID
-                selectedColorId = drawableResId;
+            dialog.setOnColorSelectedListener(colorIndex -> {
 
-                // Cập nhật màu nút (Nếu gradient, dùng setBackgroundResource)
-                btnSelectColor.setBackgroundResource(selectedColorId);
+                selectedColorIndex = colorIndex;
+                btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
 
                 // Lưu ý: Nếu bạn cần cập nhật selectedColor INT để mở Dialog lại đúng màu,
                 // bạn cần thêm logic ánh xạ ngược từ Drawable ID sang Color INT ở đây.
@@ -118,7 +116,7 @@ public class AddCourseDialog extends DialogFragment {
         CourseEntity course = new CourseEntity(title, teacher, room, start, end, day);
 
         // 4. LƯU ID DRAWABLE VÀO ENTITY (Sử dụng phương thức setter mới)
-        course.setColor(selectedColorId);
+        course.setColor(selectedColorIndex);
 
         new Thread(() -> {
             db.courseDao().insert(course);

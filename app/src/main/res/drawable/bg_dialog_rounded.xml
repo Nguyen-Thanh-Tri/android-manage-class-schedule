@@ -3,11 +3,8 @@
     android:shape="rectangle">
 
     <!-- Bo góc -->
-    <corners android:radius="24dp" />
-
-    <!-- Màu nền (có thể đổi) -->
-    <solid android:color="@android:color/white" />
-
-    <!-- Đổ bóng nhẹ nếu muốn -->
-    <padding android:left="16dp" android:top="16dp" android:right="16dp" android:bottom="16dp" />
+    <corners
+        android:radius="24dp" />
+    <solid
+        android:color="#D3D3D3" />
 </shape>
