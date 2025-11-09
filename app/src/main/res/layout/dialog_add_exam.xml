@@ -3,7 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_rounded">
+
 
 
     <EditText
@@ -46,6 +48,15 @@
         android:text="Save Exam"
         android:layout_marginTop="24dp"
         android:backgroundTint="#FFA500"
+        android:textColor="#FFFFFF"/>
+
+    <Button
+        android:id="@+id/btnCancelExam"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#B0B0B0"
         android:textColor="#FFFFFF"/>
 
 </LinearLayout>
