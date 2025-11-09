@@ -50,7 +50,7 @@ public class ExamsFragment extends Fragment {
         fabAddExam = view.findViewById(R.id.fabAddExam);
 
         fabAddExam.setOnClickListener(v -> {
-            startActivity(new Intent(getActivity(), com.mtp.shedule.AddExamActivity.class));
+            new com.mtp.shedule.AddExamActivity().show(getParentFragmentManager(), "AddExamDialog");
         });
 
         // Observe exams from database
