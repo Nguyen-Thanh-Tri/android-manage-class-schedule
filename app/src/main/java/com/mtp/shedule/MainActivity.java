@@ -2,9 +2,6 @@ package com.mtp.shedule;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,11 +38,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // === THÊM 2 DÒNG NÀY ===
-        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-
         recyclerView = findViewById(R.id.recyclerViewCourses);
         fabAdd = findViewById(R.id.fabAdd);
 
@@ -67,20 +59,5 @@ public class MainActivity extends AppCompatActivity {
         courseList.add(new Course(1, "Android Development", "Ritesh Deshmukh", "704", "08:00", "10:00"));
         courseList.add(new Course(2, "Design Thinking", "Kriti Sanon", "203", "13:30", "15:00"));
         courseList.add(new Course(3, "Data Visualization", "Sunny Deol", "316", "16:30", "17:30"));
-    }
-    // THÊM vào MainActivity.java (sau onCreate)
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_notifications) {
-            startActivity(new Intent(this, NotificationSettingsActivity.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 }
