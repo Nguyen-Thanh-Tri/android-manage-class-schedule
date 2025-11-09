@@ -1,6 +1,7 @@
 package com.mtp.shedule;
 
 import android.os.Bundle;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -14,6 +15,8 @@ import com.mtp.shedule.fragment.ExamsFragment;
 import com.mtp.shedule.fragment.SettingsFragment;
 import com.mtp.shedule.fragment.TeachersFragment;
 import com.mtp.shedule.fragment.TimeTableFragment;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
             Fragment selectedFragment = null;
+            String title = Objects.requireNonNull(item.getTitle()).toString(); // lấy title từ menu item
 
             if (id == R.id.nav_timetable) {
                 selectedFragment = new TimeTableFragment();
@@ -66,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
             if (selectedFragment != null) {
                 replaceFragment(selectedFragment);
                 navigationView.setCheckedItem(id);
+
+                TextView toolbarTitle = findViewById(R.id.toolbar_title);
+                toolbarTitle.setText(title);
             }
 
             drawerLayout.closeDrawer(GravityCompat.START);
