@@ -19,6 +19,7 @@ public abstract class ConnDatabase extends RoomDatabase {
     public abstract ExamDao examDao();
     public abstract TeacherDao teacherDao();
 
+
     private static volatile ConnDatabase instance;
 
     public static ConnDatabase getInstance(Context context) {
@@ -35,4 +36,3 @@ public abstract class ConnDatabase extends RoomDatabase {
         return instance;
     }
 }
-
