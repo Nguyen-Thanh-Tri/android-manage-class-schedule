@@ -1,0 +1,99 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="20dp"
+    tools:context=".AddCourseDialog"
+    android:background="@drawable/bg_dialog_rounded">
+
+    <EditText
+        android:id="@+id/etTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Course Title"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/etTeacher"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Teacher Name"
+        android:inputType="text"
+        android:layout_marginTop="12dp" />
+
+    <EditText
+        android:id="@+id/etRoom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Room"
+        android:inputType="text"
+        android:layout_marginTop="12dp" />
+
+    <Spinner
+        android:id="@+id/spinnerDay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" />
+
+    <EditText
+        android:id="@+id/etStartTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Start Time"
+        android:focusable="false"
+        android:layout_marginTop="12dp" />
+
+    <EditText
+        android:id="@+id/etEndTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="End Time"
+        android:focusable="false"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnSelectColor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Color"
+        android:layout_marginTop="16dp"
+        app:backgroundTint="@null"
+        android:textColor="@android:color/white"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp">
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+
+            android:layout_gravity="left"
+            android:text="Cancel"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="#FF0000"
+            android:textColor="#FFFFFF"/>
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:layout_gravity="right"
+            android:text="Save"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="#FFA500"
+            android:textColor="#FFFFFF"/>
+    </LinearLayout>
+</LinearLayout>
+

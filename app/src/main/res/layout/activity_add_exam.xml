@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+
+    <EditText
+        android:id="@+id/etExamSubject"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Subject"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/etExamDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Date"
+        android:focusable="false"
+        android:inputType="none"
+        android:layout_marginTop="12dp" />
+
+    <EditText
+        android:id="@+id/etExamTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Time"
+        android:focusable="false"
+        android:inputType="none"
+        android:layout_marginTop="12dp" />
+
+    <EditText
+        android:id="@+id/etExamLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Location"
+        android:inputType="text"
+        android:layout_marginTop="12dp" />
+
+    <Button
+        android:id="@+id/btnSaveExam"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save Exam"
+        android:layout_marginTop="24dp"
+        android:backgroundTint="#FFA500"
+        android:textColor="#FFFFFF"/>
+
+</LinearLayout>
