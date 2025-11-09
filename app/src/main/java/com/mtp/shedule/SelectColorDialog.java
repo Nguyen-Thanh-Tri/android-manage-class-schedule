@@ -15,43 +15,37 @@ import androidx.fragment.app.DialogFragment;
 
 import com.mtp.shedule.R;
 
+import java.util.Objects;
+
 public class SelectColorDialog extends DialogFragment {
-    private int selectedColor = Color.WHITE;
     private OnColorSelectedListener listener;
     private View lastSelectedView = null;
-
+    private int selectedColorIndex = 0; // Index mặc định là 0 (Red)
     public interface OnColorSelectedListener {
-        void onColorSelected(int color);
+        void onColorSelected(int drawableId);
     }
 
     public void setOnColorSelectedListener(OnColorSelectedListener listener) {
         this.listener = listener;
     }
-
-    public void setSelectedColor(int color) {
-        this.selectedColor = color;
+    public void setSelectedColorIndex(int index) {
+        this.selectedColorIndex = index;
     }
-    private int selectedColorId = R.drawable.gradient_bg_red; // Default
-    private static int[] colors = {
-            Color.parseColor("#E91E63"), // Index 0: Red
-            Color.parseColor("#9C27B0"), // Index 1: Purple
-            Color.parseColor("#F44336"), // Index 2: Red-Orange
-            Color.parseColor("#FF9800"), // Index 3: Orange
-            Color.parseColor("#FFEB3B"), // Index 4: Yellow
-            Color.parseColor("#4CAF50"), // Index 5: Green
-            Color.parseColor("#2196F3"), // Index 6: Blue
-            Color.parseColor("#673AB7"), // Index 7: Deep Purple
-            Color.parseColor("#00BCD4"), // Index 8: Cyan
-            Color.parseColor("#8BC34A"), // Index 9: Light Green
-            Color.parseColor("#FF5722"), // Index 10: Deep Orange
-            Color.parseColor("#009688")  // Index 11: Teal
-    };
-    private static final int[] COLOR_MAPPING_DRAWABLE = {
+    public static final int[] COLOR_MAPPING_DRAWABLE = {
             R.drawable.gradient_bg_red,  // Ánh xạ màu #E91E63
-            R.drawable.gradient_bg_green, // Ánh xạ màu #9C27B0
-            R.drawable.gradient_bg_blue,   // Ánh xạ màu #F44336
-
+            R.drawable.gradient_bg_green, // Ánh xạ màu #4CAF50
+            R.drawable.gradient_bg_redorange,   // Ánh xạ màu #F44336
+            R.drawable.gradient_bg_orange, // Ánh xạ màu #FF9800
+            R.drawable.gradient_bg_yellow, // Ánh xạ màu #FFEB3B
+            R.drawable.gradient_bg_purple, // Ánh xạ màu #9C27B0
+            R.drawable.gradient_bg_blue,   // Ánh xạ màu #2196F3
+            R.drawable.gradient_bg_deeppurple, // Ánh xạ màu #673AB7
+            R.drawable.gradient_bg_cyan,   // Ánh xạ màu #00BCD4
+            R.drawable.gradient_bg_lightgreen, // Ánh xạ màu #8BC34A
+            R.drawable.gradient_bg_deeporange, // Ánh xạ màu #FF5722
+            R.drawable.gradient_bg_teal    // Ánh xạ màu #009688
     };
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -61,24 +55,28 @@ public class SelectColorDialog extends DialogFragment {
         GridLayout grid = view.findViewById(R.id.gridColors);
         TextView btnSave = view.findViewById(R.id.btnSave);
 
-
-
-        for (int color : colors) {
-            final int currentColor = color;
+        // Lặp qua mảng GRADIENT DRAWABLE IDs
+        for (int i = 0; i < COLOR_MAPPING_DRAWABLE.length; i++) {
+            final int currentIndex = i; // Index hiện tại
+            final int currentDrawableId = COLOR_MAPPING_DRAWABLE[i]; // Lấy Drawable ID tương ứng
 
             View colorView = new View(getContext());
             GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = 100;
-            params.height = 100;
-            params.setMargins(10, 10, 10, 10);
+
+            params.columnSpec = GridLayout.spec(i % 6);
+            params.width = (int) (getResources().getDisplayMetrics().density * 40); // khoảng 40dp
+            params.height = (int) (getResources().getDisplayMetrics().density * 40); // khoảng 40dp
+            params.setMargins(8, 8, 8, 8); // Khoảng cách giữa các ô màu
 
             colorView.setLayoutParams(params);
-            colorView.setBackgroundColor(currentColor);
-            colorView.setClickable(true);
 
-            // Đánh dấu màu đã được chọn ban đầu (nếu có)
-            if (currentColor == selectedColor) {
-                colorView.setForeground(ContextCompat.getDrawable(getContext(), R.drawable.selected_border));
+            // 1. Áp dụng bo góc chung
+            colorView.setBackgroundResource(R.drawable.bg_color_item_rounded);
+            colorView.setBackground(ContextCompat.getDrawable(requireContext(), currentDrawableId));
+
+            // Đánh dấu màu đã được chọn ban đầu (kiểm tra bằng Gradient ID)
+            if (currentIndex == selectedColorIndex) { // So sánh bằng ID drawable đã lưu
+                colorView.setForeground(ContextCompat.getDrawable(requireContext(), R.drawable.selected_border));
                 lastSelectedView = colorView;
             }
 
@@ -86,34 +84,18 @@ public class SelectColorDialog extends DialogFragment {
                 if (lastSelectedView != null) {
                     lastSelectedView.setForeground(null); // Xóa viền cũ
                 }
-                v.setForeground(ContextCompat.getDrawable(getContext(), R.drawable.selected_border));
+                v.setForeground(ContextCompat.getDrawable(requireContext(), R.drawable.selected_border));
                 lastSelectedView = v; // Cập nhật view cuối cùng đã chọn
-                selectedColor = currentColor; // Cập nhật màu đã chọn
 
+                // Cập nhật ID drawable đã chọn
+                selectedColorIndex = currentIndex;
             });
             grid.addView(colorView);
         }
 
         btnSave.setOnClickListener(v -> {
-            // TÌM VỊ TRÍ CHỌN:
-            int index = -1;
-            for (int i = 0; i < colors.length; i++) {
-                if (colors[i] == selectedColor) {
-                    index = i;
-                    break;
-                }
-            }
-
-            if (listener != null && index != -1) {
-                if (index < COLOR_MAPPING_DRAWABLE.length) {
-                    int selectedDrawableId = COLOR_MAPPING_DRAWABLE[index];
-                    // Gọi phương thức mới đã sửa trong interface
-                    ((OnColorSelectedListener) listener).onColorSelected(selectedDrawableId);
-                } else {
-                    // Xử lý lỗi nếu index vượt quá giới hạn (Chỉ xảy ra nếu bạn thêm màu mới mà quên thêm Drawable)
-                    // Bạn có thể chọn gửi một ID mặc định ở đây.
-                    ((OnColorSelectedListener) listener).onColorSelected(R.drawable.gradient_bg_red);
-                }
+            if (listener != null ) {
+                listener.onColorSelected(selectedColorIndex);
             }
             dismiss();
         });

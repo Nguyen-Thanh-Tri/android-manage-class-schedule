@@ -1,5 +1,7 @@
 package com.mtp.shedule.adapter;
 
+import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -71,13 +73,15 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
         });
 
         // 1. ÁP DỤNG MÀU CHO CARDVIEW
-        int colorId = course.getColor();
-        if (colorId != 0) {
-            holder.cardView.setBackgroundResource(colorId);
+        int colorIndex = course.getColor();
+        int drawableResId;
+
+        if (colorIndex >= 0 && colorIndex < COLOR_MAPPING_DRAWABLE.length) {
+            drawableResId = COLOR_MAPPING_DRAWABLE[colorIndex];
         } else {
-            // Đặt màu mặc định nếu không có dữ liệu màu
-            holder.cardView.setCardBackgroundColor(R.drawable.gradient_bg_red);
+            drawableResId = COLOR_MAPPING_DRAWABLE[0];
         }
+        holder.cardView.setBackgroundResource(drawableResId);
     }
 
     @Override
