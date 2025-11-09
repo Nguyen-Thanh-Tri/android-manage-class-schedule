@@ -22,37 +22,112 @@ public class NotificationHelper {
     private static final String CHANNEL_ID = "CLASS_SCHEDULE_CHANNEL";
     private static final int NOTIFICATION_ID = 1001;
 
-    public static void scheduleAllClassNotifications(Context context) {
-        DatabaseHelper db = new DatabaseHelper(context);
-        List<Course> courses = db.getAllCourses();
+//    public static void scheduleAllClassNotifications(Context context) {
+//        DatabaseHelper db = new DatabaseHelper(context);
+//        List<Course> courses = db.getAllCourses();
+//
+//        for (Course course : courses) {
+//            scheduleClassNotification(context, course);
+//        }
+//    }
+//
+//    public static void scheduleClassNotification(Context context, Course course) {
+//        try {
+//            String startTime = course.getTimeStart();
+//            if (startTime == null || startTime.isEmpty()) return;
+//
+//            // Parse thời gian bắt đầu (format: "08:00")
+//            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+//            Calendar classTime = Calendar.getInstance();
+//            classTime.setTime(sdf.parse(startTime));
+//
+//            // Tính thời điểm thông báo (2 tiếng trước)
+//            Calendar notificationTime = (Calendar) classTime.clone();
+//            notificationTime.add(Calendar.HOUR_OF_DAY, -2);
+////            notificationTime.add(Calendar.MINUTE, 2)
+//
+//            // Nếu thời điểm thông báo đã qua trong ngày hôm nay, chuyển sang ngày mai
+//            Calendar now = Calendar.getInstance();
+//            if (notificationTime.before(now)) {
+//                notificationTime.add(Calendar.DAY_OF_YEAR, 1);
+//            }
+//
+//            // Tạo intent cho alarm
+//            Intent notificationIntent = new Intent(context, NotificationReceiver.class);
+//            notificationIntent.putExtra("course_title", course.getTitle());
+//            notificationIntent.putExtra("course_teacher", course.getTeacher());
+//            notificationIntent.putExtra("course_room", course.getRoom());
+//            notificationIntent.putExtra("course_time", startTime);
+//
+//            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+//                    context,
+//                    course.getId(), // Sử dụng ID course làm request code
+//                    notificationIntent,
+//                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+//            );
+//
+//            // Lên lịch alarm
+//            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+//            alarmManager.setExact(
+//                    AlarmManager.RTC_WAKEUP,
+//                    notificationTime.getTimeInMillis(),
+//                    pendingIntent
+//            );
+//
+//            Log.d("NotificationHelper", "Đã lên lịch thông báo cho: " + course.getTitle() +
+//                    " lúc " + notificationTime.getTime());
+//
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//        }
+//    }
+public static int[] scheduleAllClassNotifications(Context context) {
+    DatabaseHelper db = new DatabaseHelper(context);
+    List<Course> courses = db.getAllCourses();
 
-        for (Course course : courses) {
-            scheduleClassNotification(context, course);
+    int scheduledCount = 0;
+    int skippedCount = 0;
+
+    for (Course course : courses) {
+        if (scheduleClassNotification(context, course)) {
+            scheduledCount++;
+            Log.i("NotificationHelper", "✅ Đã lên lịch: " + course.getTitle());
+        } else {
+            skippedCount++;
+            Log.w("NotificationHelper", "❌ Bỏ qua: " + course.getTitle());
         }
     }
 
-    public static void scheduleClassNotification(Context context, Course course) {
-        try {
-            String startTime = course.getTimeStart();
-            if (startTime == null || startTime.isEmpty()) return;
+    return new int[]{scheduledCount, skippedCount};
+}
 
-            // Parse thời gian bắt đầu (format: "08:00")
+    public static boolean scheduleClassNotification(Context context, Course course) {
+        try {
+            // VALIDATION
+            String startTime = course.getTimeStart();
+            if (startTime == null || startTime.isEmpty()) {
+                return false;
+            }
+
+            // XÓA ALARM CŨ
+            cancelClassNotification(context, course.getId());
+
+            // PARSE THỜI GIAN
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
             Calendar classTime = Calendar.getInstance();
             classTime.setTime(sdf.parse(startTime));
 
-            // Tính thời điểm thông báo (2 tiếng trước)
+            // TÍNH THỜI ĐIỂM THÔNG BÁO (2 tiếng trước)
             Calendar notificationTime = (Calendar) classTime.clone();
             notificationTime.add(Calendar.HOUR_OF_DAY, -2);
-//            notificationTime.add(Calendar.MINUTE, 2)
 
-            // Nếu thời điểm thông báo đã qua trong ngày hôm nay, chuyển sang ngày mai
+            // KIỂM TRA THỜI GIAN ĐÃ QUA
             Calendar now = Calendar.getInstance();
             if (notificationTime.before(now)) {
                 notificationTime.add(Calendar.DAY_OF_YEAR, 1);
             }
 
-            // Tạo intent cho alarm
+            // TẠO INTENT
             Intent notificationIntent = new Intent(context, NotificationReceiver.class);
             notificationIntent.putExtra("course_title", course.getTitle());
             notificationIntent.putExtra("course_teacher", course.getTeacher());
@@ -61,24 +136,20 @@ public class NotificationHelper {
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     context,
-                    course.getId(), // Sử dụng ID course làm request code
+                    course.getId(),
                     notificationIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
 
-            // Lên lịch alarm
+            // LÊN LỊCH ALARM
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    notificationTime.getTimeInMillis(),
-                    pendingIntent
-            );
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime.getTimeInMillis(), pendingIntent);
 
-            Log.d("NotificationHelper", "Đã lên lịch thông báo cho: " + course.getTitle() +
-                    " lúc " + notificationTime.getTime());
+            return true;
 
         } catch (ParseException e) {
             e.printStackTrace();
+            return false;
         }
     }
 

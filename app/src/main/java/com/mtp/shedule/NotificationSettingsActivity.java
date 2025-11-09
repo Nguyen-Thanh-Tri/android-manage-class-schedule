@@ -24,11 +24,36 @@ public class NotificationSettingsActivity extends AppCompatActivity {
         // Tạo notification channel
         NotificationHelper.createNotificationChannel(this);
 
-        btnEnableNotifications.setOnClickListener(v -> {
-            NotificationHelper.scheduleAllClassNotifications(this);
-            Toast.makeText(this, "Đã bật thông báo cho tất cả môn học", Toast.LENGTH_LONG).show();
-        });
+//        btnEnableNotifications.setOnClickListener(v -> {
+//            NotificationHelper.scheduleAllClassNotifications(this);
+//            Toast.makeText(this, "Đã bật thông báo cho tất cả môn học", Toast.LENGTH_LONG).show();
+//        });
         ///
+        btnEnableNotifications.setOnClickListener(v -> {
+            // HIỆN DIALOG XÁC NHẬN
+            DatabaseHelper db = new DatabaseHelper(this);
+            int totalCourses = db.getAllCourses().size();
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Bật thông báo")
+                    .setMessage("Bật thông báo cho tất cả " + totalCourses + " môn học?\n\nThông báo sẽ hiện 2 tiếng trước khi môn học bắt đầu.")
+                    .setPositiveButton("Bật ngay", (dialog, which) -> {
+                        // LÊN LỊCH VÀ NHẬN KẾT QUẢ
+                        int[] results = NotificationHelper.scheduleAllClassNotifications(this);
+                        int scheduled = results[0];
+                        int skipped = results[1];
+
+                        // HIỆN KẾT QUẢ CHI TIẾT
+                        String message = "✅ Đã lên lịch: " + scheduled + " môn học";
+                        if (skipped > 0) {
+                            message += "\n❌ Bỏ qua: " + skipped + " môn học (thiếu thời gian)";
+                        }
+
+                        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                    })
+                    .setNegativeButton("Hủy", null)
+                    .show();
+        });
         ///
 
         btnTestNotification.setOnClickListener(v -> {
