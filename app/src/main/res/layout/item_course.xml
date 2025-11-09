@@ -29,7 +29,7 @@
             android:textStyle="bold"
             android:textSize="16sp" />
 
-        <!-- Teacher -->
+        <!-- TeacherEntity -->
         <TextView
             android:id="@+id/tvTeacher"
             android:layout_width="wrap_content"

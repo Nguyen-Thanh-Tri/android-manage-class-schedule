@@ -11,7 +11,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import android.content.Intent;
 
-import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.CourseEntity;
 
 import java.util.Arrays;
@@ -23,7 +23,7 @@ public class AddCourseActivity extends AppCompatActivity {
     EditText etTitle, etTeacher, etRoom, etStartTime, etEndTime;
     Spinner spinnerDay;
     Button btnSave;
-    private CourseDatabase db;
+    private ConnDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +43,7 @@ public class AddCourseActivity extends AppCompatActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerDay.setAdapter(adapter);
 
-        db = CourseDatabase.getInstance(this);
+        db = ConnDatabase.getInstance(this);
 
 
         // --- TimePicker cho Start Time ---

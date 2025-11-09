@@ -2,25 +2,29 @@ package com.mtp.shedule;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.mtp.shedule.database.ConnDatabase;
+import com.mtp.shedule.entity.TeacherEntity;
+
 public class AddTeacherActivity extends AppCompatActivity {
 
     private EditText etName, etPost, etPhone, etEmail;
-    private Button btnSelectColor, btnCancel, btnSave;
-    private int selectedColorResId = R.drawable.gradient_bg_orange; // mặc định
+    Button btnSelectColor, btnCancel, btnSave;
+    private int selectedColorResId = R.drawable.gradient_bg_orange;
+    private ConnDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_teacher);
+
+        db = ConnDatabase.getInstance(this);
 
         etName = findViewById(R.id.etName);
         etPost = findViewById(R.id.etPost);
@@ -44,15 +48,20 @@ public class AddTeacherActivity extends AppCompatActivity {
                 return;
             }
 
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("name", name);
-            resultIntent.putExtra("position", position);
-            resultIntent.putExtra("phone", phone);
-            resultIntent.putExtra("email", email);
-            resultIntent.putExtra("colorResId", selectedColorResId);
+            TeacherEntity teacher = new TeacherEntity(name, position, phone, email, selectedColorResId);
 
-            setResult(Activity.RESULT_OK, resultIntent);
-            finish();
+            new Thread(() -> {
+                db.teacherDao().insertTeacher(teacher);
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Teacher added successfully", Toast.LENGTH_SHORT).show();
+//                    startActivity(new Intent(this, MainActivity.class));
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("added", true);
+                    setResult(Activity.RESULT_OK, resultIntent);
+                    finish();
+                });
+            }).start();
         });
     }
 

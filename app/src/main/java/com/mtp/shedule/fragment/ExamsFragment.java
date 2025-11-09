@@ -13,9 +13,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.mtp.shedule.ExamAdapter;
+import com.mtp.shedule.adapter.ExamAdapter;
 import com.mtp.shedule.R;
-import com.mtp.shedule.database.CourseDatabase;
+import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.ExamEntity;
 
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ public class ExamsFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private ExamAdapter examAdapter;
-    private CourseDatabase db;
+    private ConnDatabase db;
     private final List<ExamEntity> examList = new ArrayList<>();
     private FloatingActionButton fabAddExam;
 
@@ -45,7 +45,7 @@ public class ExamsFragment extends Fragment {
         examAdapter = new ExamAdapter(getContext(), examList);
         recyclerView.setAdapter(examAdapter);
 
-        db = CourseDatabase.getInstance(getContext());
+        db = ConnDatabase.getInstance(getContext());
 
         fabAddExam = view.findViewById(R.id.fabAddExam);
 
