@@ -1,6 +1,5 @@
 package com.mtp.shedule.fragment;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.mtp.shedule.AddExamDialog;
 import com.mtp.shedule.adapter.ExamAdapter;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
@@ -50,7 +50,7 @@ public class ExamsFragment extends Fragment {
         fabAddExam = view.findViewById(R.id.fabAddExam);
 
         fabAddExam.setOnClickListener(v -> {
-            new com.mtp.shedule.AddExamActivity().show(getParentFragmentManager(), "AddExamDialog");
+            new AddExamDialog().show(getParentFragmentManager(), "AddExamDialog");
         });
 
         // Observe exams from database

@@ -23,7 +23,7 @@ import com.mtp.shedule.entity.ExamEntity;
 
 import java.util.Calendar;
 
-public class AddExamActivity extends DialogFragment {
+public class AddExamDialog extends DialogFragment {
     private EditText etSubject, etDate, etTime, etLocation;
     private Button btnSave, btnCancel;
     private ConnDatabase db;
@@ -33,7 +33,7 @@ public class AddExamActivity extends DialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.activity_add_exam, container, false);
+        View view = inflater.inflate(R.layout.dialog_add_exam, container, false);
 
         etSubject = view.findViewById(R.id.etExamSubject);
         etDate = view.findViewById(R.id.etExamDate);
