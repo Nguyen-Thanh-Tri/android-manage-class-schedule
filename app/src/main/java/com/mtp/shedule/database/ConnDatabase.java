@@ -13,11 +13,12 @@ import com.mtp.shedule.dao.ExamDao;
 import com.mtp.shedule.entity.TeacherEntity;
 
 @Database(
-        entities = {CourseEntity.class, ExamEntity.class, TeacherEntity.class}, version = 3)
+        entities = {CourseEntity.class, ExamEntity.class, TeacherEntity.class}, version = 5)
 public abstract class ConnDatabase extends RoomDatabase {
     public abstract CourseDao courseDao();
     public abstract ExamDao examDao();
     public abstract TeacherDao teacherDao();
+
 
     private static volatile ConnDatabase instance;
 
@@ -35,4 +36,3 @@ public abstract class ConnDatabase extends RoomDatabase {
         return instance;
     }
 }
-

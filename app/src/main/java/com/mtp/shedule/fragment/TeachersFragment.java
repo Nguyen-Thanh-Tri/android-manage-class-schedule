@@ -31,11 +31,10 @@ public class TeachersFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private TeacherAdapter teacherAdapter;
-    private List<TeacherEntity> teacherList = new ArrayList<>();
+    private List<TeacherEntity> teacherList = new ArrayList<>();;
     private Button btnAddTeacher;
     private ConnDatabase db;
     private LiveData<List<TeacherEntity>> currentLiveData;
-
 
     public TeachersFragment() {
         // Required empty public constructor
@@ -57,7 +56,6 @@ public class TeachersFragment extends Fragment {
         // Lấy danh sách giảng viên từ cơ sở dữ liệu
         loadTeachers();
 
-
         // Sự kiện nút "Add Teacher"
         btnAddTeacher = view.findViewById(R.id.btnAddTeacher);
         btnAddTeacher.setOnClickListener(v -> {
@@ -65,8 +63,10 @@ public class TeachersFragment extends Fragment {
             addTeacherLauncher.launch(intent);
         });
 
+
         return view;
     }
+
     @SuppressLint("NotifyDataSetChanged")
     private void loadTeachers(){
         // Nếu đã có LiveData cũ, gỡ bỏ Observer khỏi nó.
