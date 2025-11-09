@@ -1,7 +1,6 @@
 package com.mtp.shedule.fragment;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.mtp.shedule.AddCourseActivity;
+import com.mtp.shedule.AddCourseDialog;
 import com.mtp.shedule.adapter.CourseAdapter;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
@@ -78,8 +77,8 @@ public class TimeTableFragment extends Fragment {
 // ---------------- Floating Action Button -Thêm lịch học ----------------
         fabAdd = view.findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), AddCourseActivity.class);
-            startActivity(intent);
+            AddCourseDialog dialog = new AddCourseDialog();
+            dialog.show(getParentFragmentManager(), "AddCourseDialog");
         });
 
 

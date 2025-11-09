@@ -3,6 +3,8 @@ package com.mtp.shedule.entity;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.mtp.shedule.R;
+
 @Entity(tableName = "course")
 public class CourseEntity {
     @PrimaryKey(autoGenerate = true)
@@ -14,6 +16,7 @@ public class CourseEntity {
     private String timeStart;
     private String timeEnd;
     private String dayOfWeek;
+    private int color;
 
     public CourseEntity(String title, String teacher, String room, String timeStart, String timeEnd, String dayOfWeek) {
         this.title = title;
@@ -22,6 +25,8 @@ public class CourseEntity {
         this.timeStart = timeStart;
         this.timeEnd = timeEnd;
         this.dayOfWeek = dayOfWeek;
+        this.color = R.drawable.gradient_bg_red;
+
     }
 
     // Getters và Setters
@@ -45,4 +50,7 @@ public class CourseEntity {
 
     public String getDayOfWeek() { return dayOfWeek; }
     public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
+
+    public int getColor() { return color; }
+    public void setColor(int color) { this.color = color; }
 }

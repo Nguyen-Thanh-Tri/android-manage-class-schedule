@@ -3,6 +3,7 @@ package com.mtp.shedule.adapter;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.mtp.shedule.R;
@@ -67,6 +69,15 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
                     .show();
             return true; // Đã xử lý long click
         });
+
+        // 1. ÁP DỤNG MÀU CHO CARDVIEW
+        int colorId = course.getColor();
+        if (colorId != 0) {
+            holder.cardView.setBackgroundResource(colorId);
+        } else {
+            // Đặt màu mặc định nếu không có dữ liệu màu
+            holder.cardView.setCardBackgroundColor(R.drawable.gradient_bg_red);
+        }
     }
 
     @Override
@@ -76,6 +87,8 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
 
     public static class CourseViewHolder extends RecyclerView.ViewHolder {
         TextView tvCourseTitle, tvTeacher, tvRoom, tvTime;
+        CardView cardView;
+
 
         public CourseViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -83,6 +96,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
             tvTeacher = itemView.findViewById(R.id.tvTeacher);
             tvRoom = itemView.findViewById(R.id.tvRoom);
             tvTime = itemView.findViewById(R.id.tvTime);
+            cardView = itemView.findViewById(R.id.cardViewItemCourse);
         }
     }
 }
