@@ -1,11 +1,15 @@
 package com.mtp.shedule.adapter;
 
+import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
+
 import android.content.Context;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.mtp.shedule.R;
@@ -31,6 +35,7 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
         return new ExamViewHolder(view);
     }
 
+
     @Override
     public void onBindViewHolder(@NonNull ExamViewHolder holder, int position) {
         ExamEntity exam = examList.get(position);
@@ -39,6 +44,21 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
         holder.tvTime.setText(exam.getTime());
         holder.tvLocation.setText(exam.getLocation());
 
+        // Tap to edit
+        holder.itemView.setOnClickListener(v -> {
+            androidx.fragment.app.FragmentActivity activity = (androidx.fragment.app.FragmentActivity) context;
+            com.mtp.shedule.AddExamDialog dialog = new com.mtp.shedule.AddExamDialog();
+            Bundle args = new Bundle();
+            args.putInt("id", exam.getId());
+            args.putString("subject", exam.getSubject());
+            args.putString("date", exam.getDate());
+            args.putString("time", exam.getTime());
+            args.putString("location", exam.getLocation());
+            dialog.setArguments(args);
+            dialog.show(activity.getSupportFragmentManager(), "EditExamDialog");
+        });
+
+        // Hold to delete
         holder.itemView.setOnLongClickListener(v -> {
             new android.app.AlertDialog.Builder(context)
                 .setTitle("Delete Exam")
@@ -58,6 +78,16 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
                 .show();
             return true;
         });
+
+        int colorIndex = exam.getColor();
+        int drawableResId;
+
+        if (colorIndex >= 0 && colorIndex < COLOR_MAPPING_DRAWABLE.length) {
+            drawableResId = COLOR_MAPPING_DRAWABLE[colorIndex];
+        } else {
+            drawableResId = COLOR_MAPPING_DRAWABLE[0];
+        }
+        holder.cardView.setBackgroundResource(drawableResId);
     }
 
 
@@ -69,12 +99,15 @@ public class ExamAdapter extends RecyclerView.Adapter<ExamAdapter.ExamViewHolder
 
     public static class ExamViewHolder extends RecyclerView.ViewHolder {
         TextView tvSubject, tvDate, tvTime, tvLocation;
+        CardView cardView;
+
         public ExamViewHolder(@NonNull View itemView) {
             super(itemView);
             tvSubject = itemView.findViewById(R.id.tvExamSubject);
             tvDate = itemView.findViewById(R.id.tvExamDate);
             tvTime = itemView.findViewById(R.id.tvExamTime);
             tvLocation = itemView.findViewById(R.id.tvExamLocation);
+            cardView = itemView.findViewById(R.id.cardViewItemExam);
         }
     }
 }
