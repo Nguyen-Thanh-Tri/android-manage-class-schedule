@@ -14,7 +14,8 @@
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp" />
+        android:layout_marginBottom="10dp"
+        android:textColor="@android:color/black"/>
 
     <GridLayout
         android:id="@+id/gridColors"
@@ -30,8 +31,10 @@
         android:text="Save"
         android:textColor="@android:color/holo_red_dark"
         android:textStyle="bold"
+        android:textSize="18sp"
         android:gravity="center"
         android:paddingTop="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        />
 </LinearLayout>

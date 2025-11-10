@@ -35,6 +35,16 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
         this.db = ConnDatabase.getInstance(context);
     }
 
+    public interface OnItemClickListener {
+        void onItemClick(CourseEntity course);
+    }
+
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     @NonNull
     @Override
     public CourseViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -52,7 +62,13 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
         holder.tvTime.setText(course.getTimeStart() + " - " + course.getTimeEnd());
 
 
-        //giữ để xóa
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(course);
+            }
+        });
+
+        //giữ để xóa or updaate
         holder.itemView.setOnLongClickListener(v -> {
             new AlertDialog.Builder(v.getContext())
                     .setTitle("DELETE")
@@ -72,7 +88,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
             return true; // Đã xử lý long click
         });
 
-        // 1. ÁP DỤNG MÀU CHO CARDVIEW
+        //áp dụng màu cho card view
         int colorIndex = course.getColor();
         int drawableResId;
 
@@ -88,6 +104,8 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
     public int getItemCount() {
         return courseList.size();
     }
+
+
 
     public static class CourseViewHolder extends RecyclerView.ViewHolder {
         TextView tvCourseTitle, tvTeacher, tvRoom, tvTime;
