@@ -1,6 +1,5 @@
 package com.mtp.shedule;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,10 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
-
-import com.mtp.shedule.R;
-
-import java.util.Objects;
 
 public class SelectColorDialog extends DialogFragment {
     private OnColorSelectedListener listener;
@@ -46,6 +41,14 @@ public class SelectColorDialog extends DialogFragment {
             R.drawable.gradient_bg_teal    // Ánh xạ màu #009688
     };
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Áp dụng Style để loại bỏ nền Window mặc định
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.RoundedCornersDialog);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -70,7 +73,7 @@ public class SelectColorDialog extends DialogFragment {
 
             colorView.setLayoutParams(params);
 
-            // 1. Áp dụng bo góc chung
+            // Áp dụng bo góc chung
             colorView.setBackgroundResource(R.drawable.bg_color_item_rounded);
             colorView.setBackground(ContextCompat.getDrawable(requireContext(), currentDrawableId));
 

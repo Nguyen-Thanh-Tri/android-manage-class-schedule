@@ -88,6 +88,8 @@ public class AddCourseDialog extends DialogFragment {
 
         db = ConnDatabase.getInstance(requireContext());
 
+
+        //update
         if (getArguments() != null) {
             isEditMode = true;
             courseId = getArguments().getInt(ARG_COURSE_ID);

@@ -23,7 +23,7 @@ public interface CourseDao {
     @Query("SELECT * FROM course")
     LiveData<List<CourseEntity>> getAllCourses();
 
-    @Query("SELECT * FROM course WHERE dayOfWeek = :day")
+    @Query("SELECT * FROM course WHERE dayOfWeek = :day ORDER BY timeStart ASC, timeEnd ASC")
     LiveData<List<CourseEntity>> getCoursesByDay(String day);
 
     @Query("SELECT * FROM course WHERE id = :id LIMIT 1")
