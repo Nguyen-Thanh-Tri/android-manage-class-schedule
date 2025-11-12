@@ -1,6 +1,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_calendar"
+            android:title="Calendar"
+            android:icon="@drawable/time_table" />
+        <item
             android:id="@+id/nav_timetable"
             android:title="Time Table"
             android:icon="@drawable/time_table" />
