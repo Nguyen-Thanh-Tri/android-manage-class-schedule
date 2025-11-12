@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
+import com.mtp.shedule.fragment.CalendarFragment;
 import com.mtp.shedule.fragment.ExamsFragment;
 import com.mtp.shedule.fragment.SettingsFragment;
 import com.mtp.shedule.fragment.TeachersFragment;
@@ -67,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
                 newFragment = new TeachersFragment();
             } else if (id == R.id.nav_settings && !(currentFragment instanceof SettingsFragment)) {
                 newFragment = new SettingsFragment();
+            } else if (id == R.id.nav_calendar) {
+                newFragment = new CalendarFragment();
             }
 
             if (newFragment != null) {
