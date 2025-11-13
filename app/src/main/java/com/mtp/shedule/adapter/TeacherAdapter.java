@@ -1,7 +1,9 @@
 package com.mtp.shedule.adapter;
 
-import android.app.AlertDialog;
+import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
+
 import android.content.Context;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +14,8 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.mtp.shedule.AddTeacherDialog;
 import com.mtp.shedule.R;
-import com.mtp.shedule.dao.TeacherDao;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.TeacherEntity;
 
@@ -21,10 +23,9 @@ import java.util.List;
 
 public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherViewHolder> {
 
-    private Context context;
-    private ConnDatabase db;
-    private List<TeacherEntity> teacherList;
-
+    private final Context context;
+    private final List<TeacherEntity> teacherList;
+    private final ConnDatabase db;
 
     public TeacherAdapter(Context context, List<TeacherEntity> teacherList) {
         this.context = context;
@@ -48,28 +49,49 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
         holder.tvPhone.setText(teacher.getPhone());
         holder.tvEmail.setText(teacher.getEmail());
 
-        // ✅ Đặt màu nền cho toàn card
-        holder.cardView.setBackgroundResource(teacher.getColorResId());
+        // Set background color
+        int colorIndex = teacher.getColor();
+        if (colorIndex >= 0 && colorIndex < COLOR_MAPPING_DRAWABLE.length) {
+            holder.cardView.setBackgroundResource(COLOR_MAPPING_DRAWABLE[colorIndex]);
+        } else {
+            holder.cardView.setBackgroundResource(COLOR_MAPPING_DRAWABLE[0]);
+        }
 
+        // Click để edit teacher
+        holder.itemView.setOnClickListener(v -> {
+            AddTeacherDialog dialog = new AddTeacherDialog();
+            Bundle args = new Bundle();
+            args.putString("name", teacher.getName());
+            args.putString("position", teacher.getPosition());
+            args.putString("phone", teacher.getPhone());
+            args.putString("email", teacher.getEmail());
+            args.putInt("colorIndex", teacher.getColor());
+            dialog.setArguments(args);
+            dialog.show(((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager(), "EditTeacherDialog");
+        });
 
-        //giữ để xóa
+        // Long click để delete
         holder.itemView.setOnLongClickListener(v -> {
-            new AlertDialog.Builder(v.getContext())
-                    .setTitle("DELETE")
-                    .setMessage("Are you sure? \"" + teacher.getName() + "\" No?")
+            new android.app.AlertDialog.Builder(context)
+                    .setTitle("Delete Teacher")
+                    .setMessage("Are you sure you want to delete \"" + teacher.getName() + "\"?")
                     .setPositiveButton("Delete", (dialog, which) -> {
                         new Thread(() -> {
-                            db.teacherDao().deleteTeacher(teacher); // ← Entity
-                            holder.itemView.post(() -> {
-                                teacherList.remove(holder.getAdapterPosition());
-                                notifyItemRemoved(holder.getAdapterPosition());
-                                Toast.makeText(v.getContext(), "Deleted successfully", Toast.LENGTH_SHORT).show();
+                            db.teacherDao().deleteTeacher(teacher);
+                            ((androidx.fragment.app.FragmentActivity) context).runOnUiThread(() -> {
+                                int pos = holder.getAdapterPosition();
+                                if (pos != RecyclerView.NO_POSITION) {
+                                    teacherList.remove(pos);
+                                    notifyItemRemoved(pos);
+                                    notifyItemRangeChanged(pos, teacherList.size());
+                                    Toast.makeText(context, "Teacher deleted", Toast.LENGTH_SHORT).show();
+                                }
                             });
                         }).start();
                     })
                     .setNegativeButton("Cancel", null)
                     .show();
-            return true; // Đã xử lý long click
+            return true;
         });
     }
 
@@ -78,14 +100,13 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
         return teacherList.size();
     }
 
-    public static class TeacherViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvPosition, tvPhone, tvEmail;
+    static class TeacherViewHolder extends RecyclerView.ViewHolder {
         CardView cardView;
+        TextView tvName, tvPosition, tvPhone, tvEmail;
 
         public TeacherViewHolder(@NonNull View itemView) {
             super(itemView);
-
-            cardView = itemView.findViewById(R.id.cardView);
+            cardView = itemView.findViewById(R.id.cardViewItemTeacher);
             tvName = itemView.findViewById(R.id.tvTeacherName);
             tvPosition = itemView.findViewById(R.id.tvTeacherPosition);
             tvPhone = itemView.findViewById(R.id.tvTeacherPhone);
