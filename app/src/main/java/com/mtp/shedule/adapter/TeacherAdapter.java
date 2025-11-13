@@ -9,6 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Filter;
+import android.widget.Filterable;
+import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -51,16 +54,17 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
 
         // Set background color
         int colorIndex = teacher.getColor();
-        if (colorIndex >= 0 && colorIndex < COLOR_MAPPING_DRAWABLE.length) {
-            holder.cardView.setBackgroundResource(COLOR_MAPPING_DRAWABLE[colorIndex]);
-        } else {
-            holder.cardView.setBackgroundResource(COLOR_MAPPING_DRAWABLE[0]);
-        }
+        holder.cardView.setBackgroundResource(
+                (colorIndex >= 0 && colorIndex < COLOR_MAPPING_DRAWABLE.length)
+                        ? COLOR_MAPPING_DRAWABLE[colorIndex]
+                        : COLOR_MAPPING_DRAWABLE[0]
+        );
 
         // Click để edit teacher
         holder.itemView.setOnClickListener(v -> {
             AddTeacherDialog dialog = new AddTeacherDialog();
             Bundle args = new Bundle();
+            args.putInt("id", teacher.getId());
             args.putString("name", teacher.getName());
             args.putString("position", teacher.getPosition());
             args.putString("phone", teacher.getPhone());
@@ -114,3 +118,4 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
         }
     }
 }
+
