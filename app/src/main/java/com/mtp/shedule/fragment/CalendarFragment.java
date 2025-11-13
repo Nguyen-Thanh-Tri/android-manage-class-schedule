@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.mtp.shedule.fragment.calendarfragment.MonthViewFragment;
 import com.mtp.shedule.interaction.CalendarInteractionListener;
 import com.mtp.shedule.R;
 import com.mtp.shedule.adapter.CalendarAdapter;
@@ -23,6 +24,7 @@ public class CalendarFragment extends Fragment implements CalendarInteractionLis
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
     private CalendarAdapter adapter;
+    private static final int TARGET_YEAR = 2025;
 
     @Nullable
     @Override
@@ -57,14 +59,27 @@ public class CalendarFragment extends Fragment implements CalendarInteractionLis
         return view;
     }
 
+    // Trong CalendarFragment.java
+
     @Override
     public void onSwitchTo(int position, Bundle data) {
-        // Chuyển ViewPager đến vị trí tab mới
-        viewPager.setCurrentItem(position);
+        if (position == 1 && data != null) {
+            int selectedMonth = data.getInt("SELECTED_MONTH_INDEX");
+            int selectedYear = data.getInt("SELECTED_YEAR", TARGET_YEAR);
 
-        // TODO: Xử lý dữ liệu 'data' (ví dụ: tháng đã chọn)
-        // để gửi đến MonthViewFragment sau khi nó được tạo ra.
+            // Chuyển ViewPager đến vị trí tab mới (Tab Month)
+            viewPager.setCurrentItem(position,false);
+
+            viewPager.post(() -> {
+                Fragment fragment = getChildFragmentManager().findFragmentByTag("f" + position);
+
+                if (fragment instanceof MonthViewFragment) {
+                    ((MonthViewFragment) fragment).updateMonth(selectedMonth, selectedYear);
+                }
+            });
+        }
     }
+
     private void setupTabIndicatorAnimation() {
         int orange = ContextCompat.getColor(requireContext(), R.color.orange);
         int grey = ContextCompat.getColor(requireContext(), R.color.grey);

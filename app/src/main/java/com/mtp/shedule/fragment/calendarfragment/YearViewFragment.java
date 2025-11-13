@@ -29,6 +29,7 @@ public class YearViewFragment extends Fragment {
     int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
     int currentMonth = calendar.get(Calendar.MONTH);
     int currentYear = calendar.get(Calendar.YEAR);
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -66,6 +67,7 @@ public class YearViewFragment extends Fragment {
                 if (listener != null) {
                     Bundle data = new Bundle();
                     data.putInt("SELECTED_MONTH_INDEX", monthIndex);
+                    data.putInt("SELECTED_YEAR", TARGET_YEAR);
                     listener.onSwitchTo(1, data);
                 }
             });
@@ -81,6 +83,14 @@ public class YearViewFragment extends Fragment {
         String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
         tvTitle.setText(monthNames[monthIndex].toUpperCase(Locale.getDefault()));
+
+        boolean isCurrentMonth = (monthIndex == currentMonth) && (year == currentYear);
+        if (isCurrentMonth) {
+            tvTitle.setTextColor(Color.parseColor("#2196F3")); // blue
+        } else {
+            tvTitle.setTextColor(Color.BLACK);
+            tvTitle.setBackground(null);
+        }
 
         gridDays.removeAllViews();
 
@@ -110,17 +120,13 @@ public class YearViewFragment extends Fragment {
 
     // HÀM TẠO TEXTVIEW CHO NGÀY
     private TextView createDayTextView(String text, boolean isActualDay, boolean isToday) {
-
         TextView tv = new TextView(requireContext());
-
-        // Cài đặt layout parameters cho mỗi ô (chia đều 7 cột)
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
 
         params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f); // Trọng số 1 cho cột
         params.width = 0; // Bắt buộc đặt width=0dp khi sử dụng trọng số
 
         // 2. ĐẶT TRỌNG SỐ HÀNG (MỚI)
-        // Để 6 hàng ngày chia đều chiều cao.
         params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
         params.height = GridLayout.LayoutParams.WRAP_CONTENT;
 
@@ -128,7 +134,7 @@ public class YearViewFragment extends Fragment {
         // Cài đặt kiểu chữ
         tv.setText(text);
         tv.setTypeface(Typeface.SANS_SERIF);
-        tv.setTextSize(10.5f); // Font size nhỏ để hiển thị trong ô nhỏ
+        tv.setTextSize(10.5f);
         tv.setGravity(Gravity.CENTER);
 
         // Xử lý màu sắc
@@ -136,7 +142,7 @@ public class YearViewFragment extends Fragment {
             tv.setTextColor(Color.BLACK); // Giả định nền tối
             if (isToday) {
                 // Đánh dấu nền cho ngày hôm nay (Ví dụ: một hình tròn màu xanh/xanh lá)
-                tv.setBackgroundResource(R.drawable.bg_current_day);
+                tv.setBackgroundResource(R.drawable.bg_current_day_for_year);
                 tv.setTextColor(Color.BLACK); // Tùy chọn: Đổi màu chữ thành đen nếu nền highlight sáng
             } else {
                 // Đảm bảo không có background cho các ngày khác
@@ -146,7 +152,6 @@ public class YearViewFragment extends Fragment {
             // Ô trống
             tv.setTextColor(Color.TRANSPARENT);
         }
-
         return tv;
     }
 }
