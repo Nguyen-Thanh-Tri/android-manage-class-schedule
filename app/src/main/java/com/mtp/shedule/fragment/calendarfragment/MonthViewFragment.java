@@ -52,6 +52,8 @@ public class MonthViewFragment extends Fragment {
     // Constants
     private static final int DAYS_IN_WEEK = 7;
     private static final int MAX_ROWS = 6;
+    private boolean isDragging = false;
+
 
     // Biến để lưu số hàng thực tế của tháng hiện tại
     private int actualRowsNeeded = MAX_ROWS;
@@ -139,66 +141,80 @@ public class MonthViewFragment extends Fragment {
             LinearLayout.LayoutParams eventParams = (LinearLayout.LayoutParams) llEventArea.getLayoutParams();
 
             if (rowHeight == 0 && gridFullMonthDays.getChildCount() > 0) {
-                // Calculate the height of 1 row (assuming 6 rows)
                 rowHeight = gridFullMonthDays.getHeight() / 6;
             }
-
-            if (rowHeight == 0) return false; // Cannot drag if rowHeight is not calculated
+            if (rowHeight == 0) return false;
 
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     initialTouchY = event.getRawY();
                     initialCalendarWeight = calendarParams.weight;
                     initialEventWeight = eventParams.weight;
+                    isDragging = false;
                     return true;
 
                 case MotionEvent.ACTION_MOVE:
                     float dy = event.getRawY() - initialTouchY;
+                    float containerHeight = ((View) gridFullMonthDays.getParent()).getHeight();
 
-                    // Assuming the total drag height is 100% (weightSum)
-                    float containerHeight = ((View)gridFullMonthDays.getParent()).getHeight();
+                    float DRAG_THRESHOLD = 5f;
+                    if (!isDragging) {
+                        if (Math.abs(dy) > DRAG_THRESHOLD) {
+                            isDragging = true;
+                            initialTouchY = event.getRawY();
+                            initialCalendarWeight = calendarParams.weight;
+                            initialEventWeight = eventParams.weight;
+                        } else {
+                            return true;
+                        }
+                    }
 
-                    // Calculate weight change based on vertical drag
                     float weightChange = (dy / containerHeight) * 100f;
-
                     float newCalendarWeight = initialCalendarWeight + weightChange;
-                    float newEventWeight = initialEventWeight - weightChange;
+                    float minCalendarWeight = 100f / MAX_ROWS;
+                    float maxCalendarWeight = 85f;
+                    if (newCalendarWeight < minCalendarWeight) newCalendarWeight = minCalendarWeight;
+                    if (newCalendarWeight > maxCalendarWeight) newCalendarWeight = maxCalendarWeight;
 
-                    // Weight Limits
-                    // 1 row takes up approx 100/6 ~ 16.67 weight
-                    float minCalendarWeight = 16.67f;
-                    float maxCalendarWeight = 85f; // Limit calendar not to exceed 85%
+                    // Damping để kéo mượt
+                    float damping = 0.2f;
+                    calendarParams.weight += (newCalendarWeight - calendarParams.weight) * damping;
+                    eventParams.weight = 100f - calendarParams.weight;
 
-                    if (newCalendarWeight < minCalendarWeight) {
-                        newCalendarWeight = minCalendarWeight;
-                        newEventWeight = 100f - minCalendarWeight;
-                    }
-                    if (newCalendarWeight > maxCalendarWeight) {
-                        newCalendarWeight = maxCalendarWeight;
-                        newEventWeight = 100f - maxCalendarWeight;
-                    }
-
-                    calendarParams.weight = newCalendarWeight;
-                    eventParams.weight = newEventWeight;
                     gridFullMonthDays.setLayoutParams(calendarParams);
                     llEventArea.setLayoutParams(eventParams);
-
                     return true;
 
                 case MotionEvent.ACTION_UP:
-                    // Determine the final state after releasing the touch
-                    float currentCalendarWeight = calendarParams.weight;
+                    float deltay = event.getRawY() - initialTouchY;
+                    float LIGHT_THRESHOLD = 8f; // Ngưỡng kéo rất nhẹ, dễ trượt để đổi state
 
-                    if (currentCalendarWeight < 30) {
-                        // Dragged up a lot -> Week View (only display 1 row)
-                        updateViewState(ViewState.WEEK_VIEW, true);
-                    } else if (currentCalendarWeight > 70) {
-                        // Dragged down a lot -> Month View (full calendar)
-                        updateViewState(ViewState.MONTH_VIEW, true);
-                    } else {
-                        // Return to balanced state (Split View)
-                        updateViewState(ViewState.SPLIT_VIEW, true);
+                    switch (currentState) {
+                        case MONTH_VIEW:
+                            if (deltay < -LIGHT_THRESHOLD) {
+                                // Kéo nhẹ lên -> về SPLIT_VIEW
+                                updateViewState(ViewState.SPLIT_VIEW, true);
+                            }
+                            break;
+
+                        case SPLIT_VIEW:
+                            if (deltay < -LIGHT_THRESHOLD) {
+                                // Kéo nhẹ lên -> sang WEEK_VIEW
+                                updateViewState(ViewState.WEEK_VIEW, true);
+                            } else if (deltay > LIGHT_THRESHOLD) {
+                                // Kéo nhẹ xuống -> về MONTH_VIEW
+                                updateViewState(ViewState.MONTH_VIEW, true);
+                            }
+                            break;
+
+                        case WEEK_VIEW:
+                            if (deltay > LIGHT_THRESHOLD) {
+                                // Kéo nhẹ xuống -> về SPLIT_VIEW
+                                updateViewState(ViewState.SPLIT_VIEW, true);
+                            }
+                            break;
                     }
+
                     return true;
             }
             return false;
@@ -208,110 +224,99 @@ public class MonthViewFragment extends Fragment {
 
     private void updateViewState(ViewState newState, boolean animate) {
         currentState = newState;
-
-        float calendarWeight;
-        float eventWeight;
+        float calendarWeight, eventWeight;
         int dragHandleIcon;
-        // Logic để tìm hàng (week) cần hiển thị khi ở chế độ WEEK_VIEW
         int targetRowIndex = -1;
-        boolean shouldFilterCells = false;
 
         if (rowHeight == 0 && gridFullMonthDays.getChildCount() > 0) {
-            // Ensure rowHeight is calculated before setting Week View
             rowHeight = gridFullMonthDays.getHeight() / 6;
         }
 
-        switch (newState) {
+        switch (currentState) {
             case MONTH_VIEW:
-                // Full calendar, hidden event area
                 calendarWeight = 100f;
                 eventWeight = 0f;
-                // Down arrow (to drag back to Split/Week)
                 dragHandleIcon = R.drawable.ic_drag_handle_up;
                 break;
             case WEEK_VIEW:
                 calendarWeight = 100f / MAX_ROWS;
                 eventWeight = 100f - calendarWeight;
                 dragHandleIcon = R.drawable.ic_drag_handle_down;
-                shouldFilterCells = true;
 
-                // Tính toán hàng chứa ngày hôm nay (hoặc ngày 1 nếu không phải tháng hiện tại)
                 Calendar calendar = Calendar.getInstance();
                 int todayDay = calendar.get(Calendar.DAY_OF_MONTH);
                 int todayMonth = calendar.get(Calendar.MONTH);
                 int todayYear = calendar.get(Calendar.YEAR);
 
                 if (currentMonthIndex == todayMonth && currentYear == todayYear) {
-                    // Nếu hôm nay nằm trong tháng đang xem
                     calendar.set(currentYear, currentMonthIndex, 1);
                     int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
                     int dayOffset = firstDayOfWeek - 1;
-
                     int cellIndex = dayOffset + todayDay - 1;
                     targetRowIndex = cellIndex / DAYS_IN_WEEK;
-                } else {
-                    // Nếu hôm nay không nằm trong tháng đang xem, mặc định hiển thị hàng đầu tiên (week 1)
-                    targetRowIndex = 0;
-                }
-
+                } else targetRowIndex = 0;
                 break;
             case SPLIT_VIEW:
             default:
-                // Balanced state
                 calendarWeight = 70f;
                 eventWeight = 30f;
-                // Up arrow, because the next typical action is to minimize the calendar
                 dragHandleIcon = R.drawable.ic_drag_handle_normal;
                 break;
         }
 
         ivDragHandle.setImageResource(dragHandleIcon);
 
-        // Add transition animation
-        if (animate && getView() != null) {
-            LinearLayout.LayoutParams currentCalendarParams = (LinearLayout.LayoutParams) gridFullMonthDays.getLayoutParams();
-            LinearLayout.LayoutParams currentEventParams = (LinearLayout.LayoutParams) llEventArea.getLayoutParams();
+        LinearLayout.LayoutParams calendarParams = (LinearLayout.LayoutParams) gridFullMonthDays.getLayoutParams();
+        LinearLayout.LayoutParams eventParams = (LinearLayout.LayoutParams) llEventArea.getLayoutParams();
 
-            float startCalendarWeight = currentCalendarParams.weight;
-            float endCalendarWeight = calendarWeight;
-
-            ValueAnimator animator = ValueAnimator.ofFloat(startCalendarWeight, endCalendarWeight);
-            animator.setDuration(300); // 300ms for slide effect
+        if (animate) {
+            ValueAnimator animator = ValueAnimator.ofFloat(calendarParams.weight, calendarWeight);
+            animator.setDuration(300);
             animator.addUpdateListener(animation -> {
                 float animatedWeight = (float) animation.getAnimatedValue();
+                calendarParams.weight = animatedWeight;
+                eventParams.weight = 100f - animatedWeight;
+                gridFullMonthDays.setLayoutParams(calendarParams);
+                llEventArea.setLayoutParams(eventParams);
 
-                // Calculate remaining weight
-                float animatedEventWeight = 100f - animatedWeight;
-
-                // Apply new weight to Calendar
-                currentCalendarParams.weight = animatedWeight;
-                gridFullMonthDays.setLayoutParams(currentCalendarParams);
-
-                // Apply new weight to Event Area
-                currentEventParams.weight = animatedEventWeight;
-                llEventArea.setLayoutParams(currentEventParams);
-
-                // Hide/show event area if weight is too small
-                if (animatedEventWeight < 5) {
+                if (newState == ViewState.MONTH_VIEW || animatedWeight > 95) {
                     llEventArea.setVisibility(View.GONE);
-                } else {
-                    llEventArea.setVisibility(View.VISIBLE);
-                }
+                } else llEventArea.setVisibility(View.VISIBLE);
             });
             animator.start();
-
         } else {
-            // No animation (initial load)
-            LinearLayout.LayoutParams calendarParams = (LinearLayout.LayoutParams) gridFullMonthDays.getLayoutParams();
-            LinearLayout.LayoutParams eventParams = (LinearLayout.LayoutParams) llEventArea.getLayoutParams();
-
             calendarParams.weight = calendarWeight;
             eventParams.weight = eventWeight;
             gridFullMonthDays.setLayoutParams(calendarParams);
             llEventArea.setLayoutParams(eventParams);
             llEventArea.setVisibility(eventWeight > 0 ? View.VISIBLE : View.GONE);
         }
+
+        // WEEK_VIEW fade effect
+        if (newState == ViewState.WEEK_VIEW) {
+            int finalTargetRow = targetRowIndex;
+            for (int i = 0; i < gridFullMonthDays.getChildCount(); i++) {
+                View child = gridFullMonthDays.getChildAt(i);
+                Object tag = child.getTag();
+                if (tag instanceof Integer) {
+                    int row = (int) tag;
+                    if (row == finalTargetRow) {
+                        child.animate().alpha(1f).setDuration(250).withStartAction(() -> child.setVisibility(View.VISIBLE)).start();
+                    } else {
+                        child.animate().alpha(0f).setDuration(250).withEndAction(() -> child.setVisibility(View.GONE)).start();
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < gridFullMonthDays.getChildCount(); i++) {
+                View child = gridFullMonthDays.getChildAt(i);
+                child.setVisibility(View.VISIBLE);
+                child.setAlpha(0f);
+                child.animate().alpha(1f).setDuration(250).start();
+            }
+        }
     }
+
 
 
     private void displayCalendar() {

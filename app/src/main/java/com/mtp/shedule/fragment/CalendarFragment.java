@@ -37,6 +37,8 @@ public class CalendarFragment extends Fragment implements CalendarInteractionLis
         adapter = new CalendarAdapter(this);
         viewPager.setAdapter(adapter);
 
+        viewPager.setUserInputEnabled(false);
+
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
                 case 0:
