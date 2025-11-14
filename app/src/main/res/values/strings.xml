@@ -2,4 +2,19 @@
     <string name="app_name">Shedule</string>
     <string name="main_screen_title">Time Table</string>
 
+    <string-array name="repeat_options">
+        <item>None</item>
+        <item>Daily</item>
+        <item>Weekly</item>
+        <item>Every Other Week</item>
+        <item>Monthly</item>
+    </string-array>
+
+    <string-array name="timezone_options">
+        <item>+7</item>
+        <item>+8</item>
+        <item>+9</item>
+        <item>+10</item>
+        <item>+2</item>
+    </string-array>
 </resources>

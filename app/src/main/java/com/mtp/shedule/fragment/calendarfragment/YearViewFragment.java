@@ -124,9 +124,9 @@ public class YearViewFragment extends Fragment {
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
 
         params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f); // Trọng số 1 cho cột
-        params.width = 0; // Bắt buộc đặt width=0dp khi sử dụng trọng số
+        params.width = 0;
 
-        // 2. ĐẶT TRỌNG SỐ HÀNG (MỚI)
+        //ĐẶT TRỌNG SỐ HÀNG (MỚI)
         params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
         params.height = GridLayout.LayoutParams.WRAP_CONTENT;
 
@@ -139,13 +139,11 @@ public class YearViewFragment extends Fragment {
 
         // Xử lý màu sắc
         if (isActualDay) {
-            tv.setTextColor(Color.BLACK); // Giả định nền tối
+            tv.setTextColor(Color.BLACK);
             if (isToday) {
-                // Đánh dấu nền cho ngày hôm nay (Ví dụ: một hình tròn màu xanh/xanh lá)
                 tv.setBackgroundResource(R.drawable.bg_current_day_for_year);
-                tv.setTextColor(Color.BLACK); // Tùy chọn: Đổi màu chữ thành đen nếu nền highlight sáng
+                tv.setTextColor(Color.BLACK);
             } else {
-                // Đảm bảo không có background cho các ngày khác
                 tv.setBackground(null);
             }
         } else {

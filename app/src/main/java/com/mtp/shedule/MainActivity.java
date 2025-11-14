@@ -9,7 +9,6 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.mtp.shedule.fragment.CalendarFragment;
 import com.mtp.shedule.fragment.ExamsFragment;
@@ -52,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         // Load fragment mặc định (TimeTableFragment)
         if (savedInstanceState == null) {
             replaceFragment(new TimeTableFragment());
-            navigationView.setCheckedItem(R.id.nav_timetable);
+            navigationView.setCheckedItem(R.id.nav_calendar);
         }
 
         navigationView.setNavigationItemSelectedListener(item -> {

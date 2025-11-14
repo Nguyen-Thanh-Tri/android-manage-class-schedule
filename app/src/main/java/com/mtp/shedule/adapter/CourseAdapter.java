@@ -26,7 +26,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
 
     public List<CourseEntity> courseList;
     public Context context;
-    private ConnDatabase db;
+    private final ConnDatabase db;
 
 
     public CourseAdapter(Context context, List<CourseEntity> courseList) {
