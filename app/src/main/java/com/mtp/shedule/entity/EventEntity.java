@@ -18,18 +18,16 @@ public class EventEntity {
     public String description;
     public long startTime;   // millis
     public long endTime;     // millis
-    public String timezone;
-    public String repeat;    // "None", "Daily", "Weekly"...
 
     public int color;        // lưu index màu card
 
-    public EventEntity(String title, String description, long startTime, long endTime, String timezone, String repeat) {
+    public EventEntity(String title, String description, long startTime, long endTime) {
         this.title = title;
         this.description = description;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.timezone = timezone;
-        this.repeat = repeat;
+//        this.timezone = timezone;
+//        this.repeat = repeat;
         this.color = R.drawable.gradient_bg_red;
     }
     public int getId() { return id; }
@@ -47,11 +45,11 @@ public class EventEntity {
     public long getEndTime() { return endTime; }
 
     public void setEndTime(long endTime) { this.endTime = endTime; }
-    public String getTimezone() { return timezone; }
-
-    public void setTimezone(String timezone) { this.timezone = timezone; }
-    public String getRepeat() { return repeat; }
-    public void setRepeat(String repeat) { this.repeat = repeat; }
+//    public String getTimezone() { return timezone; }
+//
+//    public void setTimezone(String timezone) { this.timezone = timezone; }
+//    public String getRepeat() { return repeat; }
+//    public void setRepeat(String repeat) { this.repeat = repeat; }
     public int getColor() { return color; }
 
     public void setColor(int color) { this.color = color; }

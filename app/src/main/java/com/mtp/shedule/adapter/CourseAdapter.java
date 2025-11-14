@@ -5,7 +5,6 @@ import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,7 +67,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
             }
         });
 
-        //giữ để xóa or updaate
+        //giữ để xóa
         holder.itemView.setOnLongClickListener(v -> {
             new AlertDialog.Builder(v.getContext())
                     .setTitle("DELETE")
@@ -110,8 +109,6 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
     public static class CourseViewHolder extends RecyclerView.ViewHolder {
         TextView tvCourseTitle, tvTeacher, tvRoom, tvTime;
         CardView cardView;
-
-
         public CourseViewHolder(@NonNull View itemView) {
             super(itemView);
             tvCourseTitle = itemView.findViewById(R.id.tvCourseTitle);

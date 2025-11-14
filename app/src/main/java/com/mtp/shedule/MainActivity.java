@@ -48,9 +48,9 @@ public class MainActivity extends AppCompatActivity {
         // ---------------- Navigation Drawer ----------------
         NavigationView navigationView = findViewById(R.id.navigation_view);
 
-        // Load fragment mặc định (TimeTableFragment)
+        // Load fragment mặc định (CalendarFragment)
         if (savedInstanceState == null) {
-            replaceFragment(new TimeTableFragment());
+            replaceFragment(new CalendarFragment());
             navigationView.setCheckedItem(R.id.nav_calendar);
         }
 
@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                 newFragment = new TeachersFragment();
             } else if (id == R.id.nav_settings && !(currentFragment instanceof SettingsFragment)) {
                 newFragment = new SettingsFragment();
-            } else if (id == R.id.nav_calendar) {
+            } else if (id == R.id.nav_calendar && !(currentFragment instanceof CalendarFragment)) {
                 newFragment = new CalendarFragment();
             }
 
@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------- Helper method thay fragment ----------------
     private void replaceFragment(Fragment fragment) {
+        currentFragment = fragment;
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)

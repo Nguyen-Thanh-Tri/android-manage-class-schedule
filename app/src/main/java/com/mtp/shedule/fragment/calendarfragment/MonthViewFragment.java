@@ -147,6 +147,11 @@ public class MonthViewFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        loadEventsForSelectedDay(
+                selectedDay.get(Calendar.DAY_OF_MONTH),
+                selectedDay.get(Calendar.MONTH),
+                selectedDay.get(Calendar.YEAR)
+        );
     }
 
     @Override
@@ -423,10 +428,6 @@ public class MonthViewFragment extends Fragment {
         calendar.set(Calendar.DAY_OF_MONTH, 1);
 
         // Get today's info to highlight
-        Calendar today = Calendar.getInstance();
-        int todayDay = today.get(Calendar.DAY_OF_MONTH);
-        int todayMonth = today.get(Calendar.MONTH);
-        int todayYear = today.get(Calendar.YEAR);
         int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK); // 1=Sunday
         int dayOffset = firstDayOfWeek - 1;
         int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
