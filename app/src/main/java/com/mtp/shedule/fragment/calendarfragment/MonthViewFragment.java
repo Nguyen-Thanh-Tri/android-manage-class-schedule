@@ -2,6 +2,7 @@ package com.mtp.shedule.fragment.calendarfragment;
 
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -12,17 +13,29 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+
+import androidx.core.content.ContextCompat;
 import androidx.gridlayout.widget.GridLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.mtp.shedule.AddEventActivity;
 import com.mtp.shedule.R;
+import com.mtp.shedule.adapter.EventAdapter;
+import com.mtp.shedule.database.ConnDatabase;
+import com.mtp.shedule.entity.EventEntity;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executors;
 
 public class MonthViewFragment extends Fragment {
     // Enum to manage the display state of the calendar
@@ -37,26 +50,26 @@ public class MonthViewFragment extends Fragment {
     private TextView tvMonthHeader;
     private GridLayout gridFullMonthDays;
     private ImageView ivDragHandle;
-    private LinearLayout llEventArea;
+    private RecyclerView rvEvents;
+    private final List<EventEntity> eventList = new ArrayList<>();
+    private EventAdapter eventAdapter;
 
     private ViewState currentState = ViewState.SPLIT_VIEW; // Default state is balanced
-
     // Variables for drag logic
     private float initialTouchY;
     private float initialCalendarWeight;
-    private float initialEventWeight;
-
-    // Height of one row (calculated when layout is complete)
+    float initialEventWeight;
     private int rowHeight = 0;
-
     // Constants
     private static final int DAYS_IN_WEEK = 7;
     private static final int MAX_ROWS = 6;
     private boolean isDragging = false;
-
-
-    // Biến để lưu số hàng thực tế của tháng hiện tại
+    private ConnDatabase db;
     private int actualRowsNeeded = MAX_ROWS;
+    // Biến lưu trữ ngày đang được chọn để load event
+    Calendar selectedDay = Calendar.getInstance();
+    private TextView lastSelectedDayView = null;
+    private int selectedDayOfMonth = -1;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,6 +78,12 @@ public class MonthViewFragment extends Fragment {
         Calendar now = Calendar.getInstance();
         currentMonthIndex = now.get(Calendar.MONTH);
         currentYear = now.get(Calendar.YEAR);
+        //ngày được chọn ban đầu là ngày hôm nay
+        selectedDay.setTime(now.getTime());
+        selectedDay.set(Calendar.HOUR_OF_DAY, 0);
+        selectedDay.set(Calendar.MINUTE, 0);
+        selectedDay.set(Calendar.SECOND, 0);
+        selectedDay.set(Calendar.MILLISECOND, 0);
 
         if (getArguments() != null) {
             currentMonthIndex = getArguments().getInt("INITIAL_MONTH_INDEX", currentMonthIndex);
@@ -75,12 +94,12 @@ public class MonthViewFragment extends Fragment {
             currentMonthIndex = savedInstanceState.getInt("state_month_index", currentMonthIndex);
             currentYear = savedInstanceState.getInt("state_year", currentYear);
 
-            // FIX: Use the standard getSerializable(String key)
+            // Use the standard getSerializable(String key)
             Object viewStateObject = savedInstanceState.getSerializable("state_view");
             if (viewStateObject instanceof ViewState) {
                 currentState = (ViewState) viewStateObject;
             } else {
-                currentState = ViewState.SPLIT_VIEW; // Safe default value
+                currentState = ViewState.SPLIT_VIEW;
             }
         }
     }
@@ -88,21 +107,46 @@ public class MonthViewFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Hiện tại, ta dùng placeholder và gọi hàm hiển thị lịch
         View view = inflater.inflate(R.layout.fragment_month_view, container, false);
+
+        rvEvents = view.findViewById(R.id.rvEvents);
+        rvEvents.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        eventAdapter = new EventAdapter(getContext(), eventList);
+        rvEvents.setAdapter(eventAdapter);
+        db = ConnDatabase.getInstance(getContext());
 
         tvMonthHeader = view.findViewById(R.id.tvMonthHeader);
         gridFullMonthDays = view.findViewById(R.id.gridFullMonthDays);
         ivDragHandle = view.findViewById(R.id.ivDragHandle);
-        llEventArea = view.findViewById(R.id.llEventArea);
+
+        FloatingActionButton fabAddEvent = view.findViewById(R.id.fabAddEvent);
 
         setupDragHandle();
         displayCalendar();
+
+        //add event
+        fabAddEvent.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), AddEventActivity.class);
+            startActivity(intent);
+        });
+
+        //load event
+        loadEventsForSelectedDay(
+                selectedDay.get(Calendar.DAY_OF_MONTH),
+                selectedDay.get(Calendar.MONTH),
+                selectedDay.get(Calendar.YEAR)
+        );
 
         // Thiết lập trạng thái ban đầu dựa trên currentState
         view.post(() -> updateViewState(currentState, false));
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
     }
 
     @Override
@@ -113,13 +157,37 @@ public class MonthViewFragment extends Fragment {
         outState.putSerializable("state_view", currentState);
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void updateMonth(int newMonthIndex, int year) {
         this.currentMonthIndex = newMonthIndex;
         this.currentYear = year;
 
+        Calendar now = Calendar.getInstance();
+        boolean isCurrentMonth = (newMonthIndex == now.get(Calendar.MONTH)
+                && year == now.get(Calendar.YEAR));
+
+        int newSelectedDay;
+
+        if (isCurrentMonth) {
+            // THÁNG HIỆN TẠI → highlight today
+            newSelectedDay = now.get(Calendar.DAY_OF_MONTH);
+        } else {
+            // KHÔNG PHẢI THÁNG HIỆN TẠI → highlight ngày 1
+            newSelectedDay = 1;
+        }
+
+        // Cập nhật selectedDay HOÀN CHỈNH
+        selectedDay.set(year, newMonthIndex, newSelectedDay);
+        selectedDay.set(Calendar.HOUR_OF_DAY, 0);
+        selectedDay.set(Calendar.MINUTE, 0);
+        selectedDay.set(Calendar.SECOND, 0);
+        selectedDay.set(Calendar.MILLISECOND, 0);
+
         if (getView() != null) {
             displayCalendar();
-            // Đảm bảo cập nhật lại trạng thái xem sau khi vẽ lại lịch
+
+            loadEventsForSelectedDay(newSelectedDay, newMonthIndex, year);
+
             updateViewState(currentState, false);
         }
     }
@@ -127,7 +195,6 @@ public class MonthViewFragment extends Fragment {
     @SuppressLint("ClickableViewAccessibility")
     private void setupDragHandle() {
         ivDragHandle.setOnClickListener(v -> {
-            // Simple click handling: toggle between WEEK_VIEW and SPLIT_VIEW
             if (currentState == ViewState.WEEK_VIEW) {
                 updateViewState(ViewState.SPLIT_VIEW, true);
             } else {
@@ -138,7 +205,7 @@ public class MonthViewFragment extends Fragment {
         // Simple drag/drop logic
         ivDragHandle.setOnTouchListener((v, event) -> {
             LinearLayout.LayoutParams calendarParams = (LinearLayout.LayoutParams) gridFullMonthDays.getLayoutParams();
-            LinearLayout.LayoutParams eventParams = (LinearLayout.LayoutParams) llEventArea.getLayoutParams();
+            LinearLayout.LayoutParams eventParams = (LinearLayout.LayoutParams) rvEvents.getLayoutParams();
 
             if (rowHeight == 0 && gridFullMonthDays.getChildCount() > 0) {
                 rowHeight = gridFullMonthDays.getHeight() / 6;
@@ -146,6 +213,7 @@ public class MonthViewFragment extends Fragment {
             if (rowHeight == 0) return false;
 
             switch (event.getAction()) {
+
                 case MotionEvent.ACTION_DOWN:
                     initialTouchY = event.getRawY();
                     initialCalendarWeight = calendarParams.weight;
@@ -173,6 +241,7 @@ public class MonthViewFragment extends Fragment {
                     float newCalendarWeight = initialCalendarWeight + weightChange;
                     float minCalendarWeight = 100f / MAX_ROWS;
                     float maxCalendarWeight = 85f;
+
                     if (newCalendarWeight < minCalendarWeight) newCalendarWeight = minCalendarWeight;
                     if (newCalendarWeight > maxCalendarWeight) newCalendarWeight = maxCalendarWeight;
 
@@ -182,7 +251,8 @@ public class MonthViewFragment extends Fragment {
                     eventParams.weight = 100f - calendarParams.weight;
 
                     gridFullMonthDays.setLayoutParams(calendarParams);
-                    llEventArea.setLayoutParams(eventParams);
+                    rvEvents.setLayoutParams(eventParams);
+
                     return true;
 
                 case MotionEvent.ACTION_UP:
@@ -209,18 +279,15 @@ public class MonthViewFragment extends Fragment {
 
                         case WEEK_VIEW:
                             if (deltay > LIGHT_THRESHOLD) {
-                                // Kéo nhẹ xuống -> về SPLIT_VIEW
                                 updateViewState(ViewState.SPLIT_VIEW, true);
                             }
                             break;
                     }
-
                     return true;
             }
             return false;
         });
     }
-
 
     private void updateViewState(ViewState newState, boolean animate) {
         currentState = newState;
@@ -243,23 +310,34 @@ public class MonthViewFragment extends Fragment {
                 eventWeight = 100f - calendarWeight;
                 dragHandleIcon = R.drawable.ic_drag_handle_down;
 
-                Calendar calendar = Calendar.getInstance();
-                int todayDay = calendar.get(Calendar.DAY_OF_MONTH);
-                int todayMonth = calendar.get(Calendar.MONTH);
-                int todayYear = calendar.get(Calendar.YEAR);
+                // đã chọn 1 ô thì ưu tiên lấy hàng từ ô đó
+                if (lastSelectedDayView != null) {
+                    Object tagObj = lastSelectedDayView.getTag();
+                    if (tagObj instanceof int[]) {
+                        targetRowIndex = ((int[]) tagObj)[0]; // row
+                    }
+                }
 
-                if (currentMonthIndex == todayMonth && currentYear == todayYear) {
-                    calendar.set(currentYear, currentMonthIndex, 1);
-                    int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-                    int dayOffset = firstDayOfWeek - 1;
-                    int cellIndex = dayOffset + todayDay - 1;
-                    targetRowIndex = cellIndex / DAYS_IN_WEEK;
-                } else targetRowIndex = 0;
+                // chưa có ô được chọn, và đang xem tháng hiện tại -> tìm ô "istoday"
+                if (targetRowIndex == -1) {
+                    Calendar todayCal = Calendar.getInstance();
+                    int todayDay = todayCal.get(Calendar.DAY_OF_MONTH);
+                    int todayMonth = todayCal.get(Calendar.MONTH);
+                    int todayYear = todayCal.get(Calendar.YEAR);
+
+                    if (currentMonthIndex == todayMonth && currentYear == todayYear) {
+                        targetRowIndex = findRowForDay(todayDay);
+                    }
+                }
+
+                // Fallback
+                if (targetRowIndex == -1) targetRowIndex = 0;
                 break;
+
             case SPLIT_VIEW:
             default:
-                calendarWeight = 70f;
-                eventWeight = 30f;
+                calendarWeight = 65f;
+                eventWeight = 35f;
                 dragHandleIcon = R.drawable.ic_drag_handle_normal;
                 break;
         }
@@ -267,7 +345,7 @@ public class MonthViewFragment extends Fragment {
         ivDragHandle.setImageResource(dragHandleIcon);
 
         LinearLayout.LayoutParams calendarParams = (LinearLayout.LayoutParams) gridFullMonthDays.getLayoutParams();
-        LinearLayout.LayoutParams eventParams = (LinearLayout.LayoutParams) llEventArea.getLayoutParams();
+        LinearLayout.LayoutParams eventParams = (LinearLayout.LayoutParams) rvEvents.getLayoutParams();
 
         if (animate) {
             ValueAnimator animator = ValueAnimator.ofFloat(calendarParams.weight, calendarWeight);
@@ -277,30 +355,26 @@ public class MonthViewFragment extends Fragment {
                 calendarParams.weight = animatedWeight;
                 eventParams.weight = 100f - animatedWeight;
                 gridFullMonthDays.setLayoutParams(calendarParams);
-                llEventArea.setLayoutParams(eventParams);
+                rvEvents.setLayoutParams(eventParams);
 
-                if (newState == ViewState.MONTH_VIEW || animatedWeight > 95) {
-                    llEventArea.setVisibility(View.GONE);
-                } else llEventArea.setVisibility(View.VISIBLE);
             });
             animator.start();
         } else {
             calendarParams.weight = calendarWeight;
             eventParams.weight = eventWeight;
             gridFullMonthDays.setLayoutParams(calendarParams);
-            llEventArea.setLayoutParams(eventParams);
-            llEventArea.setVisibility(eventWeight > 0 ? View.VISIBLE : View.GONE);
+            rvEvents.setLayoutParams(eventParams);
+            rvEvents.setVisibility(eventWeight > 0 ? View.VISIBLE : View.GONE);
         }
 
         // WEEK_VIEW fade effect
         if (newState == ViewState.WEEK_VIEW) {
-            int finalTargetRow = targetRowIndex;
             for (int i = 0; i < gridFullMonthDays.getChildCount(); i++) {
                 View child = gridFullMonthDays.getChildAt(i);
                 Object tag = child.getTag();
-                if (tag instanceof Integer) {
-                    int row = (int) tag;
-                    if (row == finalTargetRow) {
+                if (tag instanceof int[]) {
+                    int row = ((int[]) tag)[0];
+                    if (row == targetRowIndex) {
                         child.animate().alpha(1f).setDuration(250).withStartAction(() -> child.setVisibility(View.VISIBLE)).start();
                     } else {
                         child.animate().alpha(0f).setDuration(250).withEndAction(() -> child.setVisibility(View.GONE)).start();
@@ -315,9 +389,28 @@ public class MonthViewFragment extends Fragment {
                 child.animate().alpha(1f).setDuration(250).start();
             }
         }
+        // Giữ highlight ngày đang chọn khi thay đổi view
+        if (lastSelectedDayView != null) {
+            highlightSelectedDay(lastSelectedDayView);
+        }
     }
 
-
+    private int findRowForDay(int day) {
+        String dayStr = String.valueOf(day);
+        for (int i = 0; i < gridFullMonthDays.getChildCount(); i++) {
+            View child = gridFullMonthDays.getChildAt(i);
+            if (child instanceof TextView) {
+                TextView tv = (TextView) child;
+                if (tv.getText() != null && dayStr.equals(tv.getText().toString().trim())) {
+                    Object tag = tv.getTag();
+                    if (tag instanceof int[]) {
+                        return ((int[]) tag)[0]; // row
+                    }
+                }
+            }
+        }
+        return -1;
+    }
 
     private void displayCalendar() {
         String monthName = getMonthName(currentMonthIndex);
@@ -334,12 +427,9 @@ public class MonthViewFragment extends Fragment {
         int todayDay = today.get(Calendar.DAY_OF_MONTH);
         int todayMonth = today.get(Calendar.MONTH);
         int todayYear = today.get(Calendar.YEAR);
-
         int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK); // 1=Sunday
         int dayOffset = firstDayOfWeek - 1;
-
         int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
-
         int cellIndex = 0;
 
         int totalCellsNeeded = dayOffset + daysInMonth;
@@ -351,11 +441,29 @@ public class MonthViewFragment extends Fragment {
 
         // DRAW DAYS OF THE MONTH
         for (int day = 1; day <= daysInMonth; day++) {
-            boolean isToday = (day == todayDay &&
-                    currentMonthIndex == todayMonth &&
-                    currentYear == todayYear);
-            gridFullMonthDays.addView(createMonthDayTextView(String.valueOf(day), true, cellIndex++));
+            int cellIndexCurrent = cellIndex++;
+            TextView tvDay = createMonthDayTextView(String.valueOf(day), true, cellIndexCurrent);
+
+            if (day == selectedDay.get(Calendar.DAY_OF_MONTH)) {
+                highlightSelectedDay(tvDay); // selectedDay luôn được highlight
+                lastSelectedDayView = tvDay;
+            }
+
+            gridFullMonthDays.addView(tvDay);
         }
+
+        gridFullMonthDays.post(() -> {
+            if (selectedDayOfMonth != -1) {
+                int targetIndex = selectedDayOfMonth + dayOffset - 1;
+                if (targetIndex >= 0 && targetIndex < gridFullMonthDays.getChildCount()) {
+                    View v = gridFullMonthDays.getChildAt(targetIndex);
+                    if (v instanceof TextView) {
+                        highlightSelectedDay((TextView) v);
+                        lastSelectedDayView = (TextView) v;
+                    }
+                }
+            }
+        });
 
         int cellsToFill = actualRowsNeeded * DAYS_IN_WEEK;
         for (int i = cellIndex; i < cellsToFill; i++) {
@@ -369,33 +477,50 @@ public class MonthViewFragment extends Fragment {
         }
     }
 
+    //Hàm load sự kiện
+    @SuppressLint("NotifyDataSetChanged")
+    private void loadEventsForSelectedDay(int dayOfMonth, int monthIndex, int year) {
+        //Cập nhật ngày được chọn
+        selectedDay.set(year, monthIndex, dayOfMonth);
+        selectedDay.set(Calendar.HOUR_OF_DAY, 0);
+        selectedDay.set(Calendar.MINUTE, 0);
+        selectedDay.set(Calendar.SECOND, 0);
+        selectedDay.set(Calendar.MILLISECOND, 0);
+
+        long dayStartMillis = selectedDay.getTimeInMillis();
+
+        // query trong Thread Pool
+        Executors.newSingleThreadExecutor().execute(() -> {
+            List<EventEntity> loadedEvents = db.eventDao().getEventsByDay(dayStartMillis);
+
+            // Cập nhật UI trên Main Thread
+            if (getView() != null) {
+                getView().post(() -> {
+                    eventList.clear();
+                    eventList.addAll(loadedEvents);
+                    if (eventAdapter != null) {
+                        eventAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        });
+    }
 
     private TextView createMonthDayTextView(String text, boolean isActualDay, int cellIndex) {
         TextView tv = new TextView(requireContext());
 
-        // Tính toán vị trí Hàng và Cột
         int row = cellIndex / DAYS_IN_WEEK;
         int column = cellIndex % DAYS_IN_WEEK;
-        // Gắn tag là chỉ số hàng (row index). Đây là bước quan trọng để xác định ô thuộc hàng nào.
-        tv.setTag(row);
-        // TÍNH TOÁN TRỌNG SỐ HÀNG (weight)
-        // Dùng 1.0f chia cho số hàng thực tế để chia đều chiều cao.
+
+        tv.setTag(new int[]{row, column});
+
         float rowWeight = 1.0f / actualRowsNeeded;
 
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-
-        params.columnSpec = GridLayout.spec(column,1,  1f); // Cột tự động, chiếm 1 cột, weight 1f
+        params.columnSpec = GridLayout.spec(column,1,  1f);
         params.width = 0;
-
-        // 3. CHIA ĐỀU HÀNG: Thiết lập rowSpec để View chiếm 1 hàng và chia đều trọng số (weight)
-        params.rowSpec = GridLayout.spec(row, rowWeight); // Hàng tự động, weight 1f
+        params.rowSpec = GridLayout.spec(row, rowWeight);
         params.height = 0;
-
-        // Căn chỉnh lề cho đẹp hơn
-        int margin = 4;
-        params.setMargins(margin, margin, margin, margin);
-        // *******************************************
-
         tv.setLayoutParams(params);
 
         tv.setText(text);
@@ -403,46 +528,119 @@ public class MonthViewFragment extends Fragment {
         tv.setTextSize(18f);
         tv.setGravity(Gravity.CENTER);
 
+        //Lấy ngày hiện tại
+        Calendar today = Calendar.getInstance();
+        int todayDay = today.get(Calendar.DAY_OF_MONTH);
+        int todayMonth = today.get(Calendar.MONTH);
+        int todayYear = today.get(Calendar.YEAR);
+
+        // Check xem tháng đang vẽ có phải tháng hiện tại không
         boolean isToday = false;
         if (isActualDay) {
-            Calendar today = Calendar.getInstance();
-            // Đảm bảo chỉ parse khi text không rỗng
             try {
                 int day = Integer.parseInt(text);
-                isToday = (day == today.get(Calendar.DAY_OF_MONTH)) &&
-                        (currentMonthIndex == today.get(Calendar.MONTH)) &&
-                        (currentYear == today.get(Calendar.YEAR));
-            } catch (NumberFormatException e) {
-                // Should not happen for isActualDay=true, but defensive programming
-            }
+                isToday = (day == todayDay) &&
+                        (currentMonthIndex == todayMonth) &&
+                        (currentYear == todayYear);
+            } catch (NumberFormatException e) { }
         }
+
+        // Áp style mặc định (dựa trên cột/chẵn lẻ) hoặc ẩn text nếu ô trống
+        applyDefaultDayStyle(tv, isActualDay, isToday, column);
 
         if (isActualDay) {
-            tv.setTextColor(Color.BLACK);
-            if (isToday) {
-                // Assume this drawable exists
-                tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
-                tv.setTextColor(Color.WHITE);
-                tv.setTypeface(Typeface.DEFAULT_BOLD);
-            } else {
-                tv.setBackground(null);
-            }
-        } else {
-            tv.setTextColor(Color.TRANSPARENT);
+            tv.setOnClickListener(v -> {
+                int day = Integer.parseInt(text);
+
+                if (lastSelectedDayView != null && lastSelectedDayView != v) {
+                    resetDayStyle(lastSelectedDayView);
+                }
+
+                highlightSelectedDay(tv);
+
+                lastSelectedDayView = tv;
+                selectedDayOfMonth = day;
+
+                // Query events for selecting day
+                loadEventsForSelectedDay(day, currentMonthIndex, currentYear);
+            });
         }
-
-        // Add click event for testing
-        tv.setOnClickListener(v -> {
-            if (isActualDay) {
-                // Handle day click
-            }
-        });
-
         return tv;
     }
 
+    // Áp style mặc định (dựa trên cột) hoặc nếu là today thì dùng background today
+    private void applyDefaultDayStyle(TextView tv, boolean isActualDay, boolean isToday, int column) {
+        if (!isActualDay) {
+            tv.setText(""); // ô trống
+            tv.setTextColor(Color.TRANSPARENT);
+            tv.setBackground(null);
+            return;
+        }
+
+        if (isToday) {
+            tv.setBackgroundResource(R.drawable.bg_current_day_for_month); // giữ drawable hiện tại cho "today"
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+            return;
+        }
+
+        if (column % 2 == 0) {
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.dard_grey));
+            tv.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
+        } else {
+            tv.setTextColor(Color.BLACK);
+            tv.setTypeface(Typeface.SANS_SERIF);
+        }
+        tv.setBackground(null);
+    }
+
+    private void resetDayStyle(TextView tv) {
+        Object t = tv.getTag();
+        int column = 0;
+
+        if (t instanceof int[]) {
+            column = ((int[]) t)[1];
+        }
+
+        int day = 0;
+        try {
+            day = Integer.parseInt(tv.getText().toString());
+        } catch (NumberFormatException e) {}
+
+        Calendar today = Calendar.getInstance();
+        boolean isToday = (day == today.get(Calendar.DAY_OF_MONTH)) &&
+                (currentMonthIndex == today.get(Calendar.MONTH)) &&
+                (currentYear == today.get(Calendar.YEAR));
+
+        if (isToday && day != selectedDay.get(Calendar.DAY_OF_MONTH)) {
+            tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+        } else {
+            applyDefaultDayStyle(tv, true, false, column); // màu xám theo cột
+        }
+    }
+
+    private void highlightSelectedDay(TextView tv) {
+        int day = Integer.parseInt(tv.getText().toString());
+
+        Calendar today = Calendar.getInstance();
+        boolean isToday = (day == today.get(Calendar.DAY_OF_MONTH)) &&
+                (currentMonthIndex == today.get(Calendar.MONTH)) &&
+                (currentYear == today.get(Calendar.YEAR));
+
+        if (isToday) {
+            tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+        }else {
+            tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+        }
+    }
+
     private String getMonthName(int monthIndex) {
-        // Use Localized String instead of hardcode
         Calendar tempCal = Calendar.getInstance();
         tempCal.set(Calendar.MONTH, monthIndex);
         return tempCal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
