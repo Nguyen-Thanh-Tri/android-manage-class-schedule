@@ -1,6 +1,7 @@
 package com.mtp.shedule;
 
 import android.os.Bundle;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,7 +10,6 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.mtp.shedule.fragment.CalendarFragment;
 import com.mtp.shedule.fragment.ExamsFragment;
@@ -22,8 +22,8 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
-    Toolbar toolbar;
-    TextView toolbarTitle;
+    private Toolbar toolbar;
+    private TextView toolbarTitle;
     private Fragment currentFragment;
 
     @Override
@@ -33,10 +33,10 @@ public class MainActivity extends AppCompatActivity {
 
         // ---------------- Toolbar ----------------
         toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
         toolbarTitle = findViewById(R.id.toolbar_title);
+        setSupportActionBar(toolbar);
 
-        // ---------------- Drawer Layout ----------------
+        // Navigation icon mở/đóng Drawer
         drawerLayout = findViewById(R.id.drawer_layout);
         toolbar.setNavigationOnClickListener(v -> {
             if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -49,15 +49,17 @@ public class MainActivity extends AppCompatActivity {
         // ---------------- Navigation Drawer ----------------
         NavigationView navigationView = findViewById(R.id.navigation_view);
 
-        // Load fragment mặc định (TimeTableFragment)
+        // Load fragment mặc định
         if (savedInstanceState == null) {
             replaceFragment(new TimeTableFragment());
             navigationView.setCheckedItem(R.id.nav_timetable);
+            toolbarTitle.setText(getString(R.string.main_screen_title));
+            centerToolbarTitle();
         }
 
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
-            String title = Objects.requireNonNull(item.getTitle()).toString(); // lấy title từ menu item
+            String title = Objects.requireNonNull(item.getTitle()).toString();
             Fragment newFragment = null;
 
             if (id == R.id.nav_timetable && !(currentFragment instanceof TimeTableFragment)) {
@@ -75,10 +77,8 @@ public class MainActivity extends AppCompatActivity {
             if (newFragment != null) {
                 replaceFragment(newFragment);
                 navigationView.setCheckedItem(id);
-
-                // Cập nhật tiêu đề Toolbar
-                TextView toolbarTitle = findViewById(R.id.toolbar_title);
                 toolbarTitle.setText(title);
+                centerToolbarTitle(); // căn giữa sau khi đổi title
             }
 
             drawerLayout.closeDrawer(GravityCompat.START);
@@ -88,9 +88,31 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------- Helper method thay fragment ----------------
     private void replaceFragment(Fragment fragment) {
+        currentFragment = fragment;
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .commit();
+    }
+
+    // ---------------- Helper method căn giữa Toolbar title ----------------
+    private void centerToolbarTitle() {
+        toolbar.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                toolbar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                int toolbarWidth = toolbar.getWidth();
+                int titleWidth = toolbarTitle.getWidth();
+
+                int navIconWidth = 0;
+                if (toolbar.getNavigationIcon() != null) {
+                    navIconWidth = toolbar.getNavigationIcon().getIntrinsicWidth() + toolbar.getContentInsetStart();
+                }
+
+                int offset = (toolbarWidth - titleWidth) / 2 - navIconWidth;
+                toolbarTitle.setTranslationX(offset);
+            }
+        });
     }
 }
