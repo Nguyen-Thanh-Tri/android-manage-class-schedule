@@ -1,6 +1,7 @@
 package com.mtp.shedule;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         // ---------------- Toolbar ----------------
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         toolbarTitle = findViewById(R.id.toolbar_title);
 
         // ---------------- Drawer Layout ----------------
@@ -47,10 +49,17 @@ public class MainActivity extends AppCompatActivity {
 
         // ---------------- Navigation Drawer ----------------
         NavigationView navigationView = findViewById(R.id.navigation_view);
+        //toppadding cho navigation
+//        navigationView.setPadding(
+//                navigationView.getPaddingLeft(),
+//                getStatusBarHeight(),
+//                navigationView.getPaddingRight(),
+//                navigationView.getPaddingBottom()
+//        );
 
-        // Load fragment mặc định (TimeTableFragment)
+        // Load fragment mặc định (CalendarFragment)
         if (savedInstanceState == null) {
-            replaceFragment(new TimeTableFragment());
+            replaceFragment(new CalendarFragment());
             navigationView.setCheckedItem(R.id.nav_calendar);
         }
 
@@ -67,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 newFragment = new TeachersFragment();
             } else if (id == R.id.nav_settings && !(currentFragment instanceof SettingsFragment)) {
                 newFragment = new SettingsFragment();
-            } else if (id == R.id.nav_calendar) {
+            } else if (id == R.id.nav_calendar && !(currentFragment instanceof CalendarFragment)) {
                 newFragment = new CalendarFragment();
             }
 
@@ -87,9 +96,18 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------- Helper method thay fragment ----------------
     private void replaceFragment(Fragment fragment) {
+        currentFragment = fragment;
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }
+//    private int getStatusBarHeight() {
+//        int result = 0;
+//        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+//        if (resourceId > 0) {
+//            result = getResources().getDimensionPixelSize(resourceId);
+//        }
+//        return result;
+//    }
 }

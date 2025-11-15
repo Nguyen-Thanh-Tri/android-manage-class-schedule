@@ -33,8 +33,10 @@ import com.mtp.shedule.entity.EventEntity;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.Executors;
 
 public class MonthViewFragment extends Fragment {
@@ -44,7 +46,7 @@ public class MonthViewFragment extends Fragment {
         SPLIT_VIEW,
         WEEK_VIEW
     }
-
+    Set<Integer> daysWithEvents = new HashSet<>();
     private int currentMonthIndex;
     private int currentYear;
     private TextView tvMonthHeader;
@@ -147,6 +149,11 @@ public class MonthViewFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        loadEventsForSelectedDay(
+                selectedDay.get(Calendar.DAY_OF_MONTH),
+                selectedDay.get(Calendar.MONTH),
+                selectedDay.get(Calendar.YEAR)
+        );
     }
 
     @Override
@@ -182,6 +189,7 @@ public class MonthViewFragment extends Fragment {
         selectedDay.set(Calendar.MINUTE, 0);
         selectedDay.set(Calendar.SECOND, 0);
         selectedDay.set(Calendar.MILLISECOND, 0);
+
 
         if (getView() != null) {
             displayCalendar();
@@ -306,7 +314,7 @@ public class MonthViewFragment extends Fragment {
                 dragHandleIcon = R.drawable.ic_drag_handle_up;
                 break;
             case WEEK_VIEW:
-                calendarWeight = 100f / MAX_ROWS;
+                calendarWeight = (100f / MAX_ROWS)-6.67f;
                 eventWeight = 100f - calendarWeight;
                 dragHandleIcon = R.drawable.ic_drag_handle_down;
 
@@ -423,58 +431,66 @@ public class MonthViewFragment extends Fragment {
         calendar.set(Calendar.DAY_OF_MONTH, 1);
 
         // Get today's info to highlight
-        Calendar today = Calendar.getInstance();
-        int todayDay = today.get(Calendar.DAY_OF_MONTH);
-        int todayMonth = today.get(Calendar.MONTH);
-        int todayYear = today.get(Calendar.YEAR);
         int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK); // 1=Sunday
         int dayOffset = firstDayOfWeek - 1;
         int daysInMonth = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
-        int cellIndex = 0;
+        final int[] cellIndex = {0};
 
         int totalCellsNeeded = dayOffset + daysInMonth;
         actualRowsNeeded = (int) Math.ceil((double) totalCellsNeeded / DAYS_IN_WEEK);
-        // DRAW EMPTY CELLS AT THE BEGINNING OF THE MONTH
-        for (int i = 0; i < dayOffset; i++) {
-            gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex++));
-        }
 
-        // DRAW DAYS OF THE MONTH
-        for (int day = 1; day <= daysInMonth; day++) {
-            int cellIndexCurrent = cellIndex++;
-            TextView tvDay = createMonthDayTextView(String.valueOf(day), true, cellIndexCurrent);
 
-            if (day == selectedDay.get(Calendar.DAY_OF_MONTH)) {
-                highlightSelectedDay(tvDay); // selectedDay luôn được highlight
-                lastSelectedDayView = tvDay;
+
+        new Thread(() -> {
+            List<EventEntity> events = db.eventDao().getEventsByMonth(
+                    String.valueOf(currentYear),
+                    String.format(Locale.getDefault(), "%02d", currentMonthIndex + 1)
+            );
+
+            Set<Integer> daysWithEvents = new HashSet<>();
+            for (EventEntity e : events) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(e.getStartTime());
+                daysWithEvents.add(cal.get(Calendar.DAY_OF_MONTH));
             }
 
-            gridFullMonthDays.addView(tvDay);
-        }
-
-        gridFullMonthDays.post(() -> {
-            if (selectedDayOfMonth != -1) {
-                int targetIndex = selectedDayOfMonth + dayOffset - 1;
-                if (targetIndex >= 0 && targetIndex < gridFullMonthDays.getChildCount()) {
-                    View v = gridFullMonthDays.getChildAt(targetIndex);
-                    if (v instanceof TextView) {
-                        highlightSelectedDay((TextView) v);
-                        lastSelectedDayView = (TextView) v;
-                    }
+            requireActivity().runOnUiThread(() -> {
+                // DRAW EMPTY CELLS AT THE BEGINNING OF THE MONTH
+                for (int i = 0; i < dayOffset; i++) {
+                    gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
                 }
-            }
-        });
 
-        int cellsToFill = actualRowsNeeded * DAYS_IN_WEEK;
-        for (int i = cellIndex; i < cellsToFill; i++) {
-            // isToday luôn là false cho ô trống
-            gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex++));
-        }
+                // DRAW DAYS OF THE MONTH
+                for (int day = 1; day <= daysInMonth; day++) {
+                    int cellIndexCurrent = cellIndex[0]++;
+                    TextView tvDay = createMonthDayTextView(String.valueOf(day), true, cellIndexCurrent);
 
-        // Sau khi vẽ lại lịch, áp dụng lại trạng thái xem hiện tại (để ẩn/hiện nếu đang ở WEEK_VIEW)
-        if (getView() != null) {
-            updateViewState(currentState, false);
-        }
+                    // highlight ngày được chọn
+                    if (day == selectedDay.get(Calendar.DAY_OF_MONTH) &&
+                            currentMonthIndex == selectedDay.get(Calendar.MONTH) &&
+                            currentYear == selectedDay.get(Calendar.YEAR)) {
+                        highlightSelectedDay(tvDay);
+                        lastSelectedDayView = tvDay;
+                        selectedDayOfMonth = day;
+                    }
+                    // thêm chấm nhỏ nếu ngày có sự kiện
+                    if (daysWithEvents.contains(day)) {
+                        tvDay.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, R.drawable.ic_dot);
+                    }
+                    gridFullMonthDays.addView(tvDay);
+                }
+
+                // FILL EMPTY CELLS AT THE END
+                int cellsToFill = actualRowsNeeded * DAYS_IN_WEEK;
+                for (int i = cellIndex[0]; i < cellsToFill; i++) {
+                    gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
+                }
+
+                if (getView() != null) {
+                    updateViewState(currentState, false);
+                }
+            });
+        }).start();
     }
 
     //Hàm load sự kiện
@@ -525,7 +541,7 @@ public class MonthViewFragment extends Fragment {
 
         tv.setText(text);
         tv.setTypeface(Typeface.SANS_SERIF);
-        tv.setTextSize(18f);
+        tv.setTextSize(14f);
         tv.setGravity(Gravity.CENTER);
 
         //Lấy ngày hiện tại
@@ -622,20 +638,47 @@ public class MonthViewFragment extends Fragment {
     }
 
     private void highlightSelectedDay(TextView tv) {
+        Calendar today = Calendar.getInstance();
+        int todayDay = today.get(Calendar.DAY_OF_MONTH);
+        int todayMonth = today.get(Calendar.MONTH);
+        int todayYear = today.get(Calendar.YEAR);
+
+        // Lấy ngày của TextView đang chọn
         int day = Integer.parseInt(tv.getText().toString());
 
-        Calendar today = Calendar.getInstance();
-        boolean isToday = (day == today.get(Calendar.DAY_OF_MONTH)) &&
-                (currentMonthIndex == today.get(Calendar.MONTH)) &&
-                (currentYear == today.get(Calendar.YEAR));
-
-        if (isToday) {
+        if (day == todayDay && currentMonthIndex == todayMonth && currentYear == todayYear) {
+            // Nếu ngày được chọn là hôm nay → xanh
             tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
             tv.setTextColor(Color.WHITE);
             tv.setTypeface(Typeface.DEFAULT_BOLD);
-        }else {
+
+        } else if(day != todayDay && currentMonthIndex == todayMonth && currentYear == todayYear){
             tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
-            tv.setTextColor(Color.WHITE);
+            tv.setTextColor(Color.BLACK);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+            if (currentMonthIndex == todayMonth && currentYear == todayYear) {
+                // tìm đúng ngày hôm nay trong grid và đổi text thành xanh
+                for (int i = 0; i < gridFullMonthDays.getChildCount(); i++) {
+                    View v = gridFullMonthDays.getChildAt(i);
+                    if (v instanceof TextView) {
+                        TextView tvDay = (TextView) v;
+                        try {
+                            int d = Integer.parseInt(tvDay.getText().toString());
+                            if (d == todayDay) {
+                                tvDay.setTextColor(ContextCompat.getColor(requireContext(), R.color.bright_blue));
+                                tvDay.setTypeface(Typeface.DEFAULT_BOLD);
+                                break;
+                            }
+                        } catch (NumberFormatException e) {
+                            // bỏ qua ô trống
+                        }
+                    }
+                }
+            }
+        } else{
+            // Nếu ngày được chọn không phải hôm nay → xám
+            tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
+            tv.setTextColor(Color.BLACK);
             tv.setTypeface(Typeface.DEFAULT_BOLD);
         }
     }

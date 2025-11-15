@@ -2,148 +2,195 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="@color/pale_gray">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="New event"
-            android:gravity="center"
-            android:textSize="20dp"
-            android:paddingBottom="10dp"/>
-        <EditText
-            android:id="@+id/etTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Title" />
+        android:paddingTop="15dp">
 
-        <!-- Start date/time -->
         <LinearLayout
-            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:weightSum="100">
-
-            <TextView
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight="15"
-                android:text="Start" />
-
-            <TextView
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight="10" />
-
-            <Button
-                android:id="@+id/btnStartDate"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="40"
-                android:text="Pick Date"/>
-
-            <TextView
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight="5" />
-
-            <Button
-                android:id="@+id/btnStartTime"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="30"
-                android:text="Time"/>
-        </LinearLayout>
-
-        <!-- End date/time -->
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:weightSum="100">
-
-            <TextView
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight="15"
-                android:text="End" />
-
-            <TextView
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight="10" />
-
-            <Button
-                android:id="@+id/btnEndDate"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="40"
-                android:text="Pick Date"/>
-
-            <TextView
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight="5" />
-
-            <Button
-                android:id="@+id/btnEndTime"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="30"
-                android:text="Time"/>
-        </LinearLayout>
-
-        <!-- Timezone -->
-        <Spinner
-            android:id="@+id/spinnerTimezone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <!-- Repeat -->
-        <Spinner
-            android:id="@+id/spinnerRepeat"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:entries="@array/repeat_options"/>
-
-        <EditText
-            android:id="@+id/etDescription"
-            android:hint="Description"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minLines="3"/>
-
-        <!-- Color picker -->
-        <Button
-            android:gravity="center"
-            android:id="@+id/btnColorPicker"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Pick Color"/>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <Button
-                android:id="@+id/btnSave"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Add"/>
-
             <Button
                 android:id="@+id/btnCancel"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="30"
                 android:layout_height="wrap_content"
-                android:text="Cancel"/>
+                android:gravity="left"
+                android:text="Cancel"
+                android:backgroundTint="@color/pale_gray"
+                android:textColor="@color/blue"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="40"
+                android:gravity="center"
+                android:layout_height="wrap_content"
+                android:text="New event"
+                android:textSize="20dp"
+                android:paddingBottom="10dp"/>
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="0dp"
+                android:layout_weight="30"
+                android:layout_height="wrap_content"
+                android:text="Add"
+                android:backgroundTint="@color/pale_gray"
+                android:textColor="@color/save_button_text_color"/>
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="10dp">
+                <EditText
+                    android:id="@+id/etTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Title"
+                    android:background="@drawable/rounded_edittext"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/rounded_edittext">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:weightSum="100">
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight="15"
+                        android:text="Start" />
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight="10" />
+
+                    <Button
+                        android:id="@+id/btnStartDate"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="40"
+                        android:text="Pick Date"
+                        android:textSize="10dp"
+                        android:backgroundTint="@color/pale_gray2"
+                        android:textColor="@color/charcoal_gray"/>
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight="5" />
+
+                    <Button
+                        android:id="@+id/btnStartTime"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="30"
+                        android:textSize="10dp"
+                        android:text="Time"
+                        android:backgroundTint="@color/pale_gray2"
+                        android:textColor="@color/charcoal_gray"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/charcoal_gray"
+                    android:alpha="0.2"
+                    android:layout_marginVertical="4dp"/>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:weightSum="100">
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight="15"
+                        android:text="End" />
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight="10" />
+
+                    <Button
+                        android:id="@+id/btnEndDate"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="40"
+                        android:text="Pick Date"
+                        android:textSize="10dp"
+                        android:backgroundTint="@color/pale_gray2"
+                        android:textColor="@color/charcoal_gray"/>
+
+                    <TextView
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight="5" />
+
+                    <Button
+                        android:id="@+id/btnEndTime"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="30"
+                        android:textSize="10dp"
+                        android:text="Time"
+                        android:backgroundTint="@color/pale_gray2"
+                        android:textColor="@color/charcoal_gray"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp">
+
+                <EditText
+                    android:id="@+id/etDescription"
+                    android:hint="Description"
+                    android:layout_width="match_parent"
+                    android:layout_height="144dp"
+                    android:minLines="3"
+                    android:background="@drawable/rounded_edittext"/>
+
+            </LinearLayout>
+                <!-- Color picker -->
+                <Button
+                    android:gravity="center"
+                    android:id="@+id/btnColorPicker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:backgroundTint="@null"
+                    android:text="Pick Color"/>
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </ScrollView>

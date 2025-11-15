@@ -1,11 +1,15 @@
 package com.mtp.shedule;
 
+import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
+
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.graphics.Color;
 import android.media.metrics.Event;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.internal.TextWatcherAdapter;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 
@@ -23,11 +28,11 @@ public class AddEventActivity extends AppCompatActivity {
 
     EditText etTitle, etDescription;
     Button btnStartDate, btnStartTime, btnEndDate, btnEndTime, btnColorPicker, btnSave, btnCancel;
-    Spinner spinnerTimezone, spinnerRepeat;
     private ConnDatabase db;
     // Calendar objects for picking date & time
     Calendar startCal = Calendar.getInstance();
     Calendar endCal = Calendar.getInstance();
+    private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
 
     int selectedColor = Color.BLUE; // default
 
@@ -47,37 +52,38 @@ public class AddEventActivity extends AppCompatActivity {
         btnColorPicker = findViewById(R.id.btnColorPicker);
         btnSave = findViewById(R.id.btnSave);
         btnCancel = findViewById(R.id.btnCancel);
-        spinnerTimezone = findViewById(R.id.spinnerTimezone);
-        spinnerRepeat = findViewById(R.id.spinnerRepeat);
 
-        ArrayAdapter<CharSequence> repeatAdapter = ArrayAdapter.createFromResource(
-                this,
-                R.array.repeat_options,
-                android.R.layout.simple_spinner_item
-            );
-        repeatAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerRepeat.setAdapter(repeatAdapter);
-
-        ArrayAdapter<CharSequence> timezoneAdapter = ArrayAdapter.createFromResource(
-                this,
-                R.array.timezone_options,
-                android.R.layout.simple_spinner_item
-            );
-        timezoneAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerTimezone.setAdapter(timezoneAdapter);
-
+        etTitle.addTextChangedListener(watcher);
+        etDescription.addTextChangedListener(watcher);
 
         //DateTime Pickers
-        btnStartDate.setOnClickListener(v -> pickDate(startCal, btnStartDate));
-        btnStartTime.setOnClickListener(v -> pickTime(startCal, btnStartTime));
+        btnStartDate.setOnClickListener(v -> {
+            pickDate(startCal, btnStartDate);
+            updateSaveButtonState();
+        });
+        btnStartTime.setOnClickListener(v -> {
+            pickTime(startCal, btnStartTime);
+            updateSaveButtonState();
+        });
 
-        btnEndDate.setOnClickListener(v -> pickDate(endCal, btnEndDate));
-        btnEndTime.setOnClickListener(v -> pickTime(endCal, btnEndTime));
+        btnEndDate.setOnClickListener(v -> {
+            pickDate(endCal, btnEndDate);
+            updateSaveButtonState();
+        });
 
-        btnColorPicker.setOnClickListener(v -> chooseColor());
+        btnEndTime.setOnClickListener(v -> {
+            pickTime(endCal, btnEndTime);
+            updateSaveButtonState();
+        });
+        updateSaveButtonState();
+
+        btnColorPicker.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
+        btnColorPicker.setOnClickListener(v ->chooseColor());
 
         btnCancel.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> saveEvent());
+
+
     }
 
     // Pick Date
@@ -115,10 +121,17 @@ public class AddEventActivity extends AppCompatActivity {
 
     //Pick Color
     private void chooseColor() {
-        // bạn có thể thay bằng dialog chọn màu tùy ý
-        selectedColor = Color.RED;
-        btnColorPicker.setBackgroundColor(selectedColor);
-        Toast.makeText(this, "Color selected!", Toast.LENGTH_SHORT).show();
+        SelectColorDialog dialog = new SelectColorDialog();
+
+        // Truyền mã màu INT để SelectColorDialog đánh dấu ô màu đúng
+        dialog.setSelectedColorIndex(selectedColorIndex);
+
+        dialog.setOnColorSelectedListener(colorIndex -> {
+
+            selectedColorIndex = colorIndex;
+            btnColorPicker.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
+        });
+        dialog.show(getSupportFragmentManager(), "ColorDialog");
     }
 
     //Save Event
@@ -127,16 +140,14 @@ public class AddEventActivity extends AppCompatActivity {
         String desc = etDescription.getText().toString().trim();
         long start = startCal.getTimeInMillis();
         long end = endCal.getTimeInMillis();
-        String timezone = spinnerTimezone.getSelectedItem().toString();
-        String repeat = spinnerRepeat.getSelectedItem().toString();
 
-        if (title.isEmpty() || desc.isEmpty() || repeat.isEmpty() || timezone.isEmpty() || start == 0 || end == 0) {
+        if (title.isEmpty() || desc.isEmpty() || start == 0 || end == 0) {
             Toast.makeText(this, "Please enter title", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        EventEntity event = new EventEntity(title,desc,start,end,timezone,repeat);
-        event.setColor(1);
+        EventEntity event = new EventEntity(title,desc,start,end);
+        event.setColor(selectedColorIndex);
 
         new Thread(() -> {
             db.eventDao().insertEvent(event);
@@ -144,5 +155,24 @@ public class AddEventActivity extends AppCompatActivity {
 
         Toast.makeText(this, "Event saved!", Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    TextWatcher watcher = new TextWatcher() {
+        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        @Override public void afterTextChanged(Editable s) {
+            updateSaveButtonState();
+        }
+    };
+
+    private void updateSaveButtonState() {
+        boolean isTitleFilled = !etTitle.getText().toString().trim().isEmpty();
+        boolean isDescFilled = !etDescription.getText().toString().trim().isEmpty();
+
+        boolean isStartSet = startCal.get(Calendar.YEAR) > 1970;
+        boolean isEndSet = endCal.get(Calendar.YEAR) > 1970;
+
+        boolean enable = isTitleFilled && isDescFilled && isStartSet && isEndSet;
+        btnSave.setEnabled(enable);
     }
 }

@@ -3,4 +3,6 @@
     <item type="id" name="animator_tag" />
     <item type="id" name="row_index_tag" />
     <item type="id" name="day_info_tag" />
+    <item name="tag_event_id" type="id"/>
+    <item name="tag_event_column" type="id"/>
 </resources>
