@@ -11,25 +11,21 @@ import com.mtp.shedule.fragment.calendarfragment.YearViewFragment;
 
 public class CalendarAdapter extends FragmentStateAdapter {
 
-    public CalendarAdapter(@NonNull Fragment fragment) {
-        super(fragment);
+    private final Fragment[] fragments = new Fragment[4];
+
+    public CalendarAdapter(@NonNull Fragment parentFragment) {
+        super(parentFragment);
+
+        fragments[0] = new YearViewFragment();
+        fragments[1] = new MonthViewFragment();
+        fragments[2] = new WeekViewFragment();
+        fragments[3] = new DayViewFragment();
     }
 
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        switch (position) {
-            case 0:
-                return new YearViewFragment();
-            case 1:
-                return new MonthViewFragment();
-            case 2:
-                return new WeekViewFragment();
-            case 3:
-                return new DayViewFragment();
-            default:
-                return new YearViewFragment();
-        }
+        return fragments[position];
     }
 
     @Override

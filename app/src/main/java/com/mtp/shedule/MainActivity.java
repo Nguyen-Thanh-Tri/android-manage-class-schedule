@@ -2,6 +2,7 @@ package com.mtp.shedule;
 
 import android.os.Bundle;
 import android.view.ViewTreeObserver;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 newFragment = new TeachersFragment();
             } else if (id == R.id.nav_settings && !(currentFragment instanceof SettingsFragment)) {
                 newFragment = new SettingsFragment();
-            } else if (id == R.id.nav_calendar) {
+            } else if (id == R.id.nav_calendar && !(currentFragment instanceof CalendarFragment)) {
                 newFragment = new CalendarFragment();
             }
 
@@ -86,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------- Helper method thay fragment ----------------
     private void replaceFragment(Fragment fragment) {
+        currentFragment = fragment;
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)

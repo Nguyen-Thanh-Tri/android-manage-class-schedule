@@ -17,4 +17,8 @@
         <item name="android:background">@drawable/bg_month_cell</item>
     </style>
 
+    <style name="ShapeAppearance.App.Circle" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">999dp</item>
+    </style>
 </resources>

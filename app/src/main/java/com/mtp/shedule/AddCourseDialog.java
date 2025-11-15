@@ -128,10 +128,6 @@ public class AddCourseDialog extends DialogFragment {
 
                 selectedColorIndex = colorIndex;
                 btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
-
-                // Lưu ý: Nếu bạn cần cập nhật selectedColor INT để mở Dialog lại đúng màu,
-                // bạn cần thêm logic ánh xạ ngược từ Drawable ID sang Color INT ở đây.
-                // (Tạm thời bỏ qua nếu không cần tính năng đó)
             });
             dialog.show(getParentFragmentManager(), "ColorDialog");
         });
