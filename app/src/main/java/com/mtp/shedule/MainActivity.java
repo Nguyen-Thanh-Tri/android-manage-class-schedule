@@ -1,6 +1,7 @@
 package com.mtp.shedule;
 
 import android.os.Bundle;
+import android.view.ViewTreeObserver;
 import android.view.View;
 import android.widget.TextView;
 
@@ -22,8 +23,8 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
-    Toolbar toolbar;
-    TextView toolbarTitle;
+    private Toolbar toolbar;
+    private TextView toolbarTitle;
     private Fragment currentFragment;
 
     @Override
@@ -33,11 +34,10 @@ public class MainActivity extends AppCompatActivity {
 
         // ---------------- Toolbar ----------------
         toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         toolbarTitle = findViewById(R.id.toolbar_title);
+        setSupportActionBar(toolbar);
 
-        // ---------------- Drawer Layout ----------------
+        // Navigation icon mở/đóng Drawer
         drawerLayout = findViewById(R.id.drawer_layout);
         toolbar.setNavigationOnClickListener(v -> {
             if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -49,23 +49,17 @@ public class MainActivity extends AppCompatActivity {
 
         // ---------------- Navigation Drawer ----------------
         NavigationView navigationView = findViewById(R.id.navigation_view);
-        //toppadding cho navigation
-//        navigationView.setPadding(
-//                navigationView.getPaddingLeft(),
-//                getStatusBarHeight(),
-//                navigationView.getPaddingRight(),
-//                navigationView.getPaddingBottom()
-//        );
 
-        // Load fragment mặc định (CalendarFragment)
+        // Load fragment mặc định
         if (savedInstanceState == null) {
-            replaceFragment(new CalendarFragment());
-            navigationView.setCheckedItem(R.id.nav_calendar);
+            replaceFragment(new TimeTableFragment());
+            navigationView.setCheckedItem(R.id.nav_timetable);
+            toolbarTitle.setText(getString(R.string.main_screen_title));
         }
 
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
-            String title = Objects.requireNonNull(item.getTitle()).toString(); // lấy title từ menu item
+            String title = Objects.requireNonNull(item.getTitle()).toString();
             Fragment newFragment = null;
 
             if (id == R.id.nav_timetable && !(currentFragment instanceof TimeTableFragment)) {
@@ -83,9 +77,6 @@ public class MainActivity extends AppCompatActivity {
             if (newFragment != null) {
                 replaceFragment(newFragment);
                 navigationView.setCheckedItem(id);
-
-                // Cập nhật tiêu đề Toolbar
-                TextView toolbarTitle = findViewById(R.id.toolbar_title);
                 toolbarTitle.setText(title);
             }
 
@@ -102,12 +93,5 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }
-//    private int getStatusBarHeight() {
-//        int result = 0;
-//        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-//        if (resourceId > 0) {
-//            result = getResources().getDimensionPixelSize(resourceId);
-//        }
-//        return result;
-//    }
+
 }
