@@ -5,7 +5,7 @@
     android:layout_height="200dp"
     android:orientation="vertical"
     android:gravity="bottom"
-    android:background="@drawable/gradient_bg_orange"
+    android:background="@drawable/bg_header"
     android:padding="16dp"
     android:theme="@style/ThemeOverlay.AppCompat.Dark">
 
@@ -13,6 +13,7 @@
         android:id="@+id/img_logo"
         android:layout_width="80dp"
         android:layout_height="80dp"
+        android:layout_gravity=""
         android:src="@drawable/logo"
         android:scaleType="fitCenter"
         android:layout_marginBottom="16dp"/>

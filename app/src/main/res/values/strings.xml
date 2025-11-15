@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Shedule</string>
+    <string name="app_name">Schedule</string>
     <string name="main_screen_title">Time Table</string>
 
     <string-array name="repeat_options">

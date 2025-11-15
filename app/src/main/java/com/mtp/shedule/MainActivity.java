@@ -1,6 +1,7 @@
 package com.mtp.shedule;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         // ---------------- Toolbar ----------------
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         toolbarTitle = findViewById(R.id.toolbar_title);
 
         // ---------------- Drawer Layout ----------------
@@ -47,6 +49,13 @@ public class MainActivity extends AppCompatActivity {
 
         // ---------------- Navigation Drawer ----------------
         NavigationView navigationView = findViewById(R.id.navigation_view);
+        //toppadding cho navigation
+//        navigationView.setPadding(
+//                navigationView.getPaddingLeft(),
+//                getStatusBarHeight(),
+//                navigationView.getPaddingRight(),
+//                navigationView.getPaddingBottom()
+//        );
 
         // Load fragment mặc định (CalendarFragment)
         if (savedInstanceState == null) {
@@ -93,4 +102,12 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }
+//    private int getStatusBarHeight() {
+//        int result = 0;
+//        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+//        if (resourceId > 0) {
+//            result = getResources().getDimensionPixelSize(resourceId);
+//        }
+//        return result;
+//    }
 }
