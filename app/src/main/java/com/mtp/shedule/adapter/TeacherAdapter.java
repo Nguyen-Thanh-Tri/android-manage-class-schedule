@@ -120,21 +120,6 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
         notifyDataSetChanged();
     }
 
-    // ---------------- HIGHLIGHT ----------------
-    private Spannable highlightText(String text, String query) {
-        if (text == null) text = "";
-        SpannableString spannable = new SpannableString(text);
-
-        if (query == null || query.isEmpty()) return spannable;
-
-        String lowerText = text.toLowerCase();
-        int start = lowerText.indexOf(query);
-        if (start >= 0) {
-            int end = Math.min(start + query.length(), text.length());
-            spannable.setSpan(new BackgroundColorSpan(0xFFFFFF00), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        return spannable;
-    }
 
     // ---------------- ADAPTER CORE ----------------
     @NonNull
@@ -149,10 +134,10 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
         if (position < 0 || position >= teacherList.size()) return;
         TeacherEntity teacher = teacherList.get(position);
 
-        holder.tvName.setText(highlightText(teacher.getName(), searchQuery));
-        holder.tvPosition.setText(highlightText(teacher.getPosition(), searchQuery));
-        holder.tvPhone.setText(highlightText(teacher.getPhone(), searchQuery));
-        holder.tvEmail.setText(highlightText(teacher.getEmail(), searchQuery));
+        holder.tvName.setText(teacher.getName());
+        holder.tvPosition.setText(teacher.getPosition());
+        holder.tvPhone.setText(teacher.getPhone());
+        holder.tvEmail.setText(teacher.getEmail());
 
         int colorIndex = teacher.getColor();
         holder.cardView.setBackgroundResource(

@@ -54,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
             replaceFragment(new TimeTableFragment());
             navigationView.setCheckedItem(R.id.nav_timetable);
             toolbarTitle.setText(getString(R.string.main_screen_title));
-            centerToolbarTitle();
         }
 
         navigationView.setNavigationItemSelectedListener(item -> {
@@ -78,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
                 replaceFragment(newFragment);
                 navigationView.setCheckedItem(id);
                 toolbarTitle.setText(title);
-                centerToolbarTitle(); // căn giữa sau khi đổi title
             }
 
             drawerLayout.closeDrawer(GravityCompat.START);
@@ -88,31 +86,10 @@ public class MainActivity extends AppCompatActivity {
 
     // ---------------- Helper method thay fragment ----------------
     private void replaceFragment(Fragment fragment) {
-        currentFragment = fragment;
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }
 
-    // ---------------- Helper method căn giữa Toolbar title ----------------
-    private void centerToolbarTitle() {
-        toolbar.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                toolbar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                int toolbarWidth = toolbar.getWidth();
-                int titleWidth = toolbarTitle.getWidth();
-
-                int navIconWidth = 0;
-                if (toolbar.getNavigationIcon() != null) {
-                    navIconWidth = toolbar.getNavigationIcon().getIntrinsicWidth() + toolbar.getContentInsetStart();
-                }
-
-                int offset = (toolbarWidth - titleWidth) / 2 - navIconWidth;
-                toolbarTitle.setTranslationX(offset);
-            }
-        });
-    }
 }
