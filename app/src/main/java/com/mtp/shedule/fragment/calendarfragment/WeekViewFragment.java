@@ -14,6 +14,8 @@ import android.view.ViewGroup;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.gridlayout.widget.GridLayout;
+
+import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -93,6 +95,10 @@ public class WeekViewFragment extends Fragment {
                         eventsByColumn.computeIfAbsent(diffDays, k -> new java.util.ArrayList<>()).add(e);
                     }
                 }
+
+            if (!isAdded()) {
+                return;
+            }
 
             requireActivity().runOnUiThread(() -> {
                 removeOldEvents();
@@ -180,12 +186,23 @@ public class WeekViewFragment extends Fragment {
         ViewGroup.LayoutParams params = eventDrawingArea.getLayoutParams();
         params.height = (HOURS_IN_DAY) * hourHeightPx+90; //  0->24
         eventDrawingArea.setLayoutParams(params);
-        eventDrawingArea.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-            drawDaySeparators();
+        // SỬA ĐỔI QUAN TRỌNG: Xóa Listener sau khi chạy
+        eventDrawingArea.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                // Đảm bảo không gọi lại nhiều lần
+                eventDrawingArea.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                drawDaySeparators();
+            }
         });
     }
     private void drawDaySeparators() {
         eventDrawingArea.post(() -> {
+
+            if (!isAdded()) {
+                return;
+            }
+
             int width = eventDrawingArea.getWidth();
             if (width == 0) return;
 
@@ -311,6 +328,9 @@ public class WeekViewFragment extends Fragment {
 
     private void drawEventsForDay(List<EventEntity> events, int columnIndex) {
         eventDrawingArea.post(() -> {
+            if (!isAdded()) {
+                return;
+            }
 
             float density = getResources().getDisplayMetrics().density;
             float hourHeightPx = HOUR_HEIGHT_DP * density;

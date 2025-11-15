@@ -36,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar);
         toolbarTitle = findViewById(R.id.toolbar_title);
         setSupportActionBar(toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
+
 
         // Navigation icon mở/đóng Drawer
         drawerLayout = findViewById(R.id.drawer_layout);
