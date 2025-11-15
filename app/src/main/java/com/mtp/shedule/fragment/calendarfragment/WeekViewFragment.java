@@ -2,6 +2,7 @@ package com.mtp.shedule.fragment.calendarfragment;
 
 import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -23,6 +24,8 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.mtp.shedule.AddEventActivity;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
@@ -46,6 +49,7 @@ public class WeekViewFragment extends Fragment {
     private static final int HOURS_IN_DAY = 24;
     private static final float HOUR_HEIGHT_DP = 70;
     TextView lastSelectedDayView = null;
+    FloatingActionButton fabAddEvent;
     int selectedDayOfMonth = -1;
      ConnDatabase db;
 
@@ -59,6 +63,15 @@ public class WeekViewFragment extends Fragment {
         gridWeekDays = view.findViewById(R.id.gridWeekDays);
         timeAxisContainer = view.findViewById(R.id.time_axis);
         eventDrawingArea = view.findViewById(R.id.eventDrawingArea);
+
+        fabAddEvent = view.findViewById(R.id.fabAddEvent);
+
+        //add event
+        fabAddEvent.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), AddEventActivity.class);
+            startActivity(intent);
+        });
+
 
         findWeekStart();
         displayWeek();

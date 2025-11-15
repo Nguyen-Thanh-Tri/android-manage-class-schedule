@@ -18,11 +18,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
+import com.mtp.shedule.fragment.calendarfragment.MonthViewFragment;
 
 import java.util.List;
 
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
-
+    private OnEventDeletedListener listener1;
     private final List<EventEntity> eventList;
     private final Context context;
     final ConnDatabase db;
@@ -34,11 +35,18 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         this.db = ConnDatabase.getInstance(context);
     }
 
+    public interface OnEventDeletedListener {
+        void onEventDeleted();
+    }
+    public void setOnEventDeletedListener(OnEventDeletedListener listener1) {
+        this.listener1 = listener1;
+    }
+
     public interface OnItemClickListener {
         void onItemClick(EventEntity event);
     }
 
-    private OnItemClickListener listener;
+    OnItemClickListener listener;
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
@@ -75,6 +83,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                                 eventList.remove(holder.getAdapterPosition());
                                 notifyItemRemoved(holder.getAdapterPosition());
                                 Toast.makeText(v.getContext(), "Deleted", Toast.LENGTH_SHORT).show();
+                                if (listener1 != null) {
+                                    listener1.onEventDeleted();
+                                }
                             });
                         }).start();
                     })
