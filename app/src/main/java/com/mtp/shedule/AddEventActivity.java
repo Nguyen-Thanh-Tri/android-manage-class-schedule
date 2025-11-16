@@ -399,36 +399,23 @@ public class AddEventActivity extends AppCompatActivity {
         }
     }
     private void updateStartAndEndDate(int targetCalendarDay) {
+        long duration = endCal.getTimeInMillis() - startCal.getTimeInMillis();
 
-        int startHour = startCal.get(Calendar.HOUR_OF_DAY);
-        int startMinute = startCal.get(Calendar.MINUTE);
-
-
-        Calendar tempCal = Calendar.getInstance();
-        tempCal.set(Calendar.HOUR_OF_DAY, startHour);
-        tempCal.set(Calendar.MINUTE, startMinute);
-        tempCal.set(Calendar.SECOND, 0);
-        tempCal.set(Calendar.MILLISECOND, 0);
-
-
-        int currentDay = tempCal.get(Calendar.DAY_OF_WEEK);
+        Calendar tempCal = (Calendar) startCal.clone();
+        int currentDay = tempCal.get(Calendar.DAY_OF_WEEK); // Ngày trong tuần hiện tại của startCal
         int daysToAdd = targetCalendarDay - currentDay;
 
         if (daysToAdd < 0) {
             daysToAdd += 7;
-        }
-
-        else if (daysToAdd == 0) {
-            if (tempCal.before(Calendar.getInstance())) {
-                daysToAdd = 7; //
-            }
+        }else if (daysToAdd == 0) {
         }
 
         tempCal.add(Calendar.DAY_OF_YEAR, daysToAdd);
 
         startCal.setTimeInMillis(tempCal.getTimeInMillis());
 
-        autoUpdateEndTime(false);
+        endCal.setTimeInMillis(startCal.getTimeInMillis() + duration);
+
 
         updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
         updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
