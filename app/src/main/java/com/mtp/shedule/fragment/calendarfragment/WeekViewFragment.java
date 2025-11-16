@@ -73,9 +73,6 @@ public class WeekViewFragment extends Fragment {
             startActivity(intent);
         });
 
-        // Set up fragment result listener for event updates
-        setupFragmentResultListeners();
-
         findWeekStart();
         updateHeaderTitle();
         displayWeek();
