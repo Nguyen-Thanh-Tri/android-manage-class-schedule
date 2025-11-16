@@ -130,6 +130,10 @@ public class AddEventActivity extends AppCompatActivity {
 
                     //Tự động cập nhật EndCal sau +1h
                     autoUpdateEndTime(true);
+                    if (spinnerRepeatType.getSelectedItemPosition() == 1) {
+                        int dayIndex = getDayOfWeekIndex(startCal);
+                        spinnerDayOfWeek.setSelection(dayIndex);
+                    }
                     updateSaveButtonState();
                 },
                 startCal.get(Calendar.YEAR),
@@ -146,7 +150,7 @@ public class AddEventActivity extends AppCompatActivity {
                     startCal.set(Calendar.MINUTE, minute);
                     updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
 
-                    // 🚀Tự động cập nhật EndCal sau +1h
+                    // Tự động cập nhật EndCal sau +1h
                     autoUpdateEndTime(true);
                     updateSaveButtonState();
                 },
@@ -186,6 +190,10 @@ public class AddEventActivity extends AppCompatActivity {
                     updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
 
                     validateAndAdjustEndTime();
+                    if (spinnerRepeatType.getSelectedItemPosition() == 1) {
+                        int dayIndex = getDayOfWeekIndex(startCal);
+                        spinnerDayOfWeek.setSelection(dayIndex);
+                    }
                     updateSaveButtonState();
                 },
                 endCal.get(Calendar.HOUR_OF_DAY),
@@ -231,10 +239,26 @@ public class AddEventActivity extends AppCompatActivity {
             public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
                 if (position == 1) { // Weekly (Course) selected
                     layoutCourseFields.setVisibility(android.view.View.VISIBLE);
+                    int dayIndex = getDayOfWeekIndex(startCal);
+                    spinnerDayOfWeek.setSelection(dayIndex);
                 } else {
                     layoutCourseFields.setVisibility(android.view.View.GONE);
                 }
                 updateSaveButtonState();
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        spinnerDayOfWeek.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+                // Đảm bảo chỉ thực hiện khi chế độ là Weekly (Course)
+                if (spinnerRepeatType.getSelectedItemPosition() == 1) {
+                    int targetCalendarDay = getCalendarDayOfWeek(position);
+                    updateStartAndEndDate(targetCalendarDay);
+                }
             }
 
             @Override
@@ -351,5 +375,63 @@ public class AddEventActivity extends AppCompatActivity {
         }
 
         btnSave.setEnabled(enable);
+    }
+    private int getDayOfWeekIndex(Calendar cal) {
+        int androidDayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
+
+        // Nếu là Chủ nhật (1), thì index spinner là 6.
+        if (androidDayOfWeek == Calendar.SUNDAY) {
+            return 6;
+        }
+        // Nếu là Thứ Hai (2), index là 0. Thứ Bảy (7), index là 5.
+        // Index = androidDayOfWeek - 2
+        else {
+            return androidDayOfWeek - 2;
+        }
+    }
+    private int getCalendarDayOfWeek(int spinnerIndex) {
+        // Spinner Index: 0=Monday, 6=Sunday
+        // Calendar Day: 1=Sunday, 2=Monday, ..., 7=Saturday
+        if (spinnerIndex == 6) {
+            return Calendar.SUNDAY;
+        } else {
+            return spinnerIndex + 2; // Monday (0) -> 2, Tuesday (1) -> 3, etc.
+        }
+    }
+    private void updateStartAndEndDate(int targetCalendarDay) {
+
+        int startHour = startCal.get(Calendar.HOUR_OF_DAY);
+        int startMinute = startCal.get(Calendar.MINUTE);
+
+
+        Calendar tempCal = Calendar.getInstance();
+        tempCal.set(Calendar.HOUR_OF_DAY, startHour);
+        tempCal.set(Calendar.MINUTE, startMinute);
+        tempCal.set(Calendar.SECOND, 0);
+        tempCal.set(Calendar.MILLISECOND, 0);
+
+
+        int currentDay = tempCal.get(Calendar.DAY_OF_WEEK);
+        int daysToAdd = targetCalendarDay - currentDay;
+
+        if (daysToAdd < 0) {
+            daysToAdd += 7;
+        }
+
+        else if (daysToAdd == 0) {
+            if (tempCal.before(Calendar.getInstance())) {
+                daysToAdd = 7; //
+            }
+        }
+
+        tempCal.add(Calendar.DAY_OF_YEAR, daysToAdd);
+
+        startCal.setTimeInMillis(tempCal.getTimeInMillis());
+
+        autoUpdateEndTime(false);
+
+        updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
+        updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
+        updateSaveButtonState();
     }
 }
