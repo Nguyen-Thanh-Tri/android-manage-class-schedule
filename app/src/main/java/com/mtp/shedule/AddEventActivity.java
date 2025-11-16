@@ -23,6 +23,7 @@ import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 
 import java.util.Calendar;
+import java.util.Locale;
 
 public class AddEventActivity extends AppCompatActivity {
 
@@ -34,14 +35,14 @@ public class AddEventActivity extends AppCompatActivity {
     Calendar endCal = Calendar.getInstance();
     private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
 
-    int selectedColor = Color.BLUE; // default
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_event);
 
         db = ConnDatabase.getInstance(this);
+
+        endCal.add(Calendar.HOUR_OF_DAY, 1);
 
         etTitle = findViewById(R.id.etTitle);
         etDescription = findViewById(R.id.etDescription);
@@ -58,23 +59,28 @@ public class AddEventActivity extends AppCompatActivity {
 
         //DateTime Pickers
         btnStartDate.setOnClickListener(v -> {
-            pickDate(startCal, btnStartDate);
+            pickStartDate();
             updateSaveButtonState();
         });
         btnStartTime.setOnClickListener(v -> {
-            pickTime(startCal, btnStartTime);
+            pickStartTime();
             updateSaveButtonState();
         });
 
         btnEndDate.setOnClickListener(v -> {
-            pickDate(endCal, btnEndDate);
+            pickEndDate();
             updateSaveButtonState();
         });
 
         btnEndTime.setOnClickListener(v -> {
-            pickTime(endCal, btnEndTime);
+            pickEndTime();
             updateSaveButtonState();
         });
+
+
+        updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
+        updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
+
         updateSaveButtonState();
 
         btnColorPicker.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
@@ -86,35 +92,90 @@ public class AddEventActivity extends AppCompatActivity {
 
     }
 
-    // Pick Date
     @SuppressLint("SetTextI18n")
-    private void pickDate(Calendar cal, Button btn) {
+    private void updateDateTimeButtons(Calendar cal, Button btnDate, Button btnTime) {
+        // Cập nhật Button Ngày
+        int day = cal.get(Calendar.DAY_OF_MONTH);
+        int month = cal.get(Calendar.MONTH);
+        int year = cal.get(Calendar.YEAR);
+        btnDate.setText(day + "/" + (month + 1) + "/" + year);
+
+        // Cập nhật Button Giờ
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        int minute = cal.get(Calendar.MINUTE);
+        btnTime.setText(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
+    }
+
+    // Pick start
+    private void pickStartDate() {
         new DatePickerDialog(
                 this,
                 (view, year, month, day) -> {
-                    cal.set(Calendar.YEAR, year);
-                    cal.set(Calendar.MONTH, month);
-                    cal.set(Calendar.DAY_OF_MONTH, day);
-                    btn.setText(day + "/" + (month + 1) + "/" + year);
+                    startCal.set(year, month, day);
+                    updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
+
+                    //Tự động cập nhật EndCal sau +1h
+                    autoUpdateEndTime(true);
+                    updateSaveButtonState();
                 },
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH)
+                startCal.get(Calendar.YEAR),
+                startCal.get(Calendar.MONTH),
+                startCal.get(Calendar.DAY_OF_MONTH)
         ).show();
     }
 
-    // Pick Time
-    @SuppressLint("DefaultLocale")
-    private void pickTime(Calendar cal, Button btn) {
+    private void pickStartTime() {
         new TimePickerDialog(
                 this,
                 (view, hour, minute) -> {
-                    cal.set(Calendar.HOUR_OF_DAY, hour);
-                    cal.set(Calendar.MINUTE, minute);
-                    btn.setText(String.format("%02d:%02d", hour, minute));
+                    startCal.set(Calendar.HOUR_OF_DAY, hour);
+                    startCal.set(Calendar.MINUTE, minute);
+                    updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
+
+                    // 🚀Tự động cập nhật EndCal sau +1h
+                    autoUpdateEndTime(true);
+                    updateSaveButtonState();
                 },
-                cal.get(Calendar.HOUR_OF_DAY),
-                cal.get(Calendar.MINUTE),
+                startCal.get(Calendar.HOUR_OF_DAY),
+                startCal.get(Calendar.MINUTE),
+                true
+        ).show();
+    }
+
+    //picker end
+    private void pickEndDate() {
+        new DatePickerDialog(
+                this,
+                (view, year, month, day) -> {
+                    endCal.set(year, month, day);
+
+                    // Cập nhật Button
+                    updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
+
+                    validateAndAdjustEndTime();
+                    updateSaveButtonState();
+                },
+                endCal.get(Calendar.YEAR),
+                endCal.get(Calendar.MONTH),
+                endCal.get(Calendar.DAY_OF_MONTH)
+        ).show();
+    }
+
+    private void pickEndTime() {
+        new TimePickerDialog(
+                this,
+                (view, hour, minute) -> {
+                    endCal.set(Calendar.HOUR_OF_DAY, hour);
+                    endCal.set(Calendar.MINUTE, minute);
+
+                    // Cập nhật Button
+                    updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
+
+                    validateAndAdjustEndTime();
+                    updateSaveButtonState();
+                },
+                endCal.get(Calendar.HOUR_OF_DAY),
+                endCal.get(Calendar.MINUTE),
                 true
         ).show();
     }
@@ -141,8 +202,13 @@ public class AddEventActivity extends AppCompatActivity {
         long start = startCal.getTimeInMillis();
         long end = endCal.getTimeInMillis();
 
-        if (title.isEmpty() || desc.isEmpty() || start == 0 || end == 0) {
-            Toast.makeText(this, "Please enter title", Toast.LENGTH_SHORT).show();
+        if (title.isEmpty() || desc.isEmpty()) {
+            Toast.makeText(this, "Use your finger and punch on me, please", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (endCal.before(startCal)) {
+            Toast.makeText(this, "timeend sooner timestart? are you the Alien.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -166,6 +232,27 @@ public class AddEventActivity extends AppCompatActivity {
         // Set result for calling activity/fragment
         setResult(RESULT_OK);
         finish();
+    }
+
+    // Tự động cập nhật endCal = startCal + 1h
+    private void autoUpdateEndTime(boolean showAlert) {
+        endCal.setTimeInMillis(startCal.getTimeInMillis());
+        endCal.add(Calendar.HOUR_OF_DAY, 1);
+
+        updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
+
+    }
+
+
+    // Kiểm tra endCal > startCal
+    private void validateAndAdjustEndTime() {
+        if (endCal.before(startCal)) {
+            // Thông báo lỗi
+            Toast.makeText(this, "timeend sooner timestart? are you the Alien", Toast.LENGTH_LONG).show();
+
+            // Tự động chỉnh endCal = startCal + 1h
+            autoUpdateEndTime(false);
+        }
     }
 
     TextWatcher watcher = new TextWatcher() {

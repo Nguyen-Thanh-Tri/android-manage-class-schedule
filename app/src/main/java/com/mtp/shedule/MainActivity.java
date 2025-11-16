@@ -54,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
 
         // Load fragment mặc định
         if (savedInstanceState == null) {
-            replaceFragment(new TimeTableFragment());
-            navigationView.setCheckedItem(R.id.nav_timetable);
+            replaceFragment(new CalendarFragment());
+            navigationView.setCheckedItem(R.id.nav_calendar);
             toolbarTitle.setText(getString(R.string.main_screen_title));
         }
 

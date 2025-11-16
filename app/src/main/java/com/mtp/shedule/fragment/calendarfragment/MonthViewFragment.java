@@ -43,7 +43,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
-public class MonthViewFragment extends Fragment {
+public class MonthViewFragment extends Fragment implements EventAdapter.OnEventDeletedListener {
     // Enum to manage the display state of the calendar
     private enum ViewState implements Serializable {
         MONTH_VIEW,
@@ -71,6 +71,7 @@ public class MonthViewFragment extends Fragment {
     private static final int MAX_ROWS = 6;
     private boolean isDragging = false;
     private ConnDatabase db;
+    FloatingActionButton fabAddEvent;
     private int actualRowsNeeded = MAX_ROWS;
     // Biến lưu trữ ngày đang được chọn để load event
     Calendar selectedDay = Calendar.getInstance();
@@ -79,6 +80,21 @@ public class MonthViewFragment extends Fragment {
     
     // Activity result launcher for AddEventActivity
     private ActivityResultLauncher<Intent> addEventLauncher;
+
+    @Override
+    public void onEventDeleted() {
+        if (isAdded() && getView() != null) {
+            getView().post(() -> {
+                loadEventsForSelectedDay(
+                        selectedDay.get(Calendar.DAY_OF_MONTH),
+                        selectedDay.get(Calendar.MONTH),
+                        selectedDay.get(Calendar.YEAR)
+                );
+
+                displayCalendar();
+            });
+        }
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -140,7 +156,8 @@ public class MonthViewFragment extends Fragment {
         gridFullMonthDays = view.findViewById(R.id.gridFullMonthDays);
         ivDragHandle = view.findViewById(R.id.ivDragHandle);
 
-        FloatingActionButton fabAddEvent = view.findViewById(R.id.fabAddEvent);
+        fabAddEvent = view.findViewById(R.id.fabAddEvent);
+        eventAdapter.setOnEventDeletedListener(this);
 
         setupDragHandle();
         displayCalendar();
@@ -172,6 +189,7 @@ public class MonthViewFragment extends Fragment {
                 selectedDay.get(Calendar.MONTH),
                 selectedDay.get(Calendar.YEAR)
         );
+        displayCalendar();
     }
 
     @Override
@@ -208,13 +226,16 @@ public class MonthViewFragment extends Fragment {
         selectedDay.set(Calendar.SECOND, 0);
         selectedDay.set(Calendar.MILLISECOND, 0);
 
-
         if (getView() != null) {
+            gridFullMonthDays.removeAllViews();
             displayCalendar();
 
             loadEventsForSelectedDay(newSelectedDay, newMonthIndex, year);
 
-            updateViewState(currentState, false);
+            // Cập nhật view state sau khi vẽ xong
+            gridFullMonthDays.post(() -> {
+                updateViewState(currentState, false);
+            });
         }
     }
 
@@ -457,7 +478,8 @@ public class MonthViewFragment extends Fragment {
         int totalCellsNeeded = dayOffset + daysInMonth;
         actualRowsNeeded = (int) Math.ceil((double) totalCellsNeeded / DAYS_IN_WEEK);
 
-
+        final int displayingMonth = currentMonthIndex;
+        final int displayingYear = currentYear;
 
         new Thread(() -> {
             List<EventEntity> events = db.eventDao().getEventsByMonth(
@@ -473,6 +495,10 @@ public class MonthViewFragment extends Fragment {
             }
 
             requireActivity().runOnUiThread(() -> {
+                if (displayingMonth != currentMonthIndex || displayingYear != currentYear) {
+                    // Tháng đã thay đổi, bỏ qua kết quả này
+                    return;
+                }
                 // DRAW EMPTY CELLS AT THE BEGINNING OF THE MONTH
                 for (int i = 0; i < dayOffset; i++) {
                     gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
