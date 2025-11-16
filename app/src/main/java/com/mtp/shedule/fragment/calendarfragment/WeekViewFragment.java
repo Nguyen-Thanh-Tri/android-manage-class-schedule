@@ -73,6 +73,9 @@ public class WeekViewFragment extends Fragment {
             startActivity(intent);
         });
 
+        // Set up fragment result listener for event updates
+        setupFragmentResultListeners();
+
         findWeekStart();
         updateHeaderTitle();
         displayWeek();
@@ -129,7 +132,6 @@ public class WeekViewFragment extends Fragment {
                 for (java.util.Map.Entry<Integer, List<EventEntity>> entry : eventsByColumn.entrySet()) {
                     drawEventsForDay(entry.getValue(), entry.getKey());
                 }
-
             });
         }).start();
     }
@@ -345,19 +347,19 @@ public class WeekViewFragment extends Fragment {
         currentWeekStart.set(Calendar.MILLISECOND, 0);
 
     }
+    
     private void displayWeek() {
         gridWeekDays.removeAllViews();
         Calendar dayIterator = (Calendar) currentWeekStart.clone();
 
         for (int i = 0; i < DAYS_IN_WEEK; i++) {
-            int day = dayIterator.get(Calendar.DAY_OF_MONTH);
             int dayOfMonth = dayIterator.get(Calendar.DAY_OF_MONTH);
             int monthIndex = dayIterator.get(Calendar.MONTH);
             int year = dayIterator.get(Calendar.YEAR);
 
             // i là cellIndex (0 đến 6)
             TextView tvDay = createWeekDayTextView(
-                    String.valueOf(day),
+                    String.valueOf(dayOfMonth),
                     true,
                     i,
                     dayOfMonth,
