@@ -43,7 +43,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executors;
 
-public class MonthViewFragment extends Fragment implements EventAdapter.OnEventDeletedListener {
+public class MonthViewFragment extends Fragment {
     // Enum to manage the display state of the calendar
     private enum ViewState implements Serializable {
         MONTH_VIEW,
@@ -80,21 +80,6 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
     
     // Activity result launcher for AddEventActivity
     private ActivityResultLauncher<Intent> addEventLauncher;
-
-    @Override
-    public void onEventDeleted() {
-        if (isAdded() && getView() != null) {
-            getView().post(() -> {
-                loadEventsForSelectedDay(
-                        selectedDay.get(Calendar.DAY_OF_MONTH),
-                        selectedDay.get(Calendar.MONTH),
-                        selectedDay.get(Calendar.YEAR)
-                );
-
-                displayCalendar();
-            });
-        }
-    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -156,8 +141,7 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
         gridFullMonthDays = view.findViewById(R.id.gridFullMonthDays);
         ivDragHandle = view.findViewById(R.id.ivDragHandle);
 
-        fabAddEvent = view.findViewById(R.id.fabAddEvent);
-        eventAdapter.setOnEventDeletedListener(this);
+        FloatingActionButton fabAddEvent = view.findViewById(R.id.fabAddEvent);
 
         setupDragHandle();
         displayCalendar();
@@ -177,6 +161,18 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
 
         // Thiết lập trạng thái ban đầu dựa trên currentState
         view.post(() -> updateViewState(currentState, false));
+
+        // Listen for event deletion to refresh calendar
+        getParentFragmentManager().setFragmentResultListener("event_deleted", this,
+            (requestKey, result) -> {
+                // Refresh the calendar view and event list
+                displayCalendar();
+                loadEventsForSelectedDay(
+                        selectedDay.get(Calendar.DAY_OF_MONTH),
+                        selectedDay.get(Calendar.MONTH),
+                        selectedDay.get(Calendar.YEAR)
+                );
+            });
 
         return view;
     }
@@ -482,16 +478,40 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
         final int displayingYear = currentYear;
 
         new Thread(() -> {
+            // Load regular events for this month (excluding repeating events)
             List<EventEntity> events = db.eventDao().getEventsByMonth(
                     String.valueOf(currentYear),
                     String.format(Locale.getDefault(), "%02d", currentMonthIndex + 1)
             );
 
+            // Filter out original repeating events (we'll show generated instances instead)
+            List<EventEntity> filteredEvents = new ArrayList<>();
+            for (EventEntity event : events) {
+                if (event.getRepeatType() == null || "none".equals(event.getRepeatType())) {
+                    filteredEvents.add(event);
+                }
+                // Skip original repeating events - we'll generate instances instead
+            }
+
+            // Load repeating events and generate instances for this month
+            try {
+                List<EventEntity> repeatingEvents = db.eventDao().getAllRepeatingEvents();
+                if (repeatingEvents != null && !repeatingEvents.isEmpty()) {
+                    List<EventEntity> generatedEvents = generateRepeatingEventInstancesForMonth(repeatingEvents);
+                    filteredEvents.addAll(generatedEvents);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             Set<Integer> daysWithEvents = new HashSet<>();
-            for (EventEntity e : events) {
+            for (EventEntity e : filteredEvents) {
                 Calendar cal = Calendar.getInstance();
                 cal.setTimeInMillis(e.getStartTime());
-                daysWithEvents.add(cal.get(Calendar.DAY_OF_MONTH));
+                // Only include events that are in the current month and year being displayed
+                if (cal.get(Calendar.MONTH) == currentMonthIndex && cal.get(Calendar.YEAR) == currentYear) {
+                    daysWithEvents.add(cal.get(Calendar.DAY_OF_MONTH));
+                }
             }
 
             requireActivity().runOnUiThread(() -> {
@@ -548,22 +568,90 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
         selectedDay.set(Calendar.MILLISECOND, 0);
 
         long dayStartMillis = selectedDay.getTimeInMillis();
+        long dayEndMillis = dayStartMillis + (24 * 60 * 60 * 1000L) - 1; // End of day
 
         // query trong Thread Pool
         Executors.newSingleThreadExecutor().execute(() -> {
+            // Load regular events for the day (excluding repeating events)
             List<EventEntity> loadedEvents = db.eventDao().getEventsByDay(dayStartMillis);
+
+            // Filter out original repeating events (we'll show generated instances instead)
+            List<EventEntity> filteredEvents = new ArrayList<>();
+            for (EventEntity event : loadedEvents) {
+                if (event.getRepeatType() == null || "none".equals(event.getRepeatType())) {
+                    filteredEvents.add(event);
+                }
+                // Skip original repeating events - we'll generate instances instead
+            }
+
+            // Load repeating events and generate instances for this specific day
+            try {
+                List<EventEntity> repeatingEvents = db.eventDao().getAllRepeatingEvents();
+                if (repeatingEvents != null && !repeatingEvents.isEmpty()) {
+                    for (EventEntity repeatingEvent : repeatingEvents) {
+                        if ("weekly".equals(repeatingEvent.getRepeatType())) {
+                            EventEntity dayInstance = generateWeeklyEventInstanceForSpecificDay(repeatingEvent, selectedDay);
+                            if (dayInstance != null) {
+                                filteredEvents.add(dayInstance);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             // Cập nhật UI trên Main Thread
             if (getView() != null) {
                 getView().post(() -> {
                     eventList.clear();
-                    eventList.addAll(loadedEvents);
+                    eventList.addAll(filteredEvents);
                     if (eventAdapter != null) {
                         eventAdapter.notifyDataSetChanged();
                     }
                 });
             }
         });
+    }
+
+    /**
+     * Generate a weekly event instance for a specific day
+     */
+    private EventEntity generateWeeklyEventInstanceForSpecificDay(EventEntity repeatingEvent, Calendar targetDay) {
+        // Check if the target day matches the event's day of week
+        int targetDayOfWeek = parseDayOfWeek(repeatingEvent.getDayOfWeek());
+        if (targetDayOfWeek == -1 || targetDay.get(Calendar.DAY_OF_WEEK) != targetDayOfWeek) {
+            return null; // This event doesn't occur on the target day
+        }
+
+        // Calculate the time for this instance
+        Calendar eventTime = (Calendar) targetDay.clone();
+        Calendar originalEventTime = Calendar.getInstance();
+        originalEventTime.setTimeInMillis(repeatingEvent.getStartTime());
+
+        eventTime.set(Calendar.HOUR_OF_DAY, originalEventTime.get(Calendar.HOUR_OF_DAY));
+        eventTime.set(Calendar.MINUTE, originalEventTime.get(Calendar.MINUTE));
+        eventTime.set(Calendar.SECOND, originalEventTime.get(Calendar.SECOND));
+        eventTime.set(Calendar.MILLISECOND, originalEventTime.get(Calendar.MILLISECOND));
+
+        long duration = repeatingEvent.getEndTime() - repeatingEvent.getStartTime();
+
+        // Create instance for this day
+        EventEntity instance = new EventEntity(
+            repeatingEvent.getTitle(),
+            repeatingEvent.getDescription(),
+            eventTime.getTimeInMillis(),
+            eventTime.getTimeInMillis() + duration
+        );
+
+        // Copy all properties from the repeating event
+        instance.setColor(repeatingEvent.getColor());
+        instance.setTeacher(repeatingEvent.getTeacher());
+        instance.setRoom(repeatingEvent.getRoom());
+        instance.setIsCourse(repeatingEvent.isCourse());
+        instance.setId(-repeatingEvent.getId()); // Negative ID to distinguish instances
+
+        return instance;
     }
 
     private TextView createMonthDayTextView(String text, boolean isActualDay, int cellIndex) {
@@ -742,12 +830,139 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
         
         // Reload events for the selected day if needed
         if (selectedDay != null) {
-            // Add any event loading logic here if MonthViewFragment shows events
+            loadEventsForSelectedDay(
+                selectedDay.get(Calendar.DAY_OF_MONTH),
+                selectedDay.get(Calendar.MONTH),
+                selectedDay.get(Calendar.YEAR)
+            );
         }
         
         // Notify other fragments about the event change
         Bundle result = new Bundle();
         result.putString("message", "Events refreshed");
         getParentFragmentManager().setFragmentResult("event_created", result);
+    }
+
+    /**
+     * Generate instances of repeating events for the current month
+     */
+    private List<EventEntity> generateRepeatingEventInstancesForMonth(List<EventEntity> repeatingEvents) {
+        List<EventEntity> generatedEvents = new ArrayList<>();
+
+        for (EventEntity repeatingEvent : repeatingEvents) {
+            if ("weekly".equals(repeatingEvent.getRepeatType())) {
+                List<EventEntity> weeklyInstances = generateWeeklyEventInstancesForMonth(repeatingEvent);
+                generatedEvents.addAll(weeklyInstances);
+            }
+            // Add other repeat types here (daily, monthly) as needed
+        }
+
+        return generatedEvents;
+    }
+
+    /**
+     * Generate weekly event instances for the current month
+     */
+    private List<EventEntity> generateWeeklyEventInstancesForMonth(EventEntity repeatingEvent) {
+        List<EventEntity> instances = new ArrayList<>();
+
+        // Get target day of week
+        int targetDayOfWeek = parseDayOfWeek(repeatingEvent.getDayOfWeek());
+        if (targetDayOfWeek == -1) return instances; // Invalid day
+
+        // Start from the first day of the month
+        Calendar monthStart = Calendar.getInstance();
+        monthStart.set(currentYear, currentMonthIndex, 1, 0, 0, 0);
+        monthStart.set(Calendar.MILLISECOND, 0);
+
+        // End at the last day of the month
+        Calendar monthEnd = Calendar.getInstance();
+        monthEnd.set(currentYear, currentMonthIndex, monthStart.getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59);
+        monthEnd.set(Calendar.MILLISECOND, 999);
+
+        // Find all occurrences of the target day of week in this month
+        Calendar currentDay = (Calendar) monthStart.clone();
+
+        // Move to the first occurrence of the target day in the month
+        while (currentDay.get(Calendar.DAY_OF_WEEK) != targetDayOfWeek &&
+               currentDay.getTimeInMillis() <= monthEnd.getTimeInMillis()) {
+            currentDay.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        // Generate instances for each week in the month
+        while (currentDay.getTimeInMillis() <= monthEnd.getTimeInMillis()) {
+            // Calculate the time for this instance
+            Calendar originalEventTime = Calendar.getInstance();
+            originalEventTime.setTimeInMillis(repeatingEvent.getStartTime());
+
+            currentDay.set(Calendar.HOUR_OF_DAY, originalEventTime.get(Calendar.HOUR_OF_DAY));
+            currentDay.set(Calendar.MINUTE, originalEventTime.get(Calendar.MINUTE));
+            currentDay.set(Calendar.SECOND, originalEventTime.get(Calendar.SECOND));
+            currentDay.set(Calendar.MILLISECOND, originalEventTime.get(Calendar.MILLISECOND));
+
+            long duration = repeatingEvent.getEndTime() - repeatingEvent.getStartTime();
+
+            // Create instance for this occurrence
+            EventEntity instance = new EventEntity(
+                repeatingEvent.getTitle(),
+                repeatingEvent.getDescription(),
+                currentDay.getTimeInMillis(),
+                currentDay.getTimeInMillis() + duration
+            );
+
+            // Copy all properties from the repeating event
+            instance.setColor(repeatingEvent.getColor());
+            instance.setTeacher(repeatingEvent.getTeacher());
+            instance.setRoom(repeatingEvent.getRoom());
+            instance.setIsCourse(repeatingEvent.isCourse());
+            instance.setId(-repeatingEvent.getId()); // Negative ID to distinguish instances
+
+            instances.add(instance);
+
+            // Move to next week
+            currentDay.add(Calendar.WEEK_OF_YEAR, 1);
+        }
+
+        return instances;
+    }
+
+    /**
+     * Parse day of week string to Calendar constant
+     */
+    private int parseDayOfWeek(String dayOfWeek) {
+        if (dayOfWeek == null) return -1;
+
+        switch (dayOfWeek.toLowerCase().trim()) {
+            case "sunday":
+            case "chủ nhật":
+            case "cn":
+                return Calendar.SUNDAY;
+            case "monday":
+            case "thứ hai":
+            case "t2":
+                return Calendar.MONDAY;
+            case "tuesday":
+            case "thứ ba":
+            case "t3":
+                return Calendar.TUESDAY;
+            case "wednesday":
+            case "thứ tư":
+            case "t4":
+                return Calendar.WEDNESDAY;
+            case "thursday":
+            case "thứ năm":
+            case "t5":
+                return Calendar.THURSDAY;
+            case "friday":
+            case "thứ sáu":
+            case "t6":
+                return Calendar.FRIDAY;
+            case "saturday":
+            case "thứ bảy":
+            case "t7":
+                return Calendar.SATURDAY;
+            default:
+                return -1;
+        }
     }
 }

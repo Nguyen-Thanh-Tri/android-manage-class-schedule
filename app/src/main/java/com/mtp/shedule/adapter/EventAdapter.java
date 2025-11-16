@@ -73,20 +73,60 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         // long click delete
         holder.itemView.setOnLongClickListener(v -> {
+            String deleteMessage;
+            String eventType;
+
+            // Determine if this is a course instance or regular event
+            if (event.getId() < 0) {
+                // This is a generated instance of a repeating event
+                deleteMessage = "Delete all instances of course \"" + event.getTitle() + "\"?\n\nThis will remove the course from all weeks.";
+                eventType = "course";
+            } else if (event.isCourse() && "weekly".equals(event.getRepeatType())) {
+                // This is an original repeating event
+                deleteMessage = "Delete all instances of course \"" + event.getTitle() + "\"?\n\nThis will remove the course from all weeks.";
+                eventType = "course";
+            } else {
+                // This is a regular one-time event
+                deleteMessage = "Delete event \"" + event.getTitle() + "\"?";
+                eventType = "event";
+            }
+
             new AlertDialog.Builder(v.getContext())
-                    .setTitle("Delete Event")
-                    .setMessage("Delete \"" + event.getTitle() + "\"?")
+                    .setTitle("Delete " + (eventType.equals("course") ? "Course" : "Event"))
+                    .setMessage(deleteMessage)
                     .setPositiveButton("Delete", (dialog, which) -> {
                         new Thread(() -> {
-                            db.eventDao().deleteEvent(event);
-                            holder.itemView.post(() -> {
-                                eventList.remove(holder.getAdapterPosition());
-                                notifyItemRemoved(holder.getAdapterPosition());
-                                Toast.makeText(v.getContext(), "Deleted", Toast.LENGTH_SHORT).show();
-                                if (listener1 != null) {
-                                    listener1.onEventDeleted();
+                            try {
+                                if (event.getId() < 0) {
+                                    // Delete the original repeating event (positive ID)
+                                    int originalId = Math.abs(event.getId());
+                                    EventEntity originalEvent = db.eventDao().getEventById(originalId);
+                                    if (originalEvent != null) {
+                                        db.eventDao().deleteEvent(originalEvent);
+                                    }
+                                } else {
+                                    // Delete the regular event or original repeating event
+                                    db.eventDao().deleteEvent(event);
                                 }
-                            });
+
+                                holder.itemView.post(() -> {
+                                    eventList.remove(holder.getAdapterPosition());
+                                    notifyItemRemoved(holder.getAdapterPosition());
+                                    Toast.makeText(v.getContext(), "Deleted", Toast.LENGTH_SHORT).show();
+
+                                    // Notify parent fragment to refresh the calendar
+                                    // This ensures other views update as well
+                                    if (context instanceof androidx.fragment.app.FragmentActivity) {
+                                        ((androidx.fragment.app.FragmentActivity) context).getSupportFragmentManager()
+                                            .setFragmentResult("event_deleted", new android.os.Bundle());
+                                    }
+                                });
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                holder.itemView.post(() -> {
+                                    Toast.makeText(v.getContext(), "Error deleting event", Toast.LENGTH_SHORT).show();
+                                });
+                            }
                         }).start();
                     })
                     .setNegativeButton("Cancel", null)

@@ -1,6 +1,7 @@
 package com.mtp.shedule.entity;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import com.mtp.shedule.R;
 
@@ -20,14 +21,46 @@ public class EventEntity {
     public long endTime;     // millis
 
     public int color;        // lưu index màu card
+    
+    // Repeat functionality
+    public String repeatType;    // "none", "weekly", "daily", "monthly"
+    public String dayOfWeek;     // for weekly repeats ("monday", "tuesday", etc.)
+    
+    // Course-related fields (optional, for course-type events)
+    public String teacher;       // teacher name for course events
+    public String room;          // room location for course events
+    public boolean isCourse;     // flag to identify course events
 
+    // Default constructor for Room
+    public EventEntity() {
+        this.color = R.drawable.gradient_bg_red;
+        this.repeatType = "none";
+        this.isCourse = false;
+    }
+
+    @Ignore
     public EventEntity(String title, String description, long startTime, long endTime) {
         this.title = title;
         this.description = description;
         this.startTime = startTime;
         this.endTime = endTime;
-//        this.timezone = timezone;
-//        this.repeat = repeat;
+        this.color = R.drawable.gradient_bg_red;
+        this.repeatType = "none";
+        this.isCourse = false;
+    }
+    
+    // Constructor for course events
+    @Ignore
+    public EventEntity(String title, String teacher, String room, String dayOfWeek, long startTime, long endTime) {
+        this.title = title;
+        this.teacher = teacher;
+        this.room = room;
+        this.dayOfWeek = dayOfWeek;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.repeatType = "weekly";
+        this.isCourse = true;
+        this.description = "Room: " + room + "\nTeacher: " + teacher;
         this.color = R.drawable.gradient_bg_red;
     }
     public int getId() { return id; }
@@ -47,12 +80,23 @@ public class EventEntity {
     public void setEndTime(long endTime) { this.endTime = endTime; }
 //    public String getTimezone() { return timezone; }
 //
-//    public void setTimezone(String timezone) { this.timezone = timezone; }
-//    public String getRepeat() { return repeat; }
-//    public void setRepeat(String repeat) { this.repeat = repeat; }
     public int getColor() { return color; }
-
     public void setColor(int color) { this.color = color; }
+    
+    public String getRepeatType() { return repeatType; }
+    public void setRepeatType(String repeatType) { this.repeatType = repeatType; }
+    
+    public String getDayOfWeek() { return dayOfWeek; }
+    public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
+    
+    public String getTeacher() { return teacher; }
+    public void setTeacher(String teacher) { this.teacher = teacher; }
+    
+    public String getRoom() { return room; }
+    public void setRoom(String room) { this.room = room; }
+    
+    public boolean isCourse() { return isCourse; }
+    public void setIsCourse(boolean isCourse) { this.isCourse = isCourse; }
     public String getStartTimeFormatted() {
         return formatTime(startTime);
     }
