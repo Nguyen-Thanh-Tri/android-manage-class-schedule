@@ -208,13 +208,16 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
         selectedDay.set(Calendar.SECOND, 0);
         selectedDay.set(Calendar.MILLISECOND, 0);
 
-
         if (getView() != null) {
+            gridFullMonthDays.removeAllViews();
             displayCalendar();
 
             loadEventsForSelectedDay(newSelectedDay, newMonthIndex, year);
 
-            updateViewState(currentState, false);
+            // Cập nhật view state sau khi vẽ xong
+            gridFullMonthDays.post(() -> {
+                updateViewState(currentState, false);
+            });
         }
     }
 
@@ -457,7 +460,8 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
         int totalCellsNeeded = dayOffset + daysInMonth;
         actualRowsNeeded = (int) Math.ceil((double) totalCellsNeeded / DAYS_IN_WEEK);
 
-
+        final int displayingMonth = currentMonthIndex;
+        final int displayingYear = currentYear;
 
         new Thread(() -> {
             List<EventEntity> events = db.eventDao().getEventsByMonth(
@@ -473,6 +477,10 @@ public class MonthViewFragment extends Fragment implements EventAdapter.OnEventD
             }
 
             requireActivity().runOnUiThread(() -> {
+                if (displayingMonth != currentMonthIndex || displayingYear != currentYear) {
+                    // Tháng đã thay đổi, bỏ qua kết quả này
+                    return;
+                }
                 // DRAW EMPTY CELLS AT THE BEGINNING OF THE MONTH
                 for (int i = 0; i < dayOffset; i++) {
                     gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));

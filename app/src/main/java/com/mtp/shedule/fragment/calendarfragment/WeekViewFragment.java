@@ -2,6 +2,7 @@ package com.mtp.shedule.fragment.calendarfragment;
 
 import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -30,6 +31,7 @@ import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -37,21 +39,20 @@ import java.util.Objects;
 
 public class WeekViewFragment extends Fragment {
     // Các biến hằng số
-    int currentMonthIndex;
-    int currentYear;
     private static final float EVENT_SIDE_MARGIN_DP = 1f;
     private static final int DAYS_IN_WEEK = 7;
     private final Calendar currentWeekStart = Calendar.getInstance();
     private GridLayout gridWeekDays;
     private LinearLayout timeAxisContainer;
     private ConstraintLayout eventDrawingArea;
+    private TextView tvMonthHeader;
     // Hằng số cho chiều cao một giờ (ví dụ: 70dp)
     private static final int HOURS_IN_DAY = 24;
     private static final float HOUR_HEIGHT_DP = 70;
     TextView lastSelectedDayView = null;
     FloatingActionButton fabAddEvent;
     int selectedDayOfMonth = -1;
-     ConnDatabase db;
+    ConnDatabase db;
 
     @Nullable
     @Override
@@ -63,7 +64,7 @@ public class WeekViewFragment extends Fragment {
         gridWeekDays = view.findViewById(R.id.gridWeekDays);
         timeAxisContainer = view.findViewById(R.id.time_axis);
         eventDrawingArea = view.findViewById(R.id.eventDrawingArea);
-
+        tvMonthHeader = view.findViewById(R.id.tvMonthHeader);
         fabAddEvent = view.findViewById(R.id.fabAddEvent);
 
         //add event
@@ -72,9 +73,12 @@ public class WeekViewFragment extends Fragment {
             startActivity(intent);
         });
 
-
         findWeekStart();
+        updateHeaderTitle();
         displayWeek();
+
+        // Click vào header để mở DatePicker
+        tvMonthHeader.setOnClickListener(v -> showDatePicker());
 
         view.post(() ->{
             drawTimeAxisLabels();
@@ -82,6 +86,13 @@ public class WeekViewFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        // Tải lại sự kiện mỗi khi Fragment được hiển thị lại
+        loadInitialEvents();
     }
     private void loadInitialEvents() {
         Calendar weekStart = (Calendar) currentWeekStart.clone();
@@ -122,6 +133,75 @@ public class WeekViewFragment extends Fragment {
             });
         }).start();
     }
+
+    private void showDatePicker() {
+        Calendar calendar = (Calendar) currentWeekStart.clone();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                requireContext(),
+                (view, selectedYear, selectedMonth, selectedDay) -> {
+                    // Set ngày được chọn làm ngày bắt đầu tuần
+                    currentWeekStart.set(selectedYear, selectedMonth, selectedDay);
+
+                    findWeekStart();
+
+                    lastSelectedDayView = null;
+                    selectedDayOfMonth = -1;
+
+                    gridWeekDays.removeAllViews();
+                    timeAxisContainer.removeAllViews();
+                    eventDrawingArea.removeAllViews();
+                    updateHeaderTitle();
+                    displayWeek();
+
+                    // Vẽ lại time axis và events nếu cần
+                    eventDrawingArea.post(() -> {
+                        drawTimeAxisLabels();
+                        loadInitialEvents();
+                    });
+                },
+                year,
+                month,
+                day
+        );
+
+        datePickerDialog.show();
+    }
+    private void updateHeaderTitle() {
+        Calendar startOfWeek = (Calendar) currentWeekStart.clone();
+        Calendar endOfWeek = (Calendar) currentWeekStart.clone();
+        endOfWeek.add(Calendar.DAY_OF_MONTH, 6);
+
+        SimpleDateFormat monthFormat = new SimpleDateFormat("MMM", Locale.getDefault());
+        SimpleDateFormat dayFormat = new SimpleDateFormat("d", Locale.getDefault());
+        SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
+
+        String startMonth = monthFormat.format(startOfWeek.getTime());
+        String endMonth = monthFormat.format(endOfWeek.getTime());
+        String startDay = dayFormat.format(startOfWeek.getTime());
+        String endDay = dayFormat.format(endOfWeek.getTime());
+        String year = yearFormat.format(startOfWeek.getTime());
+
+        String title;
+        if (startOfWeek.get(Calendar.MONTH) == endOfWeek.get(Calendar.MONTH)) {
+            title = String.format(Locale.getDefault(), "%s %s - %s, %s",
+                    startMonth.toUpperCase(), startDay, endDay, year);
+        } else if (startOfWeek.get(Calendar.YEAR) == endOfWeek.get(Calendar.YEAR)) {
+            title = String.format(Locale.getDefault(), "%s %s - %s %s, %s",
+                    startMonth.toUpperCase(), startDay, endMonth.toUpperCase(), endDay, year);
+        } else {
+            String endYear = yearFormat.format(endOfWeek.getTime());
+            title = String.format(Locale.getDefault(), "%s %s, %s - %s %s, %s",
+                    startMonth.toUpperCase(), startDay, year,
+                    endMonth.toUpperCase(), endDay, endYear);
+        }
+
+        tvMonthHeader.setText(title);
+    }
+
     private void drawTimeAxisLabels() {
         timeAxisContainer.removeAllViews();
         //padding đầu vào cuối lưới
@@ -254,12 +334,16 @@ public class WeekViewFragment extends Fragment {
     private void findWeekStart() {
         // Đặt ngày bắt đầu tuần là Chủ Nhật
         currentWeekStart.setFirstDayOfWeek(Calendar.SUNDAY);
-        currentWeekStart.set(Calendar.DAY_OF_WEEK, currentWeekStart.getFirstDayOfWeek());
+        // Tìm ngày Chủ Nhật gần nhất
+        while (currentWeekStart.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+            currentWeekStart.add(Calendar.DAY_OF_MONTH, -1);
+        }
         // Thiết lập về 00:00:00
         currentWeekStart.set(Calendar.HOUR_OF_DAY, 0);
         currentWeekStart.set(Calendar.MINUTE, 0);
         currentWeekStart.set(Calendar.SECOND, 0);
         currentWeekStart.set(Calendar.MILLISECOND, 0);
+
     }
     private void displayWeek() {
         gridWeekDays.removeAllViews();
@@ -288,21 +372,55 @@ public class WeekViewFragment extends Fragment {
         }
     }
     private void highlightSelectedDay(TextView tv) {
-        int day = Integer.parseInt(tv.getText().toString());
-
-        Calendar today = Calendar.getInstance();
-        boolean isToday = (day == today.get(Calendar.DAY_OF_MONTH)) &&
-                (currentMonthIndex == today.get(Calendar.MONTH)) &&
-                (currentYear == today.get(Calendar.YEAR));
-
-        tv.setTextColor(Color.WHITE);
-        tv.setTypeface(Typeface.DEFAULT_BOLD);
-        if (isToday) {
-            tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
-        }else {
-            tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
+        Object tagObj = tv.getTag();
+        if (!(tagObj instanceof int[])) {
+            return;
         }
 
+        int[] tagData = (int[]) tagObj;
+        int dayOfMonth = tagData[1];
+        int monthIndex = tagData[2];
+        int year = tagData[3];
+
+        Calendar today = Calendar.getInstance();
+        int todayDay = today.get(Calendar.DAY_OF_MONTH);
+        int todayMonth = today.get(Calendar.MONTH);
+        int todayYear = today.get(Calendar.YEAR);
+
+        // Kiểm tra xem có phải ngày hiện tại không
+        boolean isToday = (dayOfMonth == todayDay) &&
+                (monthIndex == todayMonth) &&
+                (year == todayYear);
+
+        if (isToday) {
+            tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+        } else {
+            tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
+            tv.setTextColor(Color.WHITE);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+            // Nếu đang xem tháng/năm hiện tại, tìm và đổi text ngày hôm nay thành xanh
+            if (monthIndex == todayMonth && year == todayYear) {
+                for (int i = 0; i < gridWeekDays.getChildCount(); i++) {
+                    View v = gridWeekDays.getChildAt(i);
+                    if (v instanceof TextView) {
+                        TextView tvDay = (TextView) v;
+                        Object dayTag = tvDay.getTag();
+                        if (dayTag instanceof int[]) {
+                            int[] dayData = (int[]) dayTag;
+                            int d = dayData[1]; // dayOfMonth
+                            if (d == todayDay) {
+                                tvDay.setTextColor(ContextCompat.getColor(requireContext(), R.color.bright_blue));
+                                tvDay.setTypeface(Typeface.DEFAULT_BOLD);
+                                tvDay.setBackground(null);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private TextView createWeekDayTextView(String text, boolean isActualDay, int cellIndex,
