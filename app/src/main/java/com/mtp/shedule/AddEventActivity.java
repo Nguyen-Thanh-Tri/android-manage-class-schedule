@@ -31,7 +31,16 @@ public class AddEventActivity extends AppCompatActivity {
 
     EditText etTitle, etDescription, etTeacher, etRoom;
     Button btnStartDate, btnStartTime, btnEndDate, btnEndTime, btnColorPicker, btnSave, btnCancel;
-    Spinner spinnerRepeatType, spinnerDayOfWeek;
+    Spinner spinnerRepeatType, spinnerDayOfWeek, spinnerRemind;
+    private final String[] REMINDER_DISPLAY = {
+            "When event occurs", "5 minutes before", "15 minutes before",
+            "30 minutes before", "1 hour before",
+            "2 hours before", "1 day before",
+            "2 day before", "7day before"
+    };
+    private final int[] REMINDER_VALUES_MINUTES = {
+            0, 5, 15, 30, 60, 120, 1440, 2880, 10080
+    };
     LinearLayout layoutCourseFields;
     private ConnDatabase db;
     // Calendar objects for picking date & time
@@ -56,6 +65,7 @@ public class AddEventActivity extends AppCompatActivity {
         etRoom = findViewById(R.id.etRoom);
         spinnerRepeatType = findViewById(R.id.spinnerRepeatType);
         spinnerDayOfWeek = findViewById(R.id.spinnerDayOfWeek);
+        spinnerRemind = findViewById(R.id.spinnerRemind);
         layoutCourseFields = findViewById(R.id.layoutCourseFields);
         btnStartDate = findViewById(R.id.btnStartDate);
         btnStartTime = findViewById(R.id.btnStartTime);
@@ -216,7 +226,6 @@ public class AddEventActivity extends AppCompatActivity {
         });
         dialog.show(getSupportFragmentManager(), "ColorDialog");
     }
-
     // Setup spinners for repeat type and day of week
     private void setupSpinners() {
         // Setup repeat type spinner
@@ -260,10 +269,16 @@ public class AddEventActivity extends AppCompatActivity {
                     updateStartAndEndDate(targetCalendarDay);
                 }
             }
-
             @Override
             public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
+
+        ArrayAdapter<String> remindAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, REMINDER_DISPLAY);
+        remindAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerRemind.setAdapter(remindAdapter);
+        // Mặc định chọn "occurs" (Index 0)
+        spinnerRemind.setSelection(0);
     }
 
     //Save Event
@@ -275,7 +290,7 @@ public class AddEventActivity extends AppCompatActivity {
 
         boolean isWeeklyRepeat = spinnerRepeatType.getSelectedItemPosition() == 1;
 
-        if (title.isEmpty() || desc.isEmpty()) {
+        if (title.isEmpty() ) {
             Toast.makeText(this, "Use your finger and punch on me, please", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -309,10 +324,15 @@ public class AddEventActivity extends AppCompatActivity {
         }
 
         event.setColor(selectedColorIndex);
+        int selectedReminderIndex = spinnerRemind.getSelectedItemPosition();
+        int reminderMinutes = REMINDER_VALUES_MINUTES[selectedReminderIndex];
+        event.setReminder(reminderMinutes); // SỬ DỤNG SETTER MỚI
 
         new Thread(() -> {
-            db.eventDao().insertEvent(event);
-            
+            long newId = db.eventDao().insertEvent(event);
+            event.setId((int)newId);
+
+            NotificationScheduler.scheduleReminder(this, event);
             // Notify fragments about the new event on the UI thread
             runOnUiThread(() -> {
                 // Send result to notify fragments about event creation
@@ -415,7 +435,6 @@ public class AddEventActivity extends AppCompatActivity {
         startCal.setTimeInMillis(tempCal.getTimeInMillis());
 
         endCal.setTimeInMillis(startCal.getTimeInMillis() + duration);
-
 
         updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
         updateDateTimeButtons(endCal, btnEndDate, btnEndTime);

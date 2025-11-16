@@ -162,8 +162,28 @@
 
                 </LinearLayout>
 
-            </LinearLayout>
 
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="10dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Reminder"
+                    android:textSize="12sp"
+                    android:paddingBottom="2dp"/>
+
+                <Spinner
+                    android:id="@+id/spinnerRemind"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/rounded_edittext"/>
+
+            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -192,8 +212,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Repeat Type"
-                    android:textSize="16sp"
-                    android:paddingBottom="8dp"/>
+                    android:textSize="12sp"
+                    android:paddingBottom="2dp"/>
                     
                 <Spinner
                     android:id="@+id/spinnerRepeatType"

@@ -15,7 +15,7 @@ import com.mtp.shedule.dao.ExamDao;
 import com.mtp.shedule.entity.TeacherEntity;
 
 @Database(
-        entities = {CourseEntity.class, ExamEntity.class, TeacherEntity.class, EventEntity.class}, version = 10)
+        entities = {CourseEntity.class, ExamEntity.class, TeacherEntity.class, EventEntity.class}, version = 11)
 public abstract class ConnDatabase extends RoomDatabase {
     public abstract CourseDao courseDao();
     public abstract ExamDao examDao();

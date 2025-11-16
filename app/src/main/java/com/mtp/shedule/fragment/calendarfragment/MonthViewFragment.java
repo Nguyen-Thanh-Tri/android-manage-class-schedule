@@ -519,6 +519,11 @@ public class MonthViewFragment extends Fragment {
                     // Tháng đã thay đổi, bỏ qua kết quả này
                     return;
                 }
+
+                if (lastSelectedDayView != null) {
+                    resetDayStyle(lastSelectedDayView);
+                    lastSelectedDayView = null; // Rất quan trọng: Đảm bảo không reset nhầm lần nữa
+                }
                 // DRAW EMPTY CELLS AT THE BEGINNING OF THE MONTH
                 for (int i = 0; i < dayOffset; i++) {
                     gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));

@@ -1,12 +1,19 @@
 package com.mtp.shedule;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.ViewTreeObserver;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -38,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
 
+        RequestPermission.requestNotificationPermission(this);
 
         // Navigation icon mở/đóng Drawer
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -86,7 +94,21 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
     }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
+        if (requestCode == RequestPermission.PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Người dùng đã cấp quyền POST_NOTIFICATIONS.
+                // Có thể tiếp tục logic đặt lịch báo thức.
+                Toast.makeText(this, "Đã cấp quyền thông báo.", Toast.LENGTH_SHORT).show();
+            } else {
+                // Người dùng từ chối quyền POST_NOTIFICATIONS.
+                Toast.makeText(this, "Không thể hiện thông báo nhắc nhở nếu không cấp quyền.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
     // ---------------- Helper method thay fragment ----------------
     private void replaceFragment(Fragment fragment) {
         currentFragment = fragment;
@@ -95,5 +117,6 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.fragment_container, fragment)
                 .commit();
     }
+
 
 }

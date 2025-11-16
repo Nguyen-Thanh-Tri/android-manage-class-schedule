@@ -14,7 +14,7 @@ import java.util.List;
 public interface EventDao {
 
     @Insert
-    void insertEvent(EventEntity event);
+    long insertEvent(EventEntity event);
 
     @Query("SELECT * FROM events WHERE startTime BETWEEN :start AND :end")
     List<EventEntity> getEventsInRange(long start, long end);
