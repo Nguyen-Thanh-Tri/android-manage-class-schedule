@@ -469,6 +469,8 @@ public class MonthViewFragment extends Fragment {
         int totalCellsNeeded = dayOffset + daysInMonth;
         actualRowsNeeded = (int) Math.ceil((double) totalCellsNeeded / DAYS_IN_WEEK);
 
+        final int displayingMonth = currentMonthIndex;
+        final int displayingYear = currentYear;
 
 
         new Thread(() -> {
@@ -509,6 +511,9 @@ public class MonthViewFragment extends Fragment {
             }
 
             requireActivity().runOnUiThread(() -> {
+                if (displayingMonth != currentMonthIndex || displayingYear != currentYear) {
+                    return;
+                }
                 // DRAW EMPTY CELLS AT THE BEGINNING OF THE MONTH
                 for (int i = 0; i < dayOffset; i++) {
                     gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
