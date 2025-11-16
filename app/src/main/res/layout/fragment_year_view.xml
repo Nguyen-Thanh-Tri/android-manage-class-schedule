@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/pale_gray">
+
+    <TextView
+        android:id="@+id/tvYear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2025"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_gravity="center_horizontal"
+        android:paddingBottom="12dp"/>
+
+    <androidx.gridlayout.widget.GridLayout
+        android:id="@+id/gridMonths"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:alignmentMode="alignMargins"
+        app:columnCount="3"
+        app:columnOrderPreserved="false"
+        app:rowCount="4"
+        app:useDefaultMargins="true"
+        android:background="@color/pale_gray">
+
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+        <include
+            layout="@layout/mini_month_cell"
+            android:id="@+id/monthCell1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_columnWeight="1"
+            app:layout_rowWeight="1" />
+
+    </androidx.gridlayout.widget.GridLayout>
+</LinearLayout>

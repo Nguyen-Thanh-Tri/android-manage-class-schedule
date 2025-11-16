@@ -1,11 +1,12 @@
 package com.mtp.shedule;
 
+import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import android.app.TimePickerDialog;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -34,8 +35,33 @@ public class AddCourseDialog extends DialogFragment {
     Button btnSave, btnCancel, btnSelectColor;
     private ConnDatabase db;
 
-    private int selectedColor = Color.parseColor("#4285F4");
-    private int selectedColorId = R.drawable.gradient_bg_red;
+    private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
+    private static final String ARG_COURSE_ID = "course_id";
+    private static final String ARG_TITLE = "title";
+    private static final String ARG_TEACHER = "teacher";
+    private static final String ARG_ROOM = "room";
+    private static final String ARG_START = "start";
+    private static final String ARG_END = "end";
+    private static final String ARG_DAY = "day";
+    private static final String ARG_COLOR = "color";
+
+    private int courseId = -1;
+    private boolean isEditMode = false;
+
+    public static AddCourseDialog newInstance(CourseEntity course) {
+        AddCourseDialog dialog = new AddCourseDialog();
+        Bundle args = new Bundle();
+        args.putInt(ARG_COURSE_ID, course.getId());
+        args.putString(ARG_TITLE, course.getTitle());
+        args.putString(ARG_TEACHER, course.getTeacher());
+        args.putString(ARG_ROOM, course.getRoom());
+        args.putString(ARG_START, course.getTimeStart());
+        args.putString(ARG_END, course.getTimeEnd());
+        args.putString(ARG_DAY, course.getDayOfWeek());
+        args.putInt(ARG_COLOR, course.getColor());
+        dialog.setArguments(args);
+        return dialog;
+    }
 
     @Nullable
     @Override
@@ -63,6 +89,24 @@ public class AddCourseDialog extends DialogFragment {
         db = ConnDatabase.getInstance(requireContext());
 
 
+        //update
+        if (getArguments() != null) {
+            isEditMode = true;
+            courseId = getArguments().getInt(ARG_COURSE_ID);
+            etTitle.setText(getArguments().getString(ARG_TITLE));
+            etTeacher.setText(getArguments().getString(ARG_TEACHER));
+            etRoom.setText(getArguments().getString(ARG_ROOM));
+            etStartTime.setText(getArguments().getString(ARG_START));
+            etEndTime.setText(getArguments().getString(ARG_END));
+            selectedColorIndex = getArguments().getInt(ARG_COLOR);
+
+            // chọn đúng ngày
+            String day = getArguments().getString(ARG_DAY);
+            spinnerDay.setSelection(days.indexOf(day));
+
+            btnSave.setText("Update");
+        }
+
         // --- TimePicker cho Start Time ---
         etStartTime.setOnClickListener(v -> showTimePicker(etStartTime));
         // --- TimePicker cho End Time ---
@@ -72,24 +116,18 @@ public class AddCourseDialog extends DialogFragment {
 
 
         // Cập nhật màu nút ngay lần đầu mở dialog
-        btnSelectColor.setBackgroundResource(selectedColorId);
+        btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
 
         btnSelectColor.setOnClickListener(v ->{
             SelectColorDialog dialog = new SelectColorDialog();
 
             // Truyền mã màu INT để SelectColorDialog đánh dấu ô màu đúng
-            dialog.setSelectedColor(selectedColor);
+            dialog.setSelectedColorIndex(selectedColorIndex);
 
-            dialog.setOnColorSelectedListener(drawableResId -> {
-                // Cập nhật Drawable ID
-                selectedColorId = drawableResId;
+            dialog.setOnColorSelectedListener(colorIndex -> {
 
-                // Cập nhật màu nút (Nếu gradient, dùng setBackgroundResource)
-                btnSelectColor.setBackgroundResource(selectedColorId);
-
-                // Lưu ý: Nếu bạn cần cập nhật selectedColor INT để mở Dialog lại đúng màu,
-                // bạn cần thêm logic ánh xạ ngược từ Drawable ID sang Color INT ở đây.
-                // (Tạm thời bỏ qua nếu không cần tính năng đó)
+                selectedColorIndex = colorIndex;
+                btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
             });
             dialog.show(getParentFragmentManager(), "ColorDialog");
         });
@@ -116,17 +154,22 @@ public class AddCourseDialog extends DialogFragment {
         }
 
         CourseEntity course = new CourseEntity(title, teacher, room, start, end, day);
-
-        // 4. LƯU ID DRAWABLE VÀO ENTITY (Sử dụng phương thức setter mới)
-        course.setColor(selectedColorId);
+        course.setColor(selectedColorIndex);
 
         new Thread(() -> {
-            db.courseDao().insert(course);
-
-            requireActivity().runOnUiThread(() -> {
-                Toast.makeText(requireContext(), "Course added successfully", Toast.LENGTH_SHORT).show();
-                dismiss();
-            });
+            if (isEditMode && courseId != -1) {
+                // cập nhật
+                course.setId(courseId);
+                db.courseDao().update(course);
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "Updated successfully", Toast.LENGTH_SHORT).show());
+            } else {
+                db.courseDao().insert(course);
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(), "Course added successfully", Toast.LENGTH_SHORT).show();
+                });
+            }
+            dismiss();
         }).start();
     }
 

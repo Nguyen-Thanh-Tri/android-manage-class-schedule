@@ -1,30 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinatorRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="#F5F5F5">
 
+    <!-- Header: Search + Sort -->
+    <LinearLayout
+        android:id="@+id/header"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:background="#E0E0E0"
+        android:gravity="center_vertical">
 
-    <!-- Danh sách giáo viên -->
+        <!-- Bo tròn + padding -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="45dp"
+            app:cardCornerRadius="24dp"
+            android:layout_marginEnd="8dp"
+            app:cardElevation="2dp">
+
+            <EditText
+                android:id="@+id/edtSearchTeacher"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:hint="Search teachers..."
+                android:background="@android:color/transparent"
+                android:paddingStart="16dp"
+                android:paddingEnd="12dp"
+                android:drawableStart="@drawable/ic_search_material"
+                android:drawablePadding="12dp"
+                android:inputType="text"/>
+        </androidx.cardview.widget.CardView>
+
+        <ImageButton
+            android:id="@+id/btnSort"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Sort"
+            android:src="@drawable/ic_sort_material"
+            app:tint="#424242"/>
+    </LinearLayout>
+
+    <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerTeachers"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:padding="12dp"
+        android:layout_marginTop="61dp"
         android:scrollbars="vertical" />
 
-    <!-- Nút thêm giáo viên -->
-    <Button
-        android:id="@+id/btnAddTeacher"
-        android:layout_width="match_parent"
+    <!-- FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddTeacher"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Teacher"
-        android:backgroundTint="#F88103"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:layout_margin="12dp" />
+        app:layout_anchor="@id/recyclerTeachers"
+        app:layout_anchorGravity="bottom|end"
+        android:layout_margin="16dp"
+        app:srcCompat="@android:drawable/ic_input_add"
+        app:tint="@android:color/white"
+        android:contentDescription="Add new teacher" />
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

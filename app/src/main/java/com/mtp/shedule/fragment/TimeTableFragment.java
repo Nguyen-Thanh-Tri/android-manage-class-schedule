@@ -81,6 +81,10 @@ public class TimeTableFragment extends Fragment {
             dialog.show(getParentFragmentManager(), "AddCourseDialog");
         });
 
+        courseAdapter.setOnItemClickListener(course -> {
+            AddCourseDialog dialog = AddCourseDialog.newInstance(course);
+            dialog.show(getParentFragmentManager(), "EditCourseDialog");
+        });
 
         // Click listeners for day buttons
         for (int i = 0; i < dayButtons.length; i++) {
