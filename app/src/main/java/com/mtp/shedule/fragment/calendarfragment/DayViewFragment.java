@@ -109,15 +109,15 @@ public class DayViewFragment extends Fragment {
 
                     gridWeekDays.removeAllViews();
                     timeAxisContainer.removeAllViews();
+                    eventDrawingArea.removeAllViews();
 
                     updateHeaderTitle();
                     displayWeek();
 
                     // Vẽ lại time axis và events nếu cần
                     eventDrawingArea.post(() -> {
-                        timeAxisContainer.removeAllViews();
-                        eventDrawingArea.removeAllViews();
                         drawTimeAxisLabels();
+                        loadEventsForSelectedDay();
                     });
                 },
                 year,
