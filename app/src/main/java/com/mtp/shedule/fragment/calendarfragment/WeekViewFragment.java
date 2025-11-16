@@ -27,6 +27,7 @@ import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -60,6 +61,9 @@ public class WeekViewFragment extends Fragment {
         timeAxisContainer = view.findViewById(R.id.time_axis);
         eventDrawingArea = view.findViewById(R.id.eventDrawingArea);
 
+        // Set up fragment result listener for event updates
+        setupFragmentResultListeners();
+
         findWeekStart();
         displayWeek();
 
@@ -69,6 +73,37 @@ public class WeekViewFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh events when fragment becomes visible again
+        refreshEvents();
+    }
+
+    private void setupFragmentResultListeners() {
+        // Listen for event creation/update results
+        getParentFragmentManager().setFragmentResultListener("event_created", this, (requestKey, result) -> {
+            refreshEvents();
+        });
+        
+        getParentFragmentManager().setFragmentResultListener("event_updated", this, (requestKey, result) -> {
+            refreshEvents();
+        });
+        
+        getParentFragmentManager().setFragmentResultListener("event_deleted", this, (requestKey, result) -> {
+            refreshEvents();
+        });
+    }
+
+    /**
+     * Public method to refresh events - can be called from parent activities/fragments
+     */
+    public void refreshEvents() {
+        if (isAdded() && eventDrawingArea != null) {
+            loadInitialEvents();
+        }
     }
     private void loadInitialEvents() {
         Calendar weekStart = (Calendar) currentWeekStart.clone();
@@ -105,7 +140,6 @@ public class WeekViewFragment extends Fragment {
                 for (java.util.Map.Entry<Integer, List<EventEntity>> entry : eventsByColumn.entrySet()) {
                     drawEventsForDay(entry.getValue(), entry.getKey());
                 }
-
             });
         }).start();
     }
@@ -247,20 +281,24 @@ public class WeekViewFragment extends Fragment {
         currentWeekStart.set(Calendar.MINUTE, 0);
         currentWeekStart.set(Calendar.SECOND, 0);
         currentWeekStart.set(Calendar.MILLISECOND, 0);
+        
+        // Initialize currentMonthIndex and currentYear
+        currentMonthIndex = currentWeekStart.get(Calendar.MONTH);
+        currentYear = currentWeekStart.get(Calendar.YEAR);
     }
+    
     private void displayWeek() {
         gridWeekDays.removeAllViews();
         Calendar dayIterator = (Calendar) currentWeekStart.clone();
 
         for (int i = 0; i < DAYS_IN_WEEK; i++) {
-            int day = dayIterator.get(Calendar.DAY_OF_MONTH);
             int dayOfMonth = dayIterator.get(Calendar.DAY_OF_MONTH);
             int monthIndex = dayIterator.get(Calendar.MONTH);
             int year = dayIterator.get(Calendar.YEAR);
 
             // i là cellIndex (0 đến 6)
             TextView tvDay = createWeekDayTextView(
-                    String.valueOf(day),
+                    String.valueOf(dayOfMonth),
                     true,
                     i,
                     dayOfMonth,

@@ -151,9 +151,20 @@ public class AddEventActivity extends AppCompatActivity {
 
         new Thread(() -> {
             db.eventDao().insertEvent(event);
+            
+            // Notify fragments about the new event on the UI thread
+            runOnUiThread(() -> {
+                // Send result to notify fragments about event creation
+                Bundle result = new Bundle();
+                result.putString("message", "Event created successfully");
+                getSupportFragmentManager().setFragmentResult("event_created", result);
+            });
         }).start();
 
         Toast.makeText(this, "Event saved!", Toast.LENGTH_SHORT).show();
+        
+        // Set result for calling activity/fragment
+        setResult(RESULT_OK);
         finish();
     }
 
