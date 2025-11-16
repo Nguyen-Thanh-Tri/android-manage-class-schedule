@@ -2,6 +2,10 @@ package com.mtp.shedule.fragment.calendarfragment;
 
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -72,6 +76,9 @@ public class MonthViewFragment extends Fragment {
     Calendar selectedDay = Calendar.getInstance();
     private TextView lastSelectedDayView = null;
     private int selectedDayOfMonth = -1;
+    
+    // Activity result launcher for AddEventActivity
+    private ActivityResultLauncher<Intent> addEventLauncher;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -91,6 +98,17 @@ public class MonthViewFragment extends Fragment {
             currentMonthIndex = getArguments().getInt("INITIAL_MONTH_INDEX", currentMonthIndex);
             currentYear = getArguments().getInt("INITIAL_YEAR", currentYear);
         }
+        
+        // Initialize activity result launcher for AddEventActivity
+        addEventLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == AppCompatActivity.RESULT_OK) {
+                    // Event was created successfully, refresh the calendar
+                    refreshEvents();
+                }
+            }
+        );
 
         if (savedInstanceState != null) {
             currentMonthIndex = savedInstanceState.getInt("state_month_index", currentMonthIndex);
@@ -130,7 +148,7 @@ public class MonthViewFragment extends Fragment {
         //add event
         fabAddEvent.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), AddEventActivity.class);
-            startActivity(intent);
+            addEventLauncher.launch(intent);
         });
 
         //load event
@@ -687,5 +705,23 @@ public class MonthViewFragment extends Fragment {
         Calendar tempCal = Calendar.getInstance();
         tempCal.set(Calendar.MONTH, monthIndex);
         return tempCal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
+    }
+    
+    /**
+     * Refresh events after a new event is created
+     */
+    private void refreshEvents() {
+        // Refresh calendar display and any event indicators
+        displayCalendar();
+        
+        // Reload events for the selected day if needed
+        if (selectedDay != null) {
+            // Add any event loading logic here if MonthViewFragment shows events
+        }
+        
+        // Notify other fragments about the event change
+        Bundle result = new Bundle();
+        result.putString("message", "Events refreshed");
+        getParentFragmentManager().setFragmentResult("event_created", result);
     }
 }
