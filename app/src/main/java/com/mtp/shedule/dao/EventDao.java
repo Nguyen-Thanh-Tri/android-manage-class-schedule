@@ -33,4 +33,17 @@ public interface EventDao {
     void updateEvent(EventEntity event);
     @Query("SELECT * FROM events WHERE startTime BETWEEN :weekStart AND :weekEnd")
     List<EventEntity> getEventsByWeek(long weekStart, long weekEnd);
+    
+    // Methods for repeating events
+    @Query("SELECT * FROM events WHERE repeatType = 'weekly'")
+    List<EventEntity> getWeeklyRepeatingEvents();
+    
+    @Query("SELECT * FROM events WHERE isCourse = 1")
+    List<EventEntity> getCourseEvents();
+    
+    @Query("SELECT * FROM events WHERE repeatType != 'none' AND repeatType IS NOT NULL")
+    List<EventEntity> getAllRepeatingEvents();
+    
+    @Query("SELECT * FROM events WHERE id = :id")
+    EventEntity getEventById(int id);
 }

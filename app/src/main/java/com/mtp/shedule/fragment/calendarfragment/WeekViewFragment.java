@@ -29,9 +29,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mtp.shedule.AddEventActivity;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
+
 import com.mtp.shedule.entity.EventEntity;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -67,6 +69,8 @@ public class WeekViewFragment extends Fragment {
         tvMonthHeader = view.findViewById(R.id.tvMonthHeader);
         fabAddEvent = view.findViewById(R.id.fabAddEvent);
 
+        // Set up fragment result listener for event updates
+        setupFragmentResultListeners();
         //add event
         fabAddEvent.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), AddEventActivity.class);
@@ -89,10 +93,34 @@ public class WeekViewFragment extends Fragment {
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
-        // Tải lại sự kiện mỗi khi Fragment được hiển thị lại
-        loadInitialEvents();
+        // Refresh events when fragment becomes visible again
+        refreshEvents();
+    }
+
+    private void setupFragmentResultListeners() {
+        // Listen for event creation/update results
+        getParentFragmentManager().setFragmentResultListener("event_created", this, (requestKey, result) -> {
+            refreshEvents();
+        });
+        
+        getParentFragmentManager().setFragmentResultListener("event_updated", this, (requestKey, result) -> {
+            refreshEvents();
+        });
+        
+        getParentFragmentManager().setFragmentResultListener("event_deleted", this, (requestKey, result) -> {
+            refreshEvents();
+        });
+    }
+
+    /**
+     * Public method to refresh events - can be called from parent activities/fragments
+     */
+    public void refreshEvents() {
+        if (isAdded() && eventDrawingArea != null) {
+            loadInitialEvents();
+        }
     }
     private void loadInitialEvents() {
         Calendar weekStart = (Calendar) currentWeekStart.clone();
@@ -103,22 +131,45 @@ public class WeekViewFragment extends Fragment {
         long endMillis = weekEnd.getTimeInMillis();
 
         new Thread(() -> {
+            // Load regular events (excluding repeating events)
             List<EventEntity> events = db.eventDao().getEventsByWeek(startMillis, endMillis);
+
+            // Filter out original repeating events (we'll show generated instances instead)
+            List<EventEntity> filteredEvents = new ArrayList<>();
+            for (EventEntity event : events) {
+                if (event.getRepeatType() == null || "none".equals(event.getRepeatType())) {
+                    filteredEvents.add(event);
+                }
+                // Skip original repeating events - we'll generate instances instead
+            }
+
+            // Load all courses and convert to weekly recurring events
+            try {
+                // Load all repeating events and generate instances for this week
+                List<EventEntity> repeatingEvents = db.eventDao().getAllRepeatingEvents();
+                if (repeatingEvents != null && !repeatingEvents.isEmpty()) {
+                    List<EventEntity> generatedEvents = generateRepeatingEventInstances(repeatingEvents, weekStart);
+                    filteredEvents.addAll(generatedEvents);
+                }
+            } catch (Exception e) {
+                // Handle course loading error gracefully
+                e.printStackTrace();
+            }
 
             java.util.Map<Integer, List<EventEntity>> eventsByColumn = new java.util.HashMap<>();
 
-                // Phân bổ sự kiện vào từng cột
-                for (EventEntity e : events) {
-                    Calendar c = Calendar.getInstance();
-                    c.setTimeInMillis(e.startTime);
+            // Phân bổ sự kiện vào từng cột
+            for (EventEntity e : filteredEvents) {
+                Calendar c = Calendar.getInstance();
+                c.setTimeInMillis(e.startTime);
 
-                    long dayStartOfEvent = toMillis(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
-                    int diffDays = (int) ((dayStartOfEvent - startMillis) / (24 * 60 * 60 * 1000L));
+                long dayStartOfEvent = toMillis(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH));
+                int diffDays = (int) ((dayStartOfEvent - startMillis) / (24 * 60 * 60 * 1000L));
 
-                    if (diffDays >= 0 && diffDays < DAYS_IN_WEEK) {
-                        eventsByColumn.computeIfAbsent(diffDays, k -> new java.util.ArrayList<>()).add(e);
-                    }
+                if (diffDays >= 0 && diffDays < DAYS_IN_WEEK) {
+                    eventsByColumn.computeIfAbsent(diffDays, k -> new java.util.ArrayList<>()).add(e);
                 }
+            }
 
             if (!isAdded()) {
                 return;
@@ -201,6 +252,122 @@ public class WeekViewFragment extends Fragment {
 
         tvMonthHeader.setText(title);
     }
+
+    /**
+     * Generate instances of repeating events for the current week
+     */
+    private List<EventEntity> generateRepeatingEventInstances(List<EventEntity> repeatingEvents, Calendar weekStart) {
+        List<EventEntity> generatedEvents = new ArrayList<>();
+
+        for (EventEntity repeatingEvent : repeatingEvents) {
+            if ("weekly".equals(repeatingEvent.getRepeatType())) {
+                EventEntity weekInstance = generateWeeklyEventInstance(repeatingEvent, weekStart);
+                if (weekInstance != null) {
+                    generatedEvents.add(weekInstance);
+                }
+            }
+            // Add other repeat types here (daily, monthly) as needed
+        }
+
+        return generatedEvents;
+    }
+
+    /**
+     * Generate a weekly event instance for the current week
+     */
+    private EventEntity generateWeeklyEventInstance(EventEntity repeatingEvent, Calendar weekStart) {
+        // Find the day in current week that matches the event's day
+        int targetDayOfWeek = parseDayOfWeek(repeatingEvent.getDayOfWeek());
+        if (targetDayOfWeek == -1) return null; // Invalid day
+
+        Calendar eventDay = (Calendar) weekStart.clone();
+
+        // Find the correct day in the week
+        while (eventDay.get(Calendar.DAY_OF_WEEK) != targetDayOfWeek) {
+            eventDay.add(Calendar.DAY_OF_MONTH, 1);
+            // If we've gone past the week, this day doesn't exist in current week
+            if (eventDay.getTimeInMillis() >= weekStart.getTimeInMillis() + (7 * 24 * 60 * 60 * 1000L)) {
+                return null;
+            }
+        }
+
+        // Only create instance if the day exists in current week
+        if (eventDay.get(Calendar.DAY_OF_WEEK) == targetDayOfWeek &&
+            eventDay.getTimeInMillis() < weekStart.getTimeInMillis() + (7 * 24 * 60 * 60 * 1000L)) {
+
+            // Calculate the time difference to maintain the same time of day
+            Calendar originalEventTime = Calendar.getInstance();
+            originalEventTime.setTimeInMillis(repeatingEvent.getStartTime());
+
+            eventDay.set(Calendar.HOUR_OF_DAY, originalEventTime.get(Calendar.HOUR_OF_DAY));
+            eventDay.set(Calendar.MINUTE, originalEventTime.get(Calendar.MINUTE));
+            eventDay.set(Calendar.SECOND, originalEventTime.get(Calendar.SECOND));
+            eventDay.set(Calendar.MILLISECOND, originalEventTime.get(Calendar.MILLISECOND));
+
+            long duration = repeatingEvent.getEndTime() - repeatingEvent.getStartTime();
+
+            // Create instance for this week
+            EventEntity instance = new EventEntity(
+                repeatingEvent.getTitle(),
+                repeatingEvent.getDescription(),
+                eventDay.getTimeInMillis(),
+                eventDay.getTimeInMillis() + duration
+            );
+
+            // Copy all properties from the repeating event
+            instance.setColor(repeatingEvent.getColor());
+            instance.setTeacher(repeatingEvent.getTeacher());
+            instance.setRoom(repeatingEvent.getRoom());
+            instance.setIsCourse(repeatingEvent.isCourse());
+            instance.setId(-repeatingEvent.getId()); // Negative ID to distinguish instances
+
+            return instance;
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse day of week string to Calendar constant
+     */
+    private int parseDayOfWeek(String dayOfWeek) {
+        if (dayOfWeek == null) return -1;
+
+        switch (dayOfWeek.toLowerCase().trim()) {
+            case "sunday":
+            case "chủ nhật":
+            case "cn":
+                return Calendar.SUNDAY;
+            case "monday":
+            case "thứ hai":
+            case "t2":
+                return Calendar.MONDAY;
+            case "tuesday":
+            case "thứ ba":
+            case "t3":
+                return Calendar.TUESDAY;
+            case "wednesday":
+            case "thứ tư":
+            case "t4":
+                return Calendar.WEDNESDAY;
+            case "thursday":
+            case "thứ năm":
+            case "t5":
+                return Calendar.THURSDAY;
+            case "friday":
+            case "thứ sáu":
+            case "t6":
+                return Calendar.FRIDAY;
+            case "saturday":
+            case "thứ bảy":
+            case "t7":
+                return Calendar.SATURDAY;
+            default:
+                return -1;
+        }
+    }
+
+
 
     private void drawTimeAxisLabels() {
         timeAxisContainer.removeAllViews();

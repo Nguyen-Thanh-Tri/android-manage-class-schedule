@@ -10,9 +10,11 @@ import android.media.metrics.Event;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -27,13 +29,17 @@ import java.util.Locale;
 
 public class AddEventActivity extends AppCompatActivity {
 
-    EditText etTitle, etDescription;
+    EditText etTitle, etDescription, etTeacher, etRoom;
     Button btnStartDate, btnStartTime, btnEndDate, btnEndTime, btnColorPicker, btnSave, btnCancel;
+    Spinner spinnerRepeatType, spinnerDayOfWeek;
+    LinearLayout layoutCourseFields;
     private ConnDatabase db;
     // Calendar objects for picking date & time
     Calendar startCal = Calendar.getInstance();
     Calendar endCal = Calendar.getInstance();
     private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
+
+    int selectedColor = Color.BLUE; // default
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +52,11 @@ public class AddEventActivity extends AppCompatActivity {
 
         etTitle = findViewById(R.id.etTitle);
         etDescription = findViewById(R.id.etDescription);
+        etTeacher = findViewById(R.id.etTeacher);
+        etRoom = findViewById(R.id.etRoom);
+        spinnerRepeatType = findViewById(R.id.spinnerRepeatType);
+        spinnerDayOfWeek = findViewById(R.id.spinnerDayOfWeek);
+        layoutCourseFields = findViewById(R.id.layoutCourseFields);
         btnStartDate = findViewById(R.id.btnStartDate);
         btnStartTime = findViewById(R.id.btnStartTime);
         btnEndDate = findViewById(R.id.btnEndDate);
@@ -54,8 +65,11 @@ public class AddEventActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
         btnCancel = findViewById(R.id.btnCancel);
 
+        setupSpinners();
         etTitle.addTextChangedListener(watcher);
         etDescription.addTextChangedListener(watcher);
+        etTeacher.addTextChangedListener(watcher);
+        etRoom.addTextChangedListener(watcher);
 
         //DateTime Pickers
         btnStartDate.setOnClickListener(v -> {
@@ -195,12 +209,47 @@ public class AddEventActivity extends AppCompatActivity {
         dialog.show(getSupportFragmentManager(), "ColorDialog");
     }
 
+    // Setup spinners for repeat type and day of week
+    private void setupSpinners() {
+        // Setup repeat type spinner
+        String[] repeatTypes = {"None (One-time)", "Weekly (Course)"};
+        ArrayAdapter<String> repeatAdapter = new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_item, repeatTypes);
+        repeatAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerRepeatType.setAdapter(repeatAdapter);
+
+        // Setup day of week spinner
+        String[] daysOfWeek = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        ArrayAdapter<String> dayAdapter = new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_item, daysOfWeek);
+        dayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDayOfWeek.setAdapter(dayAdapter);
+
+        // Show/hide course fields based on repeat type selection
+        spinnerRepeatType.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+                if (position == 1) { // Weekly (Course) selected
+                    layoutCourseFields.setVisibility(android.view.View.VISIBLE);
+                } else {
+                    layoutCourseFields.setVisibility(android.view.View.GONE);
+                }
+                updateSaveButtonState();
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+    }
+
     //Save Event
     private void saveEvent() {
         String title = etTitle.getText().toString().trim();
         String desc = etDescription.getText().toString().trim();
         long start = startCal.getTimeInMillis();
         long end = endCal.getTimeInMillis();
+
+        boolean isWeeklyRepeat = spinnerRepeatType.getSelectedItemPosition() == 1;
 
         if (title.isEmpty() || desc.isEmpty()) {
             Toast.makeText(this, "Use your finger and punch on me, please", Toast.LENGTH_SHORT).show();
@@ -212,7 +261,29 @@ public class AddEventActivity extends AppCompatActivity {
             return;
         }
 
-        EventEntity event = new EventEntity(title,desc,start,end);
+        EventEntity event;
+
+        if (isWeeklyRepeat) {
+            // Create course event
+            String teacher = etTeacher.getText().toString().trim();
+            String room = etRoom.getText().toString().trim();
+
+            if (teacher.isEmpty() || room.isEmpty()) {
+                Toast.makeText(this, "Please fill teacher and room for course events", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Get selected day of week
+            String[] days = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"};
+            String selectedDay = days[spinnerDayOfWeek.getSelectedItemPosition()];
+
+            // Create course event using course constructor
+            event = new EventEntity(title, teacher, room, selectedDay, start, end);
+        } else {
+            // Create regular one-time event
+            event = new EventEntity(title, desc, start, end);
+        }
+
         event.setColor(selectedColorIndex);
 
         new Thread(() -> {
@@ -227,7 +298,8 @@ public class AddEventActivity extends AppCompatActivity {
             });
         }).start();
 
-        Toast.makeText(this, "Event saved!", Toast.LENGTH_SHORT).show();
+        String eventType = isWeeklyRepeat ? "Course" : "Event";
+        Toast.makeText(this, eventType + " saved!", Toast.LENGTH_SHORT).show();
         
         // Set result for calling activity/fragment
         setResult(RESULT_OK);
@@ -266,11 +338,18 @@ public class AddEventActivity extends AppCompatActivity {
     private void updateSaveButtonState() {
         boolean isTitleFilled = !etTitle.getText().toString().trim().isEmpty();
         boolean isDescFilled = !etDescription.getText().toString().trim().isEmpty();
-
         boolean isStartSet = startCal.get(Calendar.YEAR) > 1970;
         boolean isEndSet = endCal.get(Calendar.YEAR) > 1970;
 
         boolean enable = isTitleFilled && isDescFilled && isStartSet && isEndSet;
+
+        // Additional validation for course events
+        if (spinnerRepeatType.getSelectedItemPosition() == 1) { // Weekly (Course)
+            boolean isTeacherFilled = !etTeacher.getText().toString().trim().isEmpty();
+            boolean isRoomFilled = !etRoom.getText().toString().trim().isEmpty();
+            enable = enable && isTeacherFilled && isRoomFilled;
+        }
+
         btnSave.setEnabled(enable);
     }
 }
