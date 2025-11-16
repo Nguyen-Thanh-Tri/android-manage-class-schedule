@@ -153,6 +153,7 @@ public class WeekViewFragment extends Fragment {
                     gridWeekDays.removeAllViews();
                     timeAxisContainer.removeAllViews();
                     eventDrawingArea.removeAllViews();
+
                     updateHeaderTitle();
                     displayWeek();
 
