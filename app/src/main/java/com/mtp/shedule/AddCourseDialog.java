@@ -22,7 +22,8 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.mtp.shedule.database.ConnDatabase;
-import com.mtp.shedule.entity.CourseEntity;
+import com.mtp.shedule.entity.EventEntity;
+import com.mtp.shedule.notification.NotificationScheduler;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -44,21 +45,15 @@ public class AddCourseDialog extends DialogFragment {
     private static final String ARG_END = "end";
     private static final String ARG_DAY = "day";
     private static final String ARG_COLOR = "color";
-
+    private static final String ARG_EVENT_ITEM = "event_item";
     private int courseId = -1;
     private boolean isEditMode = false;
+    private EventEntity currentEvent;
 
-    public static AddCourseDialog newInstance(CourseEntity course) {
+    public static AddCourseDialog newInstance(EventEntity courseEvent) {
         AddCourseDialog dialog = new AddCourseDialog();
         Bundle args = new Bundle();
-        args.putInt(ARG_COURSE_ID, course.getId());
-        args.putString(ARG_TITLE, course.getTitle());
-        args.putString(ARG_TEACHER, course.getTeacher());
-        args.putString(ARG_ROOM, course.getRoom());
-        args.putString(ARG_START, course.getTimeStart());
-        args.putString(ARG_END, course.getTimeEnd());
-        args.putString(ARG_DAY, course.getDayOfWeek());
-        args.putInt(ARG_COLOR, course.getColor());
+        args.putSerializable(ARG_EVENT_ITEM, courseEvent);
         dialog.setArguments(args);
         return dialog;
     }
@@ -90,21 +85,32 @@ public class AddCourseDialog extends DialogFragment {
 
 
         //update
-        if (getArguments() != null) {
+        if (getArguments() != null && getArguments().containsKey(ARG_EVENT_ITEM)) {
             isEditMode = true;
-            courseId = getArguments().getInt(ARG_COURSE_ID);
-            etTitle.setText(getArguments().getString(ARG_TITLE));
-            etTeacher.setText(getArguments().getString(ARG_TEACHER));
-            etRoom.setText(getArguments().getString(ARG_ROOM));
-            etStartTime.setText(getArguments().getString(ARG_START));
-            etEndTime.setText(getArguments().getString(ARG_END));
-            selectedColorIndex = getArguments().getInt(ARG_COLOR);
+            currentEvent = (EventEntity) getArguments().getSerializable(ARG_EVENT_ITEM);
 
-            // chọn đúng ngày
-            String day = getArguments().getString(ARG_DAY);
-            spinnerDay.setSelection(days.indexOf(day));
+            if (currentEvent != null) {
+                etTitle.setText(currentEvent.getTitle());
+                etTeacher.setText(currentEvent.getTeacher());
+                etRoom.setText(currentEvent.getRoom());
 
-            btnSave.setText("Update");
+                // Format millis sang HH:mm để hiển thị
+                etStartTime.setText(currentEvent.getStartTimeFormatted());
+                etEndTime.setText(currentEvent.getEndTimeFormatted());
+
+                selectedColorIndex = currentEvent.getColor();
+
+                // Chọn đúng thứ trong spinner
+                String day = currentEvent.getDayOfWeek();
+                // Chuyển ký tự đầu thành hoa để khớp với list (Monday, Tuesday...)
+                if(day != null && !day.isEmpty()) {
+                    String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1).toLowerCase();
+                    int spinnerPos = days.indexOf(formattedDay);
+                    if (spinnerPos >= 0) spinnerDay.setSelection(spinnerPos);
+                }
+
+                btnSave.setText("Update");
+            }
         }
 
         // --- TimePicker cho Start Time ---
@@ -112,7 +118,7 @@ public class AddCourseDialog extends DialogFragment {
         // --- TimePicker cho End Time ---
         etEndTime.setOnClickListener(v -> showTimePicker(etEndTime));
 
-        btnSave.setOnClickListener(v -> saveCourse());
+        btnSave.setOnClickListener(v -> saveCourseAsEvent());
 
 
         // Cập nhật màu nút ngay lần đầu mở dialog
@@ -140,31 +146,74 @@ public class AddCourseDialog extends DialogFragment {
         return view;
     }
 
-    private void saveCourse(){
+    private void saveCourseAsEvent() {
         String title = etTitle.getText().toString().trim();
         String teacher = etTeacher.getText().toString().trim();
         String room = etRoom.getText().toString().trim();
-        String start = etStartTime.getText().toString().trim();
-        String end = etEndTime.getText().toString().trim();
-        String day = spinnerDay.getSelectedItem().toString();
+        String startStr = etStartTime.getText().toString().trim();
+        String endStr = etEndTime.getText().toString().trim();
+        String dayOfWeek = spinnerDay.getSelectedItem().toString();
 
-        if (title.isEmpty() || teacher.isEmpty()) {
+        if (title.isEmpty() || teacher.isEmpty() || startStr.isEmpty() || endStr.isEmpty()) {
             Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        CourseEntity course = new CourseEntity(title, teacher, room, start, end, day);
-        course.setColor(selectedColorIndex);
+        // TÍNH TOÁN TIMESTAMP (Millis)
+        // Ta cần tìm ngày gần nhất tương ứng với Thứ đã chọn để làm mốc thời gian
+        Calendar startCal = getNextOccurringDayOfWeek(dayOfWeek);
+        String[] startParts = startStr.split(":");
+        startCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(startParts[0]));
+        startCal.set(Calendar.MINUTE, Integer.parseInt(startParts[1]));
+        startCal.set(Calendar.SECOND, 0);
+
+        Calendar endCal = (Calendar) startCal.clone();
+        String[] endParts = endStr.split(":");
+        endCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(endParts[0]));
+        endCal.set(Calendar.MINUTE, Integer.parseInt(endParts[1]));
+        endCal.set(Calendar.SECOND, 0);
+
+        if (endCal.before(startCal)) {
+            Toast.makeText(requireContext(), "End time must be after start time", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Tạo hoặc Cập nhật EventEntity
+        final EventEntity eventToSave;
+        if (isEditMode && currentEvent != null) {
+            eventToSave = currentEvent; // Sử dụng object cũ
+        } else {
+            eventToSave = new EventEntity(); // Tạo mới
+        }
+
+        // Set các thông tin chung
+        eventToSave.setTitle(title);
+        eventToSave.setTeacher(teacher);
+        eventToSave.setRoom(room);
+        eventToSave.setStartTime(startCal.getTimeInMillis());
+        eventToSave.setEndTime(endCal.getTimeInMillis());
+        eventToSave.setColor(selectedColorIndex);
+
+        // QUAN TRỌNG: Đánh dấu đây là Course để Calendar tự repeat
+        eventToSave.setIsCourse(true);
+        eventToSave.setRepeatType("weekly");
+        eventToSave.setDayOfWeek(dayOfWeek); // "Monday", "Tuesday"...
+        eventToSave.setDescription("Teacher: " + teacher + "\nRoom: " + room); // Description phụ
 
         new Thread(() -> {
-            if (isEditMode && courseId != -1) {
-                // cập nhật
-                course.setId(courseId);
-                db.courseDao().update(course);
+            if (isEditMode) {
+                // ID dương mới update được (xử lý trường hợp ID âm từ Calendar)
+                int originalId = Math.abs(eventToSave.getId());
+                eventToSave.setId(originalId);
+
+                db.eventDao().updateEvent(eventToSave);
+                NotificationScheduler.scheduleReminder(requireContext(), eventToSave);
                 requireActivity().runOnUiThread(() ->
                         Toast.makeText(requireContext(), "Updated successfully", Toast.LENGTH_SHORT).show());
             } else {
-                db.courseDao().insert(course);
+                long id = db.eventDao().insertEvent(eventToSave);
+                eventToSave.setId((int)id);
+                NotificationScheduler.scheduleReminder(requireContext(), eventToSave);
                 requireActivity().runOnUiThread(() -> {
                     Toast.makeText(requireContext(), "Course added successfully", Toast.LENGTH_SHORT).show();
                 });
@@ -173,15 +222,35 @@ public class AddCourseDialog extends DialogFragment {
         }).start();
     }
 
-    private void showTimePicker(EditText editText){
-        Calendar c = Calendar.getInstance();
-        int hour = c.get(Calendar.HOUR_OF_DAY);
-        int minute = c.get(Calendar.MINUTE);
+    // Hàm phụ trợ: Tìm ngày Calendar khớp với thứ trong tuần (Monday, Tuesday...)
+    private Calendar getNextOccurringDayOfWeek(String dayName) {
+        int targetDay = parseDayOfWeek(dayName);
+        Calendar cal = Calendar.getInstance();
 
-        TimePickerDialog timePicker = new TimePickerDialog(requireContext(),
-                (view, hourOfDay, minute1) -> editText.setText(String.format("%02d:%02d", hourOfDay, minute1)),
-                hour, minute, true);
-        timePicker.show();
+        // Nếu hôm nay khớp thứ, dùng hôm nay. Nếu không, tìm ngày tiếp theo.
+        // Tuy nhiên, để lịch đẹp, ta nên set về tuần hiện tại hoặc tương lai gần.
+        while (cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+        }
+        return cal;
+    }
+    private int parseDayOfWeek(String dayOfWeek) {
+        switch (dayOfWeek.toLowerCase().trim()) {
+            case "sunday": return Calendar.SUNDAY;
+            case "tuesday": return Calendar.TUESDAY;
+            case "wednesday": return Calendar.WEDNESDAY;
+            case "thursday": return Calendar.THURSDAY;
+            case "friday": return Calendar.FRIDAY;
+            case "saturday": return Calendar.SATURDAY;
+            default: return Calendar.MONDAY;
+        }
+    }
+
+    private void showTimePicker(EditText editText) {
+        Calendar c = Calendar.getInstance();
+        new TimePickerDialog(requireContext(),
+                (view, hourOfDay, minute) -> editText.setText(String.format("%02d:%02d", hourOfDay, minute)),
+                c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show();
     }
 
     @Override

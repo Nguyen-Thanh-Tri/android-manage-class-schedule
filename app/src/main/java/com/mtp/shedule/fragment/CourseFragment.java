@@ -19,7 +19,7 @@ import com.mtp.shedule.AddCourseDialog;
 import com.mtp.shedule.adapter.CourseAdapter;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
-import com.mtp.shedule.entity.CourseEntity;
+import com.mtp.shedule.entity.EventEntity;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -30,11 +30,11 @@ public class CourseFragment extends Fragment {
     private RecyclerView recyclerView;
     private CourseAdapter courseAdapter;
     private ConnDatabase db;
-    private final List<CourseEntity> courseList = new ArrayList<>();
+    private final List<EventEntity> courseList = new ArrayList<>();
 
     private FloatingActionButton fabAdd;
     private MaterialButton[] dayButtons;
-    private LiveData<List<CourseEntity>> currentLiveData;
+    private LiveData<List<EventEntity>> currentLiveData;
 
     public CourseFragment() {
 
@@ -70,6 +70,7 @@ public class CourseFragment extends Fragment {
         // Highlight today
         int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
         int index = (today == Calendar.SUNDAY) ? 6 : today - 2;
+        if (index < 0) index = 0;
         highlightDay(index);
         loadCoursesByDay(dayButtons[index].getText().toString());
 
@@ -81,6 +82,7 @@ public class CourseFragment extends Fragment {
             dialog.show(getParentFragmentManager(), "AddCourseDialog");
         });
 
+        // Edit
         courseAdapter.setOnItemClickListener(course -> {
             AddCourseDialog dialog = AddCourseDialog.newInstance(course);
             dialog.show(getParentFragmentManager(), "EditCourseDialog");
@@ -117,7 +119,7 @@ public class CourseFragment extends Fragment {
             currentLiveData.removeObservers(getViewLifecycleOwner());
         }
         // Lấy LiveData mới và lưu vào biến
-        currentLiveData = db.courseDao().getCoursesByDay(day);
+        currentLiveData = db.eventDao().getCoursesByDay(day);
 
         //  Gắn Observer mới vào LiveData mới
         currentLiveData.observe(getViewLifecycleOwner(), courses -> {
