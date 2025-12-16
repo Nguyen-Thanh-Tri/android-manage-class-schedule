@@ -769,9 +769,10 @@ public class MonthViewFragment extends Fragment {
         }
 
         if (isToday) {
-            tv.setBackgroundResource(R.drawable.bg_current_day_for_month); // giữ drawable hiện tại cho "today"
-            tv.setTextColor(Color.WHITE);
+//            tv.setBackgroundResource(R.drawable.bg_current_day_for_month); // giữ drawable hiện tại cho "today"
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.bright_blue));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
+            tv.setBackground(null);
             return;
         }
 
