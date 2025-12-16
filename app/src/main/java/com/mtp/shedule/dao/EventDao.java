@@ -46,4 +46,8 @@ public interface EventDao {
     
     @Query("SELECT * FROM events WHERE id = :id")
     EventEntity getEventById(int id);
+
+    @Query("SELECT * FROM events")
+    List<EventEntity> getAllEvents();
+
 }

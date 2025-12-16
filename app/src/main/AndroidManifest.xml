@@ -17,8 +17,15 @@
         android:theme="@style/Theme.Shedule">
         <receiver android:name=".ReminderReceiver"
             android:enabled="true"
-            android:exported="true"
-            android:permission="TODO" />
+            android:exported="false"
+            android:permission="" />
+        <receiver android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true">

@@ -5,6 +5,7 @@ import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.metrics.Event;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.internal.TextWatcherAdapter;
@@ -74,6 +76,9 @@ public class AddEventActivity extends AppCompatActivity {
         btnColorPicker = findViewById(R.id.btnColorPicker);
         btnSave = findViewById(R.id.btnSave);
         btnCancel = findViewById(R.id.btnCancel);
+
+        // GỌI YÊU CẦU QUYỀN THÔNG BÁO
+        RequestPermission.requestNotificationPermission(this);
 
         setupSpinners();
         etTitle.addTextChangedListener(watcher);
@@ -439,5 +444,20 @@ public class AddEventActivity extends AppCompatActivity {
         updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
         updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
         updateSaveButtonState();
+    }
+
+    // Xử lý kết quả yêu cầu quyền từ hệ thống
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == RequestPermission.PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Đã cấp quyền thông báo.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Không có quyền thông báo, có thể không nhận được nhắc nhở.", Toast.LENGTH_LONG).show();
+                // Bạn có thể chọn vô hiệu hóa nút Save nếu không có quyền
+            }
+        }
     }
 }
