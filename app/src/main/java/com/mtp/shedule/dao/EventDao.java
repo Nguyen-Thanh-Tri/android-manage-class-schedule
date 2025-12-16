@@ -52,6 +52,9 @@ public interface EventDao {
     @Query("SELECT * FROM events")
     List<EventEntity> getAllEvents();
 
+    @Query("SELECT * FROM events")
+    LiveData<List<EventEntity>> getAllEventsLiveData();
+
     @Query("SELECT * FROM events WHERE isCourse = 1 AND LOWER(dayOfWeek) = LOWER(:dayOfWeek) ORDER BY startTime ASC")
     LiveData<List<EventEntity>> getCoursesByDay(String dayOfWeek);
 }
