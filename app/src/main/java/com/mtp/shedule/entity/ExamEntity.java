@@ -3,6 +3,8 @@ package com.mtp.shedule.entity;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.mtp.shedule.R;
+
 @Entity(tableName = "exam")
 public class ExamEntity {
     @PrimaryKey(autoGenerate = true)
@@ -11,12 +13,14 @@ public class ExamEntity {
     private String date;
     private String time;
     private String location;
+    private int color;
 
     public ExamEntity(String subject, String date, String time, String location) {
         this.subject = subject;
         this.date = date;
         this.time = time;
         this.location = location;
+        this.color = R.drawable.gradient_bg_red;
     }
 
     // Getters and setters
@@ -30,4 +34,6 @@ public class ExamEntity {
     public void setTime(String time) { this.time = time; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public int getColor() { return color; }
+    public void setColor(int color) { this.color = color; }
 }

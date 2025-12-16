@@ -1,5 +1,7 @@
 package com.mtp.shedule.adapter;
 
+import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
+
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.mtp.shedule.R;
@@ -22,13 +25,23 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
 
     public List<CourseEntity> courseList;
     public Context context;
-    private ConnDatabase db;
+    private final ConnDatabase db;
 
 
     public CourseAdapter(Context context, List<CourseEntity> courseList) {
         this.context = context;
         this.courseList = courseList;
         this.db = ConnDatabase.getInstance(context);
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(CourseEntity course);
+    }
+
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
     }
 
     @NonNull
@@ -47,6 +60,12 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
         holder.tvRoom.setText(course.getRoom());
         holder.tvTime.setText(course.getTimeStart() + " - " + course.getTimeEnd());
 
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(course);
+            }
+        });
 
         //giữ để xóa
         holder.itemView.setOnLongClickListener(v -> {
@@ -67,6 +86,17 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
                     .show();
             return true; // Đã xử lý long click
         });
+
+        //áp dụng màu cho card view
+        int colorIndex = course.getColor();
+        int drawableResId;
+
+        if (colorIndex >= 0 && colorIndex < COLOR_MAPPING_DRAWABLE.length) {
+            drawableResId = COLOR_MAPPING_DRAWABLE[colorIndex];
+        } else {
+            drawableResId = COLOR_MAPPING_DRAWABLE[0];
+        }
+        holder.cardView.setBackgroundResource(drawableResId);
     }
 
     @Override
@@ -74,15 +104,18 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
         return courseList.size();
     }
 
+
+
     public static class CourseViewHolder extends RecyclerView.ViewHolder {
         TextView tvCourseTitle, tvTeacher, tvRoom, tvTime;
-
+        CardView cardView;
         public CourseViewHolder(@NonNull View itemView) {
             super(itemView);
             tvCourseTitle = itemView.findViewById(R.id.tvCourseTitle);
             tvTeacher = itemView.findViewById(R.id.tvTeacher);
             tvRoom = itemView.findViewById(R.id.tvRoom);
             tvTime = itemView.findViewById(R.id.tvTime);
+            cardView = itemView.findViewById(R.id.cardViewItemCourse);
         }
     }
 }

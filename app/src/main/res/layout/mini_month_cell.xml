@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="@drawable/bg_month_cell"
+    android:padding="4dp">
+
+    <TextView
+        android:id="@+id/tvMonthTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="JAN"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:paddingBottom="2dp"
+        android:textColor="@color/black"
+        android:layout_gravity="start"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="7"
+        android:layout_marginTop="5dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="S"
+            android:textSize="10.5sp"
+            android:textAlignment="center"
+            android:textColor="@color/dard_grey"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="M"
+            android:textSize="10.5sp"
+            android:textAlignment="center"
+            android:textColor="@color/dard_grey"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="T"
+            android:textSize="10.5sp"
+            android:textAlignment="center"
+            android:textColor="@color/dard_grey"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="W"
+            android:textSize="10.5sp"
+            android:textAlignment="center"
+            android:textColor="@color/dard_grey"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="T"
+            android:textSize="10.5sp"
+            android:textAlignment="center"
+            android:textColor="@color/dard_grey"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="F"
+            android:textSize="10.5sp"
+            android:textAlignment="center"
+            android:textColor="@color/dard_grey"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="S"
+            android:textSize="10.5sp"
+            android:textAlignment="center"
+            android:textColor="@color/dard_grey"/>
+    </LinearLayout>
+
+    <androidx.gridlayout.widget.GridLayout
+        android:id="@+id/gridDaysInMonth"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:columnCount="7"
+        app:useDefaultMargins="false">
+
+    </androidx.gridlayout.widget.GridLayout>
+
+</LinearLayout>

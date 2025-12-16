@@ -1,8 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/cardView"
+    android:id="@+id/cardViewItemTeacher"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="12dp"
@@ -14,79 +13,85 @@
     android:focusable="true">
 
     <LinearLayout
+        android:id="@+id/teacher_content_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/gradient_bg_orange"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="12dp"
+        android:gravity="center_vertical">
 
-        <!-- Tên giáo viên -->
+        <!-- Teacher Name -->
         <TextView
             android:id="@+id/tvTeacherName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nguyen Van A"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white"
             android:textStyle="bold"
             android:textSize="16sp" />
 
-        <!-- Chức vụ -->
+        <!-- Teacher Position -->
         <TextView
             android:id="@+id/tvTeacherPosition"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Trưởng bộ môn Toán"
-            android:textColor="@android:color/black"
-            android:textSize="13sp"
-            android:layout_marginTop="2dp" />
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:paddingTop="4dp" />
 
-        <!-- Số điện thoại -->
+        <!-- Info Row: Phone + Email -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingTop="6dp">
+            android:paddingTop="8dp">
 
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_phone"
-                android:tint="@android:color/black" />
-
-            <TextView
-                android:id="@+id/tvTeacherPhone"
+            <!-- Phone -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="0987 654 321"
-                android:textColor="@android:color/black"
-                android:textSize="13sp" />
-        </LinearLayout>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-        <!-- Email -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingTop="4dp">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_phone" />
 
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_email"
-                android:tint="@android:color/black" />
+                <TextView
+                    android:id="@+id/tvTeacherPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvTeacherEmail"
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Email -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="teacherEntity@example.com"
-                android:textColor="@android:color/black"
-                android:textSize="13sp" />
-        </LinearLayout>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_email" />
+
+                <TextView
+                    android:id="@+id/tvTeacherEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

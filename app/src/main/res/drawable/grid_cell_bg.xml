@@ -1,0 +1,7 @@
+<!-- res/drawable/grid_cell_border.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@android:color/transparent" />
+    <stroke
+        android:width="0.5dp"
+        android:color="#33000000" />
+</shape>
