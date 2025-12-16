@@ -37,6 +37,7 @@ import com.mtp.shedule.entity.EventEntity;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -146,9 +147,27 @@ public class MonthViewFragment extends Fragment {
         setupDragHandle();
         displayCalendar();
 
-        //add event
+        //SHOW DETAIL EVENT
+        eventAdapter.setOnItemClickListener(event ->{
+            // Tạo Intent
+            Intent intent = new Intent(getContext(), AddEventActivity.class);
+
+            // Truyền event object qua
+            intent.putExtra("event_item", event);
+
+            // Bật cờ VIEW MODE
+            intent.putExtra("is_view_mode", true);
+
+            // Gọi launcher
+            addEventLauncher.launch(intent);
+        });
+
+        //ADD EVENT
         fabAddEvent.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), AddEventActivity.class);
+            // Tắt cờ VIEW MODE (để mặc định là false)
+            intent.putExtra("is_view_mode", false);
+
             addEventLauncher.launch(intent);
         });
 
@@ -605,6 +624,25 @@ public class MonthViewFragment extends Fragment {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            Collections.sort(filteredEvents, (e1, e2) -> {
+                // So sánh thời gian bắt đầu (Start Time)
+                int startCompare = Long.compare(e1.getStartTime(), e2.getStartTime());
+                if (startCompare != 0) {
+                    return startCompare;
+                }
+
+                //  Nếu Start Time bằng nhau, so sánh thời gian kết thúc (End Time)
+                int endCompare = Long.compare(e1.getEndTime(), e2.getEndTime());
+                if (endCompare != 0) {
+                    return endCompare;
+                }
+
+                // 3. Nếu cả Start và End Time bằng nhau, so sánh Tên (Title A->Z)
+                String title1 = e1.getTitle() == null ? "" : e1.getTitle();
+                String title2 = e2.getTitle() == null ? "" : e2.getTitle();
+                return title1.compareToIgnoreCase(title2);
+            });
 
             // Cập nhật UI trên Main Thread
             if (getView() != null) {

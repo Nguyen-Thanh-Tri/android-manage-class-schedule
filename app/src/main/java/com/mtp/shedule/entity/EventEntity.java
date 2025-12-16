@@ -6,12 +6,13 @@ import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import com.mtp.shedule.R;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 @Entity(tableName = "events")
-public class EventEntity {
+public class EventEntity implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     public int id;
