@@ -7,17 +7,14 @@ import androidx.room.RoomDatabase;
 
 import com.mtp.shedule.dao.EventDao;
 import com.mtp.shedule.dao.TeacherDao;
-import com.mtp.shedule.entity.CourseEntity;
 import com.mtp.shedule.entity.EventEntity;
 import com.mtp.shedule.entity.ExamEntity;
-import com.mtp.shedule.dao.CourseDao;
 import com.mtp.shedule.dao.ExamDao;
 import com.mtp.shedule.entity.TeacherEntity;
 
 @Database(
-        entities = {CourseEntity.class, ExamEntity.class, TeacherEntity.class, EventEntity.class}, version = 11)
+        entities = { ExamEntity.class, TeacherEntity.class, EventEntity.class}, version = 12)
 public abstract class ConnDatabase extends RoomDatabase {
-    public abstract CourseDao courseDao();
     public abstract ExamDao examDao();
     public abstract TeacherDao teacherDao();
     public abstract EventDao eventDao();

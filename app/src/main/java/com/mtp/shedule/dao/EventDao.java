@@ -1,5 +1,6 @@
 package com.mtp.shedule.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -47,7 +48,10 @@ public interface EventDao {
     @Query("SELECT * FROM events WHERE id = :id")
     EventEntity getEventById(int id);
 
+    //BOOT RECEIVER
     @Query("SELECT * FROM events")
     List<EventEntity> getAllEvents();
 
+    @Query("SELECT * FROM events WHERE isCourse = 1 AND LOWER(dayOfWeek) = LOWER(:dayOfWeek) ORDER BY startTime ASC")
+    LiveData<List<EventEntity>> getCoursesByDay(String dayOfWeek);
 }
