@@ -1,4 +1,4 @@
-package com.mtp.shedule;
+package com.mtp.shedule.notification;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
 
+import com.mtp.shedule.AddEventActivity;
 import com.mtp.shedule.entity.EventEntity;
 
 public class NotificationScheduler {

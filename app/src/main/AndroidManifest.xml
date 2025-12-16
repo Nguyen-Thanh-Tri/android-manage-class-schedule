@@ -15,11 +15,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Shedule">
-        <receiver android:name=".ReminderReceiver"
+        <receiver android:name=".notification.ReminderReceiver"
             android:enabled="true"
             android:exported="false"
             android:permission="" />
-        <receiver android:name=".BootReceiver"
+        <receiver android:name=".notification.BootReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
