@@ -5,6 +5,8 @@ import android.annotation.SuppressLint;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -58,7 +60,10 @@ public class MonthViewFragment extends Fragment {
     private GridLayout gridFullMonthDays;
     private ImageView ivDragHandle;
     private RecyclerView rvEvents;
+    // List hiển thị trên RecyclerView
     private final List<EventEntity> eventList = new ArrayList<>();
+    // List CACHE chứa toàn bộ dữ liệu thô từ DB (LiveData trả về)
+    private final List<EventEntity> allRawEventsCache = new ArrayList<>();
     private EventAdapter eventAdapter;
 
     private ViewState currentState = ViewState.SPLIT_VIEW; // Default state is balanced
@@ -78,7 +83,7 @@ public class MonthViewFragment extends Fragment {
     Calendar selectedDay = Calendar.getInstance();
     private TextView lastSelectedDayView = null;
     private int selectedDayOfMonth = -1;
-    
+
     // Activity result launcher for AddEventActivity
     private ActivityResultLauncher<Intent> addEventLauncher;
 
@@ -100,15 +105,12 @@ public class MonthViewFragment extends Fragment {
             currentMonthIndex = getArguments().getInt("INITIAL_MONTH_INDEX", currentMonthIndex);
             currentYear = getArguments().getInt("INITIAL_YEAR", currentYear);
         }
-        
+
         // Initialize activity result launcher for AddEventActivity
         addEventLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
-                if (result.getResultCode() == AppCompatActivity.RESULT_OK) {
-                    // Event was created successfully, refresh the calendar
-                    refreshEvents();
-                }
+            //Dùng liveData
             }
         );
 
@@ -145,53 +147,39 @@ public class MonthViewFragment extends Fragment {
         FloatingActionButton fabAddEvent = view.findViewById(R.id.fabAddEvent);
 
         setupDragHandle();
-        displayCalendar();
 
-        //SHOW DETAIL EVENT
+        // --- SETUP LIVEDATA OBSERVER ---
+        db.eventDao().getAllEventsLiveData().observe(getViewLifecycleOwner(), events -> {
+            // 1. Cập nhật Cache
+            allRawEventsCache.clear();
+            if (events != null) {
+                allRawEventsCache.addAll(events);
+            }
+
+            // 2. Vẽ lại lịch (cập nhật hanlde, light event)
+            displayCalendar();
+
+            // 3. Load lại list sự kiện cho ngày đang chọn
+            processEventsForSelectedDay();
+        });
+
+        // Click Item -> View Mode
         eventAdapter.setOnItemClickListener(event ->{
-            // Tạo Intent
             Intent intent = new Intent(getContext(), AddEventActivity.class);
-
-            // Truyền event object qua
             intent.putExtra("event_item", event);
-
-            // Bật cờ VIEW MODE
             intent.putExtra("is_view_mode", true);
-
-            // Gọi launcher
             addEventLauncher.launch(intent);
         });
 
-        //ADD EVENT
+        // Click FAB -> Add Mode
         fabAddEvent.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), AddEventActivity.class);
-            // Tắt cờ VIEW MODE (để mặc định là false)
             intent.putExtra("is_view_mode", false);
-
             addEventLauncher.launch(intent);
         });
-
-        //load event
-        loadEventsForSelectedDay(
-                selectedDay.get(Calendar.DAY_OF_MONTH),
-                selectedDay.get(Calendar.MONTH),
-                selectedDay.get(Calendar.YEAR)
-        );
 
         // Thiết lập trạng thái ban đầu dựa trên currentState
         view.post(() -> updateViewState(currentState, false));
-
-        // Listen for event deletion to refresh calendar
-        getParentFragmentManager().setFragmentResultListener("event_deleted", this,
-            (requestKey, result) -> {
-                // Refresh the calendar view and event list
-                displayCalendar();
-                loadEventsForSelectedDay(
-                        selectedDay.get(Calendar.DAY_OF_MONTH),
-                        selectedDay.get(Calendar.MONTH),
-                        selectedDay.get(Calendar.YEAR)
-                );
-            });
 
         return view;
     }
@@ -199,12 +187,8 @@ public class MonthViewFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadEventsForSelectedDay(
-                selectedDay.get(Calendar.DAY_OF_MONTH),
-                selectedDay.get(Calendar.MONTH),
-                selectedDay.get(Calendar.YEAR)
-        );
         displayCalendar();
+        processEventsForSelectedDay();
     }
 
     @Override
@@ -221,18 +205,8 @@ public class MonthViewFragment extends Fragment {
         this.currentYear = year;
 
         Calendar now = Calendar.getInstance();
-        boolean isCurrentMonth = (newMonthIndex == now.get(Calendar.MONTH)
-                && year == now.get(Calendar.YEAR));
-
-        int newSelectedDay;
-
-        if (isCurrentMonth) {
-            // THÁNG HIỆN TẠI → highlight today
-            newSelectedDay = now.get(Calendar.DAY_OF_MONTH);
-        } else {
-            // KHÔNG PHẢI THÁNG HIỆN TẠI → highlight ngày 1
-            newSelectedDay = 1;
-        }
+        boolean isCurrentMonth = (newMonthIndex == now.get(Calendar.MONTH) && year == now.get(Calendar.YEAR));
+        int newSelectedDay = isCurrentMonth ? now.get(Calendar.DAY_OF_MONTH) : 1;
 
         // Cập nhật selectedDay HOÀN CHỈNH
         selectedDay.set(year, newMonthIndex, newSelectedDay);
@@ -244,8 +218,7 @@ public class MonthViewFragment extends Fragment {
         if (getView() != null) {
             gridFullMonthDays.removeAllViews();
             displayCalendar();
-
-            loadEventsForSelectedDay(newSelectedDay, newMonthIndex, year);
+            processEventsForSelectedDay(); // Gọi hàm xử lý từ cache
 
             // Cập nhật view state sau khi vẽ xong
             gridFullMonthDays.post(() -> {
@@ -474,6 +447,53 @@ public class MonthViewFragment extends Fragment {
         return -1;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    private void processEventsForSelectedDay() {
+        // Lấy thời gian bắt đầu và kết thúc của ngày đang chọn
+        long dayStartMillis = selectedDay.getTimeInMillis();
+        long dayEndMillis = dayStartMillis + (24 * 60 * 60 * 1000L) - 1;
+
+        List<EventEntity> filteredEvents = new ArrayList<>();
+
+        // 1. Lọc sự kiện thường (One-time)
+        for (EventEntity event : allRawEventsCache) {
+            if (event.getRepeatType() == null || "none".equals(event.getRepeatType())) {
+                // Kiểm tra xem event có nằm trong ngày đang chọn không
+                if (event.getStartTime() >= dayStartMillis && event.getStartTime() <= dayEndMillis) {
+                    filteredEvents.add(event);
+                }
+            }
+        }
+
+        // 2. Sinh sự kiện lặp lại (Repeating)
+        for (EventEntity repeatingEvent : allRawEventsCache) {
+            if ("weekly".equals(repeatingEvent.getRepeatType())) {
+                EventEntity dayInstance = generateWeeklyEventInstanceForSpecificDay(repeatingEvent, selectedDay);
+                if (dayInstance != null) {
+                    filteredEvents.add(dayInstance);
+                }
+            }
+        }
+
+        // 3. Sắp xếp (Start -> End -> Title)
+        Collections.sort(filteredEvents, (e1, e2) -> {
+            int startCompare = Long.compare(e1.getStartTime(), e2.getStartTime());
+            if (startCompare != 0) return startCompare;
+
+            int endCompare = Long.compare(e1.getEndTime(), e2.getEndTime());
+            if (endCompare != 0) return endCompare;
+
+            String title1 = e1.getTitle() == null ? "" : e1.getTitle();
+            String title2 = e2.getTitle() == null ? "" : e2.getTitle();
+            return title1.compareToIgnoreCase(title2);
+        });
+
+        // 4. Cập nhật Adapter
+        eventList.clear();
+        eventList.addAll(filteredEvents);
+        eventAdapter.notifyDataSetChanged();
+    }
+
     private void displayCalendar() {
         String monthName = getMonthName(currentMonthIndex);
         tvMonthHeader.setText(String.format(Locale.getDefault(), "%s %d", monthName, currentYear));
@@ -482,7 +502,6 @@ public class MonthViewFragment extends Fragment {
 
         Calendar calendar = Calendar.getInstance();
         calendar.set(currentYear, currentMonthIndex, 1);
-        calendar.set(Calendar.DAY_OF_MONTH, 1);
 
         // Get today's info to highlight
         int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK); // 1=Sunday
@@ -493,168 +512,72 @@ public class MonthViewFragment extends Fragment {
         int totalCellsNeeded = dayOffset + daysInMonth;
         actualRowsNeeded = (int) Math.ceil((double) totalCellsNeeded / DAYS_IN_WEEK);
 
-        final int displayingMonth = currentMonthIndex;
-        final int displayingYear = currentYear;
+        // --- TÍNH TOÁN CÁC NGÀY CÓ SỰ KIỆN (Dựa trên Cache) ---
+        Set<Integer> daysWithEvents = new HashSet<>();
 
-        new Thread(() -> {
-            // Load regular events for this month (excluding repeating events)
-            List<EventEntity> events = db.eventDao().getEventsByMonth(
-                    String.valueOf(currentYear),
-                    String.format(Locale.getDefault(), "%02d", currentMonthIndex + 1)
-            );
-
-            // Filter out original repeating events (we'll show generated instances instead)
-            List<EventEntity> filteredEvents = new ArrayList<>();
-            for (EventEntity event : events) {
-                if (event.getRepeatType() == null || "none".equals(event.getRepeatType())) {
-                    filteredEvents.add(event);
-                }
-                // Skip original repeating events - we'll generate instances instead
-            }
-
-            // Load repeating events and generate instances for this month
-            try {
-                List<EventEntity> repeatingEvents = db.eventDao().getAllRepeatingEvents();
-                if (repeatingEvents != null && !repeatingEvents.isEmpty()) {
-                    List<EventEntity> generatedEvents = generateRepeatingEventInstancesForMonth(repeatingEvents);
-                    filteredEvents.addAll(generatedEvents);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            Set<Integer> daysWithEvents = new HashSet<>();
-            for (EventEntity e : filteredEvents) {
+        // 1. Check sự kiện thường
+        for (EventEntity e : allRawEventsCache) {
+            if (e.getRepeatType() == null || "none".equals(e.getRepeatType())) {
                 Calendar cal = Calendar.getInstance();
                 cal.setTimeInMillis(e.getStartTime());
-                // Only include events that are in the current month and year being displayed
                 if (cal.get(Calendar.MONTH) == currentMonthIndex && cal.get(Calendar.YEAR) == currentYear) {
                     daysWithEvents.add(cal.get(Calendar.DAY_OF_MONTH));
                 }
             }
+        }
 
-            requireActivity().runOnUiThread(() -> {
-                if (displayingMonth != currentMonthIndex || displayingYear != currentYear) {
-                    // Tháng đã thay đổi, bỏ qua kết quả này
-                    return;
-                }
-
-                if (lastSelectedDayView != null) {
-                    resetDayStyle(lastSelectedDayView);
-                    lastSelectedDayView = null; // Rất quan trọng: Đảm bảo không reset nhầm lần nữa
-                }
-                // DRAW EMPTY CELLS AT THE BEGINNING OF THE MONTH
-                for (int i = 0; i < dayOffset; i++) {
-                    gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
-                }
-
-                // DRAW DAYS OF THE MONTH
-                for (int day = 1; day <= daysInMonth; day++) {
-                    int cellIndexCurrent = cellIndex[0]++;
-                    TextView tvDay = createMonthDayTextView(String.valueOf(day), true, cellIndexCurrent);
-
-                    // highlight ngày được chọn
-                    if (day == selectedDay.get(Calendar.DAY_OF_MONTH) &&
-                            currentMonthIndex == selectedDay.get(Calendar.MONTH) &&
-                            currentYear == selectedDay.get(Calendar.YEAR)) {
-                        highlightSelectedDay(tvDay);
-                        lastSelectedDayView = tvDay;
-                        selectedDayOfMonth = day;
-                    }
-                    // thêm chấm nhỏ nếu ngày có sự kiện
-                    if (daysWithEvents.contains(day)) {
-                        tvDay.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, R.drawable.ic_dot);
-                    }
-                    gridFullMonthDays.addView(tvDay);
-                }
-
-                // FILL EMPTY CELLS AT THE END
-                int cellsToFill = actualRowsNeeded * DAYS_IN_WEEK;
-                for (int i = cellIndex[0]; i < cellsToFill; i++) {
-                    gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
-                }
-
-                if (getView() != null) {
-                    updateViewState(currentState, false);
-                }
-            });
-        }).start();
-    }
-
-    //Hàm load sự kiện
-    @SuppressLint("NotifyDataSetChanged")
-    private void loadEventsForSelectedDay(int dayOfMonth, int monthIndex, int year) {
-        //Cập nhật ngày được chọn
-        selectedDay.set(year, monthIndex, dayOfMonth);
-        selectedDay.set(Calendar.HOUR_OF_DAY, 0);
-        selectedDay.set(Calendar.MINUTE, 0);
-        selectedDay.set(Calendar.SECOND, 0);
-        selectedDay.set(Calendar.MILLISECOND, 0);
-
-        long dayStartMillis = selectedDay.getTimeInMillis();
-        long dayEndMillis = dayStartMillis + (24 * 60 * 60 * 1000L) - 1; // End of day
-
-        // query trong Thread Pool
-        Executors.newSingleThreadExecutor().execute(() -> {
-            // Load regular events for the day (excluding repeating events)
-            List<EventEntity> loadedEvents = db.eventDao().getEventsByDay(dayStartMillis);
-
-            // Filter out original repeating events (we'll show generated instances instead)
-            List<EventEntity> filteredEvents = new ArrayList<>();
-            for (EventEntity event : loadedEvents) {
-                if (event.getRepeatType() == null || "none".equals(event.getRepeatType())) {
-                    filteredEvents.add(event);
-                }
-                // Skip original repeating events - we'll generate instances instead
+        // 2. Check sự kiện lặp lại
+        List<EventEntity> repeatingEvents = new ArrayList<>();
+        for(EventEntity e : allRawEventsCache) {
+            if (e.getRepeatType() != null && !e.getRepeatType().equals("none")) {
+                repeatingEvents.add(e);
             }
-
-            // Load repeating events and generate instances for this specific day
-            try {
-                List<EventEntity> repeatingEvents = db.eventDao().getAllRepeatingEvents();
-                if (repeatingEvents != null && !repeatingEvents.isEmpty()) {
-                    for (EventEntity repeatingEvent : repeatingEvents) {
-                        if ("weekly".equals(repeatingEvent.getRepeatType())) {
-                            EventEntity dayInstance = generateWeeklyEventInstanceForSpecificDay(repeatingEvent, selectedDay);
-                            if (dayInstance != null) {
-                                filteredEvents.add(dayInstance);
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+        }
+        if (!repeatingEvents.isEmpty()) {
+            List<EventEntity> generatedEvents = generateRepeatingEventInstancesForMonth(repeatingEvents);
+            for (EventEntity e : generatedEvents) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTimeInMillis(e.getStartTime());
+                // Vì generateRepeatingEventInstancesForMonth đã lọc theo tháng hiện tại rồi
+                daysWithEvents.add(cal.get(Calendar.DAY_OF_MONTH));
             }
+        }
 
-            Collections.sort(filteredEvents, (e1, e2) -> {
-                // So sánh thời gian bắt đầu (Start Time)
-                int startCompare = Long.compare(e1.getStartTime(), e2.getStartTime());
-                if (startCompare != 0) {
-                    return startCompare;
-                }
+        // --- VẼ LỊCH ---
+        // Empty start cells
+        for (int i = 0; i < dayOffset; i++) {
+            gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
+        }
 
-                //  Nếu Start Time bằng nhau, so sánh thời gian kết thúc (End Time)
-                int endCompare = Long.compare(e1.getEndTime(), e2.getEndTime());
-                if (endCompare != 0) {
-                    return endCompare;
-                }
+        // Days
+        for (int day = 1; day <= daysInMonth; day++) {
+            int cellIndexCurrent = cellIndex[0]++;
+            TextView tvDay = createMonthDayTextView(String.valueOf(day), true, cellIndexCurrent);
 
-                // 3. Nếu cả Start và End Time bằng nhau, so sánh Tên (Title A->Z)
-                String title1 = e1.getTitle() == null ? "" : e1.getTitle();
-                String title2 = e2.getTitle() == null ? "" : e2.getTitle();
-                return title1.compareToIgnoreCase(title2);
-            });
-
-            // Cập nhật UI trên Main Thread
-            if (getView() != null) {
-                getView().post(() -> {
-                    eventList.clear();
-                    eventList.addAll(filteredEvents);
-                    if (eventAdapter != null) {
-                        eventAdapter.notifyDataSetChanged();
-                    }
-                });
+            // Highlight Logic
+            if (day == selectedDay.get(Calendar.DAY_OF_MONTH) &&
+                    currentMonthIndex == selectedDay.get(Calendar.MONTH) &&
+                    currentYear == selectedDay.get(Calendar.YEAR)) {
+                highlightSelectedDay(tvDay);
+                lastSelectedDayView = tvDay;
+                selectedDayOfMonth = day;
             }
-        });
+            // Dot indicator
+            if (daysWithEvents.contains(day)) {
+                tvDay.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, R.drawable.ic_dot);
+            }
+            gridFullMonthDays.addView(tvDay);
+        }
+
+        // Empty end cells
+        int cellsToFill = actualRowsNeeded * DAYS_IN_WEEK;
+        for (int i = cellIndex[0]; i < cellsToFill; i++) {
+            gridFullMonthDays.addView(createMonthDayTextView("", false, cellIndex[0]++));
+        }
+
+        if (getView() != null) {
+            updateViewState(currentState, false);
+        }
     }
 
     /**
@@ -748,12 +671,18 @@ public class MonthViewFragment extends Fragment {
                 }
 
                 highlightSelectedDay(tv);
-
                 lastSelectedDayView = tv;
                 selectedDayOfMonth = day;
 
-                // Query events for selecting day
-                loadEventsForSelectedDay(day, currentMonthIndex, currentYear);
+                // Cập nhật selectedDay
+                selectedDay.set(currentYear, currentMonthIndex, day);
+                selectedDay.set(Calendar.HOUR_OF_DAY, 0);
+                selectedDay.set(Calendar.MINUTE, 0);
+                selectedDay.set(Calendar.SECOND, 0);
+                selectedDay.set(Calendar.MILLISECOND, 0);
+
+                // Gọi xử lý từ Cache
+                processEventsForSelectedDay();
             });
         }
         return tv;
@@ -769,9 +698,9 @@ public class MonthViewFragment extends Fragment {
         }
 
         if (isToday) {
-            tv.setBackgroundResource(R.drawable.bg_current_day_for_month); // giữ drawable hiện tại cho "today"
-            tv.setTextColor(Color.WHITE);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.bright_blue));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
+            tv.setBackground(null);
             return;
         }
 
@@ -814,47 +743,37 @@ public class MonthViewFragment extends Fragment {
 
     private void highlightSelectedDay(TextView tv) {
         Calendar today = Calendar.getInstance();
-        int todayDay = today.get(Calendar.DAY_OF_MONTH);
-        int todayMonth = today.get(Calendar.MONTH);
-        int todayYear = today.get(Calendar.YEAR);
-
-        // Lấy ngày của TextView đang chọn
         int day = Integer.parseInt(tv.getText().toString());
+        boolean isToday = (day == today.get(Calendar.DAY_OF_MONTH) && currentMonthIndex == today.get(Calendar.MONTH) && currentYear == today.get(Calendar.YEAR));
 
-        if (day == todayDay && currentMonthIndex == todayMonth && currentYear == todayYear) {
-            // Nếu ngày được chọn là hôm nay → xanh
-            tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
+        if (isToday) {
+            tv.setBackgroundResource(R.drawable.bg_current_day_for_month); // Nền đặc
             tv.setTextColor(Color.WHITE);
             tv.setTypeface(Typeface.DEFAULT_BOLD);
-
-        } else if(day != todayDay && currentMonthIndex == todayMonth && currentYear == todayYear){
-            tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
+        } else {
+            tv.setBackgroundResource(R.drawable.bg_select_day_for_month); // Nền rỗng/xám
             tv.setTextColor(Color.BLACK);
             tv.setTypeface(Typeface.DEFAULT_BOLD);
-            if (currentMonthIndex == todayMonth && currentYear == todayYear) {
-                // tìm đúng ngày hôm nay trong grid và đổi text thành xanh
+
+            // Nếu có ngày "Hôm nay" đang hiện trên lưới, reset màu chữ cho nó (vì nó bị mất focus)
+            if (currentMonthIndex == today.get(Calendar.MONTH) && currentYear == today.get(Calendar.YEAR)) {
                 for (int i = 0; i < gridFullMonthDays.getChildCount(); i++) {
                     View v = gridFullMonthDays.getChildAt(i);
                     if (v instanceof TextView) {
-                        TextView tvDay = (TextView) v;
+                        TextView tvItem = (TextView) v;
                         try {
-                            int d = Integer.parseInt(tvDay.getText().toString());
-                            if (d == todayDay) {
-                                tvDay.setTextColor(ContextCompat.getColor(requireContext(), R.color.bright_blue));
-                                tvDay.setTypeface(Typeface.DEFAULT_BOLD);
-                                break;
+                            if (!tvItem.getText().toString().isEmpty()) {
+                                int d = Integer.parseInt(tvItem.getText().toString());
+                                if (d == today.get(Calendar.DAY_OF_MONTH) && d != day) {
+                                    tvItem.setBackground(null);
+                                    tvItem.setTextColor(ContextCompat.getColor(requireContext(), R.color.bright_blue));
+                                    tvItem.setTypeface(Typeface.DEFAULT_BOLD);
+                                }
                             }
-                        } catch (NumberFormatException e) {
-                            // bỏ qua ô trống
-                        }
+                        } catch (NumberFormatException e) {}
                     }
                 }
             }
-        } else{
-            // Nếu ngày được chọn không phải hôm nay → xám
-            tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
-            tv.setTextColor(Color.BLACK);
-            tv.setTypeface(Typeface.DEFAULT_BOLD);
         }
     }
 
@@ -862,28 +781,6 @@ public class MonthViewFragment extends Fragment {
         Calendar tempCal = Calendar.getInstance();
         tempCal.set(Calendar.MONTH, monthIndex);
         return tempCal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
-    }
-    
-    /**
-     * Refresh events after a new event is created
-     */
-    private void refreshEvents() {
-        // Refresh calendar display and any event indicators
-        displayCalendar();
-        
-        // Reload events for the selected day if needed
-        if (selectedDay != null) {
-            loadEventsForSelectedDay(
-                selectedDay.get(Calendar.DAY_OF_MONTH),
-                selectedDay.get(Calendar.MONTH),
-                selectedDay.get(Calendar.YEAR)
-            );
-        }
-        
-        // Notify other fragments about the event change
-        Bundle result = new Bundle();
-        result.putString("message", "Events refreshed");
-        getParentFragmentManager().setFragmentResult("event_created", result);
     }
 
     /**
