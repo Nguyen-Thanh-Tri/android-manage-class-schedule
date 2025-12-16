@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-public class TimeTableFragment extends Fragment {
+public class CourseFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private CourseAdapter courseAdapter;
@@ -36,7 +36,7 @@ public class TimeTableFragment extends Fragment {
     private MaterialButton[] dayButtons;
     private LiveData<List<CourseEntity>> currentLiveData;
 
-    public TimeTableFragment() {
+    public CourseFragment() {
 
     }
 
