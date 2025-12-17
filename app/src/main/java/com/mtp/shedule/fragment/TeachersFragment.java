@@ -1,91 +1,107 @@
 package com.mtp.shedule.fragment;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.PopupMenu;
-
+import android.view.inputmethod.InputMethodManager;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mtp.shedule.AddTeacherDialog;
-import com.mtp.shedule.adapter.TeacherAdapter;
 import com.mtp.shedule.R;
+import com.mtp.shedule.adapter.TeacherAdapter;
 import com.mtp.shedule.database.ConnDatabase;
-
-import java.util.Objects;
+import android.widget.EditText;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.ImageButton;
+import android.widget.Toast;
 
 public class TeachersFragment extends Fragment {
 
-    private RecyclerView recyclerView;
-    private TeacherAdapter teacherAdapter;
-    private FloatingActionButton fabAddTeacher;
+    private TeacherAdapter adapter;
     private ConnDatabase db;
-    private EditText edtSearchTeacher;
     private ImageButton btnSort;
+    private boolean isAscending = true;
 
-    public TeachersFragment() {}
-
-    @Nullable
+    @SuppressLint("ClickableViewAccessibility")
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_teacher, container, false);
-
-        recyclerView = view.findViewById(R.id.recyclerTeachers);
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-
-        teacherAdapter = new TeacherAdapter(requireContext());
-        recyclerView.setAdapter(teacherAdapter);
-
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_teacher, container, false);
         db = ConnDatabase.getInstance(requireContext());
 
-        // FAB add teacher
-        fabAddTeacher = view.findViewById(R.id.fabAddTeacher);
-        fabAddTeacher.setOnClickListener(v -> new AddTeacherDialog()
-                .show(getParentFragmentManager(), "AddTeacherDialog"));
+        CoordinatorLayout root = v.findViewById(R.id.coordinatorRoot);
+        RecyclerView rv = v.findViewById(R.id.recyclerTeachers);
+        rv.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new TeacherAdapter(requireContext());
+        rv.setAdapter(adapter);
 
-        // Observe teachers from database
-        db.teacherDao().getAllTeachers().observe(getViewLifecycleOwner(), teachers -> {
-            if (teachers != null) teacherAdapter.updateList(teachers);
+        btnSort = v.findViewById(R.id.btnSort);
+
+        // Click để xem chi tiết
+        adapter.setOnItemClickListener(teacher ->
+                AddTeacherDialog.newInstance(teacher).show(getParentFragmentManager(), "view"));
+
+        // Lắng nghe LiveData
+        db.teacherDao().getAllTeachers().observe(getViewLifecycleOwner(), list -> adapter.updateList(list));
+
+        // FAB
+        v.findViewById(R.id.fabAddTeacher).setOnClickListener(view ->
+                new AddTeacherDialog().show(getParentFragmentManager(), "add"));
+
+
+        // Ẩn bàn phím khi nhấn vào vùng trống
+        root.setOnTouchListener((view, motionEvent) -> {
+            hideKeyboard();
+            return false;
+        });
+        // Khi chạm vào danh sách (nhưng không trúng item cụ thể)
+        rv.setOnTouchListener((view, event) -> {
+            hideKeyboard();
+            return false;
         });
 
-        // Search using EditText
-        edtSearchTeacher = view.findViewById(R.id.edtSearchTeacher);
-        edtSearchTeacher.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                teacherAdapter.getFilter().filter(s.toString());
-            }
-            @Override
-            public void afterTextChanged(Editable s) {}
+        // Search
+        EditText search = v.findViewById(R.id.edtSearchTeacher);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { adapter.getFilter().filter(s); }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Sort button -> popup menu
-        btnSort = view.findViewById(R.id.btnSort);
-        btnSort.setOnClickListener(v -> {
-            PopupMenu popup = new PopupMenu(requireContext(), v);
-            popup.getMenu().add(0, 0, 0, "Sort A → Z");
-            popup.getMenu().add(0, 1, 1, "Sort Z → A");
-            popup.setOnMenuItemClickListener(item -> {
-                teacherAdapter.sortByName(item.getItemId() == 0);
-                return true;
-            });
-            popup.show();
+
+        //SORT
+        btnSort.setOnClickListener(view -> {
+            // Đảo trạng thái
+            isAscending = !isAscending;
+
+            // Thực hiện sắp xếp trong Adapter
+            adapter.sortByName(isAscending);
+
+            // Nếu isAscending = true (A-Z): rotation = 0
+            // Nếu isAscending = false (Z-A): rotation = 180
+            float targetRotation = isAscending ? 0f : 180f;
+            btnSort.animate().rotationX(targetRotation).setDuration(300).start();
+
+            // Thông báo cho người dùng
+            String msg = isAscending ? "Sorted A → Z" : "Sorted Z → A";
+            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
         });
 
-        return view;
+        return v;
+    }
+
+    private void hideKeyboard() {
+        View view = getActivity().getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            view.clearFocus();
+        }
     }
 }

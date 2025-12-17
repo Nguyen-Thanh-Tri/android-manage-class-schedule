@@ -1,8 +1,10 @@
 package com.mtp.shedule.notification;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import com.mtp.shedule.database.ConnDatabase;
@@ -11,33 +13,41 @@ import com.mtp.shedule.entity.EventEntity;
 import java.util.List;
 
 public class BootReceiver extends BroadcastReceiver {
+    private static final String TAG = "BootReceiver";
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        // Kiểm tra xem có phải tín hiệu khởi động máy không
-        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-            Log.i("BootReceiver", "Thiết bị vừa khởi động lại. Bắt đầu đặt lại báo thức...");
+        String action = intent.getAction();
+        Log.i(TAG, "========== BOOT RECEIVER TRIGGERED ==========");
+        Log.i(TAG, "Action: " + action);
 
-            // Bắt buộc chạy Database trong luồng phụ (Thread) để không làm đơ máy
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action) ||
+                "android.intent.action.QUICKBOOT_POWERON".equals(action)) {
+
+            Log.i(TAG, "Thiết bị vừa khởi động. Đang khôi phục alarms...");
+
             new Thread(() -> {
                 try {
-                    // 1. Lấy kết nối Database
                     ConnDatabase db = ConnDatabase.getInstance(context);
-
-                    // 2. Lấy TOÀN BỘ sự kiện (Sử dụng hàm vừa thêm ở Bước 1)
                     List<EventEntity> allEvents = db.eventDao().getAllEvents();
 
                     if (allEvents != null && !allEvents.isEmpty()) {
+                        int scheduled = 0;
                         for (EventEntity event : allEvents) {
-                            // 3. Gọi Scheduler để đặt lại báo thức
-                            // Hàm này đã có logic: Nếu giờ đã qua -> Bỏ qua. Nếu chưa -> Đặt lịch.
-                            NotificationScheduler.scheduleReminder(context, event);
+                            // Chỉ lên lịch cho event chưa qua
+                            long currentTime = System.currentTimeMillis();
+                            if (event.getStartTime() > currentTime) {
+                                NotificationScheduler.scheduleReminder(context, event);
+                                scheduled++;
+                            }
                         }
-                        Log.i("BootReceiver", "Đã khôi phục lịch nhắc nhở cho " + allEvents.size() + " sự kiện.");
+                        Log.i(TAG, "Đã khôi phục " + scheduled + "/" + allEvents.size() + " alarms");
                     } else {
-                        Log.i("BootReceiver", "Không có sự kiện nào trong Database để khôi phục.");
+                        Log.i(TAG, "Không có event nào để khôi phục");
                     }
                 } catch (Exception e) {
-                    Log.e("BootReceiver", "Lỗi khi khôi phục báo thức: " + e.getMessage());
+                    Log.e(TAG, "Lỗi khôi phục: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }).start();
         }

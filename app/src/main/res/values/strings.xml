@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">Schedule</string>
     <string name="main_screen_title">Time Table</string>
+    <string name="sort">Sort</string>
+    <string name="teacher_name">Teacher Name</string>
+    <string name="position_department">Position / Department</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="email">Email</string>
 
     <string-array name="repeat_options">
         <item>None</item>

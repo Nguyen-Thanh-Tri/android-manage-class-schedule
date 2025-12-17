@@ -22,6 +22,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.gridlayout.widget.GridLayout;
+import androidx.lifecycle.LiveData;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mtp.shedule.AddEventActivity;
@@ -50,7 +51,10 @@ public class DayViewFragment extends Fragment {
     private static final float HOUR_HEIGHT_DP = 70;
     private static final float EVENT_SIDE_MARGIN_DP = 1f;
     FloatingActionButton fabAddEvent;
+    private LiveData<List<EventEntity>> currentDayEventsLiveData;
     private ConnDatabase db;
+    private View currentTimeLine;
+    private final android.os.Handler timelineHandler = new android.os.Handler();
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -79,7 +83,9 @@ public class DayViewFragment extends Fragment {
 
         view.post(() ->{
             drawTimeAxisLabels();
+            initCurrentTimeLine();
             loadEventsForSelectedDay();
+            timelineHandler.post(timelineRunnable);
         });
 
         return view;
@@ -88,7 +94,15 @@ public class DayViewFragment extends Fragment {
     public void onResume() {
         super.onResume();
         // Reload events khi quay lại fragment
-        loadEventsForSelectedDay();
+        if (lastSelectedDayView != null) {
+            loadEventsForSelectedDay();
+        }
+        timelineHandler.post(timelineRunnable);
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+        timelineHandler.removeCallbacks(timelineRunnable);
     }
     private void showDatePicker() {
         Calendar calendar = (Calendar) currentWeekStart.clone();
@@ -466,40 +480,28 @@ public class DayViewFragment extends Fragment {
     }
 
     private void loadEventsForSelectedDay() {
-        if (db == null || lastSelectedDayView == null) {
-            return;
-        }
+        if (db == null || lastSelectedDayView == null) return;
 
-        Object tagObj = lastSelectedDayView.getTag();
-        if (!(tagObj instanceof int[])) {
-            return;
-        }
-
-        int[] tagData = (int[]) tagObj;
-        int dayOfMonth = tagData[1];
-        int monthIndex = tagData[2];
-        int year = tagData[3];
-
-        // Tạo calendar cho ngày được chọn
+        int[] tagData = (int[]) lastSelectedDayView.getTag();
         Calendar selectedDay = Calendar.getInstance();
-        selectedDay.set(year, monthIndex, dayOfMonth, 0, 0, 0);
+        selectedDay.set(tagData[3], tagData[2], tagData[1], 0, 0, 0);
         selectedDay.set(Calendar.MILLISECOND, 0);
 
         long dayStartMillis = selectedDay.getTimeInMillis();
 
-        // Query events trong background thread
-        Executors.newSingleThreadExecutor().execute(() -> {
-            List<EventEntity> events = db.eventDao().getEventsByDay(dayStartMillis);
+        // 1. Gỡ bỏ Observer cũ nếu có (Quan trọng!)
+        if (currentDayEventsLiveData != null) {
+            currentDayEventsLiveData.removeObservers(getViewLifecycleOwner());
+        }
 
-            // Vẽ events trên UI thread
-            if (getView() != null) {
-                getView().post(() -> {
-                    // Xóa các events cũ (giữ lại grid lines)
-                    clearOldEvents();
+        // 2. Lấy LiveData mới từ DAO
+        currentDayEventsLiveData = db.eventDao().getEventsByDayLiveData(dayStartMillis);
 
-                    // Vẽ events mới
-                    drawEventsForDay(events);
-                });
+        // 3. Quan sát sự thay đổi
+        currentDayEventsLiveData.observe(getViewLifecycleOwner(), events -> {
+            if (events != null) {
+                clearOldEvents();
+                drawEventsForDay(events);
             }
         });
     }
@@ -596,5 +598,69 @@ public class DayViewFragment extends Fragment {
             }
         });
 
+    }
+    private final Runnable timelineRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateCurrentTimeLine();
+            // Cập nhật mỗi phút (60000ms)
+            timelineHandler.postDelayed(this, 60000);
+        }
+    };
+    private void initCurrentTimeLine() {
+        if (currentTimeLine != null) {
+            eventDrawingArea.removeView(currentTimeLine);
+        }
+
+        float density = getResources().getDisplayMetrics().density;
+        currentTimeLine = new View(requireContext());
+        currentTimeLine.setBackgroundColor(Color.parseColor("#2196F3")); // Màu xanh dương
+        currentTimeLine.setTag("current_time_line");
+
+        ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(
+                ConstraintLayout.LayoutParams.MATCH_PARENT, // Kéo dài hết chiều ngang cột
+                (int) (2 * density) // Độ dày 2dp
+        );
+        lp.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
+        lp.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+
+        currentTimeLine.setLayoutParams(lp);
+        currentTimeLine.setZ(10f); // Luôn nằm trên các event box
+        eventDrawingArea.addView(currentTimeLine);
+    }
+
+    private void updateCurrentTimeLine() {
+        if (!isAdded() || eventDrawingArea == null || currentTimeLine == null || lastSelectedDayView == null) return;
+
+        // Lấy thông tin ngày đang được chọn trên giao diện
+        int[] tagData = (int[]) lastSelectedDayView.getTag();
+        int selDay = tagData[1];
+        int selMonth = tagData[2];
+        int selYear = tagData[3];
+
+        Calendar now = Calendar.getInstance();
+
+        // Kiểm tra: Chỉ hiển thị Line nếu ngày đang chọn là "Hôm nay"
+        boolean isDisplayingToday = (selDay == now.get(Calendar.DAY_OF_MONTH) &&
+                selMonth == now.get(Calendar.MONTH) &&
+                selYear == now.get(Calendar.YEAR));
+
+        if (!isDisplayingToday) {
+            currentTimeLine.setVisibility(View.GONE);
+            return;
+        }
+
+        currentTimeLine.setVisibility(View.VISIBLE);
+
+        // Tính toán vị trí Y
+        float density = getResources().getDisplayMetrics().density;
+        float hourHeightPx = HOUR_HEIGHT_DP * density;
+        int hour = now.get(Calendar.HOUR_OF_DAY);
+        int minute = now.get(Calendar.MINUTE);
+
+        // Vị trí = (Giờ + Phút/60) * Chiều cao mỗi giờ
+        float positionY = (hour + (minute / 60f)) * hourHeightPx;
+
+        currentTimeLine.setTranslationY(positionY);
     }
 }

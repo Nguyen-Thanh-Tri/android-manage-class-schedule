@@ -13,8 +13,8 @@ import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
 import com.mtp.shedule.AddCourseDialog;
 import com.mtp.shedule.adapter.CourseAdapter;
 import com.mtp.shedule.R;
@@ -33,9 +33,9 @@ public class CourseFragment extends Fragment {
     private final List<EventEntity> courseList = new ArrayList<>();
 
     private FloatingActionButton fabAdd;
-    private MaterialButton[] dayButtons;
+    private TabLayout tabLayout;
     private LiveData<List<EventEntity>> currentLiveData;
-
+    private final String[] daysOfWeek = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
     public CourseFragment() {
 
     }
@@ -54,26 +54,8 @@ public class CourseFragment extends Fragment {
 
         db = ConnDatabase.getInstance(getContext());
 
-
-        // Day buttons
-        dayButtons = new MaterialButton[]{
-                view.findViewById(R.id.btnMonday),
-                view.findViewById(R.id.btnTuesday),
-                view.findViewById(R.id.btnWednesday),
-                view.findViewById(R.id.btnThursday),
-                view.findViewById(R.id.btnFriday),
-                view.findViewById(R.id.btnSaturday),
-                view.findViewById(R.id.btnSunday)
-        };
-
-
-        // Highlight today
-        int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-        int index = (today == Calendar.SUNDAY) ? 6 : today - 2;
-        if (index < 0) index = 0;
-        highlightDay(index);
-        loadCoursesByDay(dayButtons[index].getText().toString());
-
+        tabLayout = view.findViewById(R.id.tabLayout);
+        setupTabs();
 
 // ---------------- Floating Action Button -Thêm lịch học ----------------
         fabAdd = view.findViewById(R.id.fabAdd);
@@ -82,36 +64,73 @@ public class CourseFragment extends Fragment {
             dialog.show(getParentFragmentManager(), "AddCourseDialog");
         });
 
-        // Edit
+        // EDIT
         courseAdapter.setOnItemClickListener(course -> {
             AddCourseDialog dialog = AddCourseDialog.newInstance(course);
             dialog.show(getParentFragmentManager(), "EditCourseDialog");
         });
 
-        // Click listeners for day buttons
-        for (int i = 0; i < dayButtons.length; i++) {
-            int finalI = i;
-            dayButtons[i].setOnClickListener(v -> {
-                highlightDay(finalI);
-                loadCoursesByDay(dayButtons[finalI].getText().toString());
-            });
-        }
-
         return view;
     }
 
-    private void highlightDay(int index){
-        for(int i = 0; i < dayButtons.length; i++){
-            if(i == index){
-                dayButtons[i].setBackgroundColor(getResources().getColor(R.color.orange, null));
-                dayButtons[i].setTextColor(getResources().getColor(android.R.color.white, null));
-            } else {
-                dayButtons[i].setBackgroundColor(getResources().getColor(android.R.color.transparent, null));
-                dayButtons[i].setTextColor(getResources().getColor(android.R.color.black, null));
-            }
-        }
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Khi quay lại màn hình, đảm bảo load dữ liệu cho Tab đang chọn hiện tại
+//        int selectedIndex = tabLayout.getSelectedTabPosition();
+//        if (selectedIndex != -1) {
+//            TabLayout.Tab currentTab = tabLayout.getTabAt(selectedIndex);
+//            if (currentTab != null && currentTab.getText() != null) {
+//                loadCoursesByDay(currentTab.getText().toString());
+//            }
+//        } else {
+//            selectTodayTab();
+//        }
     }
 
+    //Hàm thiết lập Tab và logic chọn ngày
+    private void setupTabs() {
+        // Thêm các tab vào TabLayout
+        for (String day : daysOfWeek) {
+            tabLayout.addTab(tabLayout.newTab().setText(day));
+        }
+
+        // Lắng nghe sự kiện người dùng bấm vào Tab
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                // Khi tab được chọn -> Load dữ liệu từ DB theo tên ngày
+                if (tab.getText() != null) {
+                    loadCoursesByDay(tab.getText().toString());
+                }
+            }
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
+        selectTodayTab();
+    }
+
+    //  Hàm tính toán và chọn Tab ngày hiện tại
+    private void selectTodayTab() {
+        int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
+        // Calendar.SUNDAY = 1, MONDAY = 2, ...
+        // Logic mapping:
+        // CN (1) -> index 6
+        // T2 (2) -> index 0
+        int index = (today == Calendar.SUNDAY) ? 6 : today - 2;
+
+        if (index < 0) index = 0; // Phòng lỗi
+
+        // Lấy tab tại vị trí index và chọn nó
+        // Việc gọi .select() sẽ kích hoạt listener onTabSelected ở trên -> tự động load data
+        TabLayout.Tab tab = tabLayout.getTabAt(index);
+        if (tab != null) {
+            tab.select();
+        }
+    }
     @SuppressLint("NotifyDataSetChanged")
     private void loadCoursesByDay(String day){
         // Nếu đã có LiveData cũ, gỡ bỏ Observer khỏi nó.
@@ -124,17 +143,11 @@ public class CourseFragment extends Fragment {
         //  Gắn Observer mới vào LiveData mới
         currentLiveData.observe(getViewLifecycleOwner(), courses -> {
             courseList.clear();
-            courseList.addAll(courses);
+            if (courses != null) {
+                courseList.addAll(courses);
+            }
             courseAdapter.notifyDataSetChanged();
         });
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-        int index = (today == Calendar.SUNDAY) ? 6 : today - 2;
-        highlightDay(index);
-//        loadCoursesByDay(dayButtons[index].getText().toString());
-    }
 }

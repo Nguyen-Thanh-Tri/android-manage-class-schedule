@@ -4,41 +4,70 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="20dp"
+    android:padding="10dp"
     tools:context=".AddTeacherDialog"
     android:background="@drawable/bg_dialog_rounded">
 
-    <EditText
-        android:id="@+id/etName"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Teacher Name"
-        android:inputType="textPersonName" />
+        android:orientation="vertical"
+        android:paddingBottom="10dp">
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="@string/teacher_name"
+            android:paddingTop="10dp"
+            android:inputType="textPersonName"
+            android:background="@drawable/rounded_edittext"/>
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/etPosition"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Position / Department"
-        android:inputType="text"
-        android:layout_marginTop="12dp" />
+        android:orientation="vertical"
+        android:paddingBottom="10dp">
+        <EditText
+            android:id="@+id/etPosition"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:paddingTop="10dp"
+            android:hint="@string/position_department"
+            android:inputType="text"
+            android:background="@drawable/rounded_edittext"/>
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/etPhone"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Phone Number"
-        android:inputType="phone"
-        android:layout_marginTop="12dp" />
+        android:orientation="vertical"
+        android:paddingBottom="10dp">
+        <EditText
+            android:id="@+id/etPhone"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:paddingTop="10dp"
+            android:hint="@string/phone_number"
+            android:inputType="phone"
+            android:background="@drawable/rounded_edittext"/>
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/etEmail"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email"
-        android:inputType="textEmailAddress"
-        android:layout_marginTop="12dp" />
+        android:orientation="vertical"
+        android:paddingBottom="10dp">
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:paddingTop="10dp"
 
+            android:hint="@string/email"
+            android:inputType="textEmailAddress"
+            android:background="@drawable/rounded_edittext"/>
+    </LinearLayout>
     <Button
         android:id="@+id/btnSelectColor"
         android:layout_width="match_parent"

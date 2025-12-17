@@ -20,8 +20,8 @@ public interface EventDao {
     @Query("SELECT * FROM events WHERE startTime BETWEEN :start AND :end")
     List<EventEntity> getEventsInRange(long start, long end);
 
-    @Query("SELECT * FROM events WHERE date(startTime/1000,'unixepoch', 'localtime') = date(:day/1000,'unixepoch', 'localtime')")
-    List<EventEntity> getEventsByDay(long day);
+    @Query("SELECT * FROM events WHERE date(startTime/1000,'unixepoch', 'localtime') = date(:dayStartMillis/1000,'unixepoch', 'localtime')")
+    LiveData<List<EventEntity>> getEventsByDayLiveData(long dayStartMillis);
 
     @Query("SELECT * FROM events " +
             "WHERE strftime('%Y', startTime/1000, 'unixepoch', 'localtime') = :year " +
@@ -55,6 +55,8 @@ public interface EventDao {
     @Query("SELECT * FROM events")
     LiveData<List<EventEntity>> getAllEventsLiveData();
 
-    @Query("SELECT * FROM events WHERE isCourse = 1 AND LOWER(dayOfWeek) = LOWER(:dayOfWeek) ORDER BY startTime ASC")
+    @Query("SELECT * FROM events " +
+            "WHERE isCourse = 1 AND LOWER(dayOfWeek) = LOWER(:dayOfWeek) " +
+            "ORDER BY startTime ASC, endTime ASC, title ASC")
     LiveData<List<EventEntity>> getCoursesByDay(String dayOfWeek);
 }
