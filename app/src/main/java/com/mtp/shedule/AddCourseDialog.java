@@ -166,12 +166,13 @@ public class AddCourseDialog extends DialogFragment {
         String endStr = etEndTime.getText().toString().trim();
         String dayOfWeek = spinnerDay.getSelectedItem().toString();
 
-        Calendar startCal = getNextOccurringDayOfWeek(dayOfWeek);
         String[] sParts = startStr.split(":");
-        startCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(sParts[0]));
-        startCal.set(Calendar.MINUTE, Integer.parseInt(sParts[1]));
-        startCal.set(Calendar.SECOND, 0);
+        int startH = Integer.parseInt(sParts[0]);
+        int startM = Integer.parseInt(sParts[1]);
 
+        Calendar startCal = getNextOccurringDayOfWeek(dayOfWeek, startH, startM);
+
+        // Tính mốc kết thúc dựa trên mốc bắt đầu đã tìm được
         Calendar endCal = (Calendar) startCal.clone();
         String[] eParts = endStr.split(":");
         endCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(eParts[0]));
@@ -211,11 +212,21 @@ public class AddCourseDialog extends DialogFragment {
     }
 
     // Hàm phụ trợ: Tìm ngày Calendar khớp với thứ trong tuần (Monday, Tuesday...)
-    private Calendar getNextOccurringDayOfWeek(String dayName) {
+    private Calendar getNextOccurringDayOfWeek(String dayName, int hour, int minute) {
         int targetDay = parseDayOfWeek(dayName);
         Calendar cal = Calendar.getInstance();
-        while (cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
-            cal.add(Calendar.DAY_OF_YEAR, 1);
+        cal.set(Calendar.HOUR_OF_DAY, hour);
+        cal.set(Calendar.MINUTE, minute);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        // Nếu thời điểm hiện tại đã trôi qua mốc giờ này trong hôm nay
+        // hoặc hôm nay không phải thứ đó -> Tìm ngày tiếp theo
+        if (cal.getTimeInMillis() <= System.currentTimeMillis() || cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
+            // Cuộn tới ngày có thứ khớp tiếp theo
+            do {
+                cal.add(Calendar.DAY_OF_YEAR, 1);
+            } while (cal.get(Calendar.DAY_OF_WEEK) != targetDay);
         }
         return cal;
     }

@@ -6,6 +6,13 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="oplus.permission.OPLUS_COMPONENT_SAFE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
+        tools:ignore="SpecificForegroundServiceType" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -15,15 +22,29 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Shedule">
-        <receiver android:name=".notification.ReminderReceiver"
+        <service
+            android:name=".notification.ReminderForegroundService"
             android:enabled="true"
             android:exported="false"
-            android:permission="" />
+            android:foregroundServiceType="shortService"/>
+        <receiver android:name=".notification.ReminderReceiver"
+            android:enabled="true"
+            android:exported="false" />
         <receiver android:name=".notification.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/> <!-- Xiaomi -->
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".notification.StopRingtoneReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="com.mtp.shedule.STOP_RINGTONE"/>
             </intent-filter>
         </receiver>
         <activity
