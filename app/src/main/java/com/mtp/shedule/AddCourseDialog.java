@@ -10,6 +10,8 @@ import android.app.TimePickerDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +30,7 @@ import com.mtp.shedule.notification.NotificationScheduler;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class AddCourseDialog extends DialogFragment {
 
@@ -37,16 +40,9 @@ public class AddCourseDialog extends DialogFragment {
     private ConnDatabase db;
 
     private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
-    private static final String ARG_COURSE_ID = "course_id";
-    private static final String ARG_TITLE = "title";
-    private static final String ARG_TEACHER = "teacher";
-    private static final String ARG_ROOM = "room";
-    private static final String ARG_START = "start";
-    private static final String ARG_END = "end";
-    private static final String ARG_DAY = "day";
-    private static final String ARG_COLOR = "color";
     private static final String ARG_EVENT_ITEM = "event_item";
     private int courseId = -1;
+    private boolean isViewOnly = false;
     private boolean isEditMode = false;
     private EventEntity currentEvent;
 
@@ -75,7 +71,6 @@ public class AddCourseDialog extends DialogFragment {
         btnCancel = view.findViewById(R.id.btnCancel);
         btnSelectColor = view.findViewById(R.id.btnSelectColor);
 
-
         List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, days);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -83,67 +78,84 @@ public class AddCourseDialog extends DialogFragment {
 
         db = ConnDatabase.getInstance(requireContext());
 
+        // Đăng ký TextWatcher cho validation
+        etTitle.addTextChangedListener(validationWatcher);
+        etTeacher.addTextChangedListener(validationWatcher);
+        etRoom.addTextChangedListener(validationWatcher);
+        etStartTime.addTextChangedListener(validationWatcher);
+        etEndTime.addTextChangedListener(validationWatcher);
 
         //update
         if (getArguments() != null && getArguments().containsKey(ARG_EVENT_ITEM)) {
             isEditMode = true;
+            isViewOnly = true;
             currentEvent = (EventEntity) getArguments().getSerializable(ARG_EVENT_ITEM);
-
             if (currentEvent != null) {
-                etTitle.setText(currentEvent.getTitle());
-                etTeacher.setText(currentEvent.getTeacher());
-                etRoom.setText(currentEvent.getRoom());
-
-                // Format millis sang HH:mm để hiển thị
-                etStartTime.setText(currentEvent.getStartTimeFormatted());
-                etEndTime.setText(currentEvent.getEndTimeFormatted());
-
-                selectedColorIndex = currentEvent.getColor();
-
-                // Chọn đúng thứ trong spinner
-                String day = currentEvent.getDayOfWeek();
-                // Chuyển ký tự đầu thành hoa để khớp với list (Monday, Tuesday...)
-                if(day != null && !day.isEmpty()) {
-                    String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1).toLowerCase();
-                    int spinnerPos = days.indexOf(formattedDay);
-                    if (spinnerPos >= 0) spinnerDay.setSelection(spinnerPos);
-                }
-
-                btnSave.setText("Update");
+                fillData(days);
             }
         }
 
-        // --- TimePicker cho Start Time ---
-        etStartTime.setOnClickListener(v -> showTimePicker(etStartTime));
-        // --- TimePicker cho End Time ---
-        etEndTime.setOnClickListener(v -> showTimePicker(etEndTime));
+        // Setup UI theo Mode
+        setupModeUI();
 
-        btnSave.setOnClickListener(v -> saveCourseAsEvent());
-
-
-        // Cập nhật màu nút ngay lần đầu mở dialog
-        btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
+        // Listeners
+        etStartTime.setOnClickListener(v -> showTimePicker(etStartTime, true));
+        etEndTime.setOnClickListener(v -> showTimePicker(etEndTime, false));
+        btnCancel.setOnClickListener(v -> dismiss());
 
         btnSelectColor.setOnClickListener(v ->{
             SelectColorDialog dialog = new SelectColorDialog();
-
             // Truyền mã màu INT để SelectColorDialog đánh dấu ô màu đúng
             dialog.setSelectedColorIndex(selectedColorIndex);
-
             dialog.setOnColorSelectedListener(colorIndex -> {
-
                 selectedColorIndex = colorIndex;
                 btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
             });
             dialog.show(getParentFragmentManager(), "ColorDialog");
         });
-
-
-        if (btnCancel != null) {
-            btnCancel.setOnClickListener(v -> dismiss());
-        }
-
         return view;
+    }
+
+    private void fillData(List<String> days) {
+        etTitle.setText(currentEvent.getTitle());
+        etTeacher.setText(currentEvent.getTeacher());
+        etRoom.setText(currentEvent.getRoom());
+        etStartTime.setText(currentEvent.getStartTimeFormatted());
+        etEndTime.setText(currentEvent.getEndTimeFormatted());
+        selectedColorIndex = currentEvent.getColor();
+        btnSelectColor.setBackgroundResource(COLOR_MAPPING_DRAWABLE[selectedColorIndex]);
+
+        String day = currentEvent.getDayOfWeek();
+        if (day != null && !day.isEmpty()) {
+            String formattedDay = day.substring(0, 1).toUpperCase() + day.substring(1).toLowerCase();
+            int pos = days.indexOf(formattedDay);
+            if (pos >= 0) spinnerDay.setSelection(pos);
+        }
+    }
+
+    private void setupModeUI() {
+        boolean canEdit = !isViewOnly;
+        etTitle.setEnabled(canEdit);
+        etTeacher.setEnabled(canEdit);
+        etRoom.setEnabled(canEdit);
+        etStartTime.setEnabled(canEdit);
+        etEndTime.setEnabled(canEdit);
+        spinnerDay.setEnabled(canEdit);
+        btnSelectColor.setEnabled(canEdit);
+
+        if (isViewOnly) {
+            btnSave.setText("Update");
+            btnSave.setEnabled(true);
+            btnSave.setAlpha(1.0f);
+            btnSave.setOnClickListener(v -> {
+                isViewOnly = false;
+                setupModeUI();
+            });
+        } else {
+            btnSave.setText(isEditMode ? "Confirm Update" : "Save");
+            btnSave.setOnClickListener(v -> saveCourseAsEvent());
+            validateFields();
+        }
     }
 
     private void saveCourseAsEvent() {
@@ -154,71 +166,47 @@ public class AddCourseDialog extends DialogFragment {
         String endStr = etEndTime.getText().toString().trim();
         String dayOfWeek = spinnerDay.getSelectedItem().toString();
 
-        if (title.isEmpty() || teacher.isEmpty() || startStr.isEmpty() || endStr.isEmpty()) {
-            Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // TÍNH TOÁN TIMESTAMP (Millis)
-        // Ta cần tìm ngày gần nhất tương ứng với Thứ đã chọn để làm mốc thời gian
         Calendar startCal = getNextOccurringDayOfWeek(dayOfWeek);
-        String[] startParts = startStr.split(":");
-        startCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(startParts[0]));
-        startCal.set(Calendar.MINUTE, Integer.parseInt(startParts[1]));
+        String[] sParts = startStr.split(":");
+        startCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(sParts[0]));
+        startCal.set(Calendar.MINUTE, Integer.parseInt(sParts[1]));
         startCal.set(Calendar.SECOND, 0);
 
         Calendar endCal = (Calendar) startCal.clone();
-        String[] endParts = endStr.split(":");
-        endCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(endParts[0]));
-        endCal.set(Calendar.MINUTE, Integer.parseInt(endParts[1]));
-        endCal.set(Calendar.SECOND, 0);
+        String[] eParts = endStr.split(":");
+        endCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(eParts[0]));
+        endCal.set(Calendar.MINUTE, Integer.parseInt(eParts[1]));
 
         if (endCal.before(startCal)) {
             Toast.makeText(requireContext(), "End time must be after start time", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Tạo hoặc Cập nhật EventEntity
-        final EventEntity eventToSave;
-        if (isEditMode && currentEvent != null) {
-            eventToSave = currentEvent; // Sử dụng object cũ
-        } else {
-            eventToSave = new EventEntity(); // Tạo mới
-        }
-
-        // Set các thông tin chung
+        final EventEntity eventToSave = (isEditMode && currentEvent != null) ? currentEvent : new EventEntity();
         eventToSave.setTitle(title);
         eventToSave.setTeacher(teacher);
         eventToSave.setRoom(room);
         eventToSave.setStartTime(startCal.getTimeInMillis());
         eventToSave.setEndTime(endCal.getTimeInMillis());
         eventToSave.setColor(selectedColorIndex);
-
-        // QUAN TRỌNG: Đánh dấu đây là Course để Calendar tự repeat
         eventToSave.setIsCourse(true);
         eventToSave.setRepeatType("weekly");
-        eventToSave.setDayOfWeek(dayOfWeek); // "Monday", "Tuesday"...
-        eventToSave.setDescription("Teacher: " + teacher + "\nRoom: " + room); // Description phụ
+        eventToSave.setDayOfWeek(dayOfWeek);
+        eventToSave.setDescription("Teacher: " + teacher + "\nRoom: " + room);
 
         new Thread(() -> {
             if (isEditMode) {
-                // ID dương mới update được (xử lý trường hợp ID âm từ Calendar)
-                int originalId = Math.abs(eventToSave.getId());
-                eventToSave.setId(originalId);
-
+                eventToSave.setId(Math.abs(eventToSave.getId()));
                 db.eventDao().updateEvent(eventToSave);
-                NotificationScheduler.scheduleReminder(requireContext(), eventToSave);
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(requireContext(), "Updated successfully", Toast.LENGTH_SHORT).show());
             } else {
                 long id = db.eventDao().insertEvent(eventToSave);
-                eventToSave.setId((int)id);
-                NotificationScheduler.scheduleReminder(requireContext(), eventToSave);
-                requireActivity().runOnUiThread(() -> {
-                    Toast.makeText(requireContext(), "Course added successfully", Toast.LENGTH_SHORT).show();
-                });
+                eventToSave.setId((int) id);
             }
-            dismiss();
+            NotificationScheduler.scheduleReminder(requireContext(), eventToSave);
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(requireContext(), isEditMode ? "Updated" : "Added", Toast.LENGTH_SHORT).show();
+                dismiss();
+            });
         }).start();
     }
 
@@ -226,9 +214,6 @@ public class AddCourseDialog extends DialogFragment {
     private Calendar getNextOccurringDayOfWeek(String dayName) {
         int targetDay = parseDayOfWeek(dayName);
         Calendar cal = Calendar.getInstance();
-
-        // Nếu hôm nay khớp thứ, dùng hôm nay. Nếu không, tìm ngày tiếp theo.
-        // Tuy nhiên, để lịch đẹp, ta nên set về tuần hiện tại hoặc tương lai gần.
         while (cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
             cal.add(Calendar.DAY_OF_YEAR, 1);
         }
@@ -246,11 +231,52 @@ public class AddCourseDialog extends DialogFragment {
         }
     }
 
-    private void showTimePicker(EditText editText) {
+    private void setViewsEnabled(boolean enabled) {
+        etTitle.setEnabled(enabled);
+        etTeacher.setEnabled(enabled);
+        etRoom.setEnabled(enabled);
+        etStartTime.setEnabled(enabled);
+        etEndTime.setEnabled(enabled);
+        spinnerDay.setEnabled(enabled);
+        btnSelectColor.setEnabled(enabled);
+    }
+
+    // Thêm TextWatcher để theo dõi thay đổi dữ liệu
+    private final TextWatcher validationWatcher = new TextWatcher() {
+        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            validateFields(); // Gọi hàm kiểm tra mỗi khi text thay đổi
+        }
+        @Override public void afterTextChanged(Editable s) {}
+    };
+
+    private void validateFields() {
+        if (isViewOnly) return;
+
+        boolean isAllFilled = !etTitle.getText().toString().trim().isEmpty() &&
+                !etTeacher.getText().toString().trim().isEmpty() &&
+                !etRoom.getText().toString().trim().isEmpty() &&
+                !etStartTime.getText().toString().trim().isEmpty() &&
+                !etEndTime.getText().toString().trim().isEmpty();
+
+        btnSave.setEnabled(isAllFilled);
+        btnSave.setAlpha(isAllFilled ? 1.0f : 0.5f);
+    }
+
+    private void showTimePicker(EditText editText, boolean isStartTime) {
         Calendar c = Calendar.getInstance();
-        new TimePickerDialog(requireContext(),
-                (view, hourOfDay, minute) -> editText.setText(String.format("%02d:%02d", hourOfDay, minute)),
-                c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show();
+        new TimePickerDialog(requireContext(), (view, hour, minute) -> {
+            String time = String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
+            editText.setText(time);
+
+            if (isStartTime) {
+                int endH = (hour + 1) % 24;
+                etEndTime.setText(String.format(Locale.getDefault(), "%02d:%02d", endH, minute));
+            } else {
+                int startH = (hour - 1 < 0) ? 23 : hour - 1;
+                etStartTime.setText(String.format(Locale.getDefault(), "%02d:%02d", startH, minute));
+            }
+        }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show();
     }
 
     @Override
@@ -267,7 +293,7 @@ public class AddCourseDialog extends DialogFragment {
             // Kích thước
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
             int screenWidth = displayMetrics.widthPixels;
-            double ratio = 0.75;
+            double ratio = 0.85;
             int dialogWidth = (int) (screenWidth * ratio);
 
             getDialog().getWindow().setLayout(dialogWidth,
