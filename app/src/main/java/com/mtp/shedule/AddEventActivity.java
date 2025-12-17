@@ -438,14 +438,17 @@ public class AddEventActivity extends AppCompatActivity {
         startCal.setTimeInMillis(tempCal.getTimeInMillis());
 
         endCal.setTimeInMillis(startCal.getTimeInMillis() + duration);
+
         updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
         updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
         updateSaveButtonState();
     }
+
     // Xử lý kết quả yêu cầu quyền từ hệ thống
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         if (requestCode == RequestPermission.PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Đã cấp quyền thông báo.", Toast.LENGTH_SHORT).show();

@@ -135,6 +135,7 @@ public class ReminderReceiver extends BroadcastReceiver {
                     RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),
                     null
             );
+
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(channel);
