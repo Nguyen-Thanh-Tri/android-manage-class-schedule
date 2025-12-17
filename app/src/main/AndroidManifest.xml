@@ -15,11 +15,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Shedule">
-        <receiver android:name=".ReminderReceiver"
+        <receiver android:name=".notification.ReminderReceiver"
             android:enabled="true"
             android:exported="false"
             android:permission="" />
-        <receiver android:name=".BootReceiver"
+        <receiver android:name=".notification.BootReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -31,7 +31,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -40,7 +39,6 @@
             android:exported="false"
             android:windowSoftInputMode="adjustPan">
         </activity>
-
         <!--        <activity-->
         <!--            android:name=".AddCourseDialog"-->
         <!--            android:exported="true">-->
@@ -49,7 +47,5 @@
         <!--            android:name=".AddTeacherDialog"-->
         <!--            android:exported="true">-->
         <!--        </activity>-->
-
     </application>
-
 </manifest>

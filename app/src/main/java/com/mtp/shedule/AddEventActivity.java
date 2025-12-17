@@ -7,11 +7,9 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.media.metrics.Event;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,9 +20,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.internal.TextWatcherAdapter;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
+import com.mtp.shedule.notification.NotificationScheduler;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -440,17 +438,14 @@ public class AddEventActivity extends AppCompatActivity {
         startCal.setTimeInMillis(tempCal.getTimeInMillis());
 
         endCal.setTimeInMillis(startCal.getTimeInMillis() + duration);
-
         updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
         updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
         updateSaveButtonState();
     }
-
     // Xử lý kết quả yêu cầu quyền từ hệ thống
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         if (requestCode == RequestPermission.PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Đã cấp quyền thông báo.", Toast.LENGTH_SHORT).show();
