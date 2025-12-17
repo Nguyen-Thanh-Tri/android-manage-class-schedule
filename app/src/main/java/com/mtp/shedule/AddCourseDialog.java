@@ -214,20 +214,27 @@ public class AddCourseDialog extends DialogFragment {
     // Hàm phụ trợ: Tìm ngày Calendar khớp với thứ trong tuần (Monday, Tuesday...)
     private Calendar getNextOccurringDayOfWeek(String dayName, int hour, int minute) {
         int targetDay = parseDayOfWeek(dayName);
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, hour);
+        Calendar cal = Calendar.getInstance(Locale.getDefault());
+
+        // Lưu thời điểm "ngay bây giờ" để so sánh
+        long now = System.currentTimeMillis();
+
+        // Thiết lập cho ngày hôm nay với giờ/phút đã chọn
+        cal.set(Calendar.HOUR_OF_DAY, hour); // 0h sẽ là 0
         cal.set(Calendar.MINUTE, minute);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
-        // Nếu thời điểm hiện tại đã trôi qua mốc giờ này trong hôm nay
-        // hoặc hôm nay không phải thứ đó -> Tìm ngày tiếp theo
-        if (cal.getTimeInMillis() <= System.currentTimeMillis() || cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
-            // Cuộn tới ngày có thứ khớp tiếp theo
+        // LOGIC QUAN TRỌNG:
+        // Nếu hôm nay đúng là Thứ đó NHƯNG giờ đã trôi qua (ví dụ đặt 0h10 lúc đang là 0h15)
+        // HOẶC hôm nay không phải Thứ đó.
+        if (cal.getTimeInMillis() <= now || cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
+            // Tìm ngày tiếp theo khớp với Thứ đó
             do {
                 cal.add(Calendar.DAY_OF_YEAR, 1);
             } while (cal.get(Calendar.DAY_OF_WEEK) != targetDay);
         }
+
         return cal;
     }
     private int parseDayOfWeek(String dayOfWeek) {

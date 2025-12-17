@@ -571,18 +571,27 @@ public class AddEventActivity extends AppCompatActivity {
 
     private Calendar getNextOccurringDayOfWeek(String dayName, int hour, int minute) {
         int targetDay = parseDayOfWeekString(dayName);
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, hour);
+        Calendar cal = Calendar.getInstance(Locale.getDefault());
+
+        // Lưu thời điểm "ngay bây giờ" để so sánh
+        long now = System.currentTimeMillis();
+
+        // Thiết lập cho ngày hôm nay với giờ/phút đã chọn
+        cal.set(Calendar.HOUR_OF_DAY, hour); // 0h sẽ là 0
         cal.set(Calendar.MINUTE, minute);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
-        // Nếu Thứ hiện tại không khớp HOẶC (khớp Thứ nhưng giờ đã qua), tìm ngày kế tiếp
-        if (cal.get(Calendar.DAY_OF_WEEK) != targetDay || cal.getTimeInMillis() <= System.currentTimeMillis()) {
+        // LOGIC QUAN TRỌNG:
+        // Nếu hôm nay đúng là Thứ đó NHƯNG giờ đã trôi qua (ví dụ đặt 0h10 lúc đang là 0h15)
+        // HOẶC hôm nay không phải Thứ đó.
+        if (cal.getTimeInMillis() <= now || cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
+            // Tìm ngày tiếp theo khớp với Thứ đó
             do {
                 cal.add(Calendar.DAY_OF_YEAR, 1);
             } while (cal.get(Calendar.DAY_OF_WEEK) != targetDay);
         }
+
         return cal;
     }
     private int parseDayOfWeekString(String day) {
