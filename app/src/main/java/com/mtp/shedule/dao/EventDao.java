@@ -1,5 +1,6 @@
 package com.mtp.shedule.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -33,21 +34,27 @@ public interface EventDao {
     void updateEvent(EventEntity event);
     @Query("SELECT * FROM events WHERE startTime BETWEEN :weekStart AND :weekEnd")
     List<EventEntity> getEventsByWeek(long weekStart, long weekEnd);
-
+    
     // Methods for repeating events
     @Query("SELECT * FROM events WHERE repeatType = 'weekly'")
     List<EventEntity> getWeeklyRepeatingEvents();
-
+    
     @Query("SELECT * FROM events WHERE isCourse = 1")
     List<EventEntity> getCourseEvents();
-
+    
     @Query("SELECT * FROM events WHERE repeatType != 'none' AND repeatType IS NOT NULL")
     List<EventEntity> getAllRepeatingEvents();
-
+    
     @Query("SELECT * FROM events WHERE id = :id")
     EventEntity getEventById(int id);
 
+    //BOOT RECEIVER
     @Query("SELECT * FROM events")
     List<EventEntity> getAllEvents();
 
+    @Query("SELECT * FROM events")
+    LiveData<List<EventEntity>> getAllEventsLiveData();
+
+    @Query("SELECT * FROM events WHERE isCourse = 1 AND LOWER(dayOfWeek) = LOWER(:dayOfWeek) ORDER BY startTime ASC")
+    LiveData<List<EventEntity>> getCoursesByDay(String dayOfWeek);
 }

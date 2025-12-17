@@ -6,12 +6,13 @@ import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import com.mtp.shedule.R;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 @Entity(tableName = "events")
-public class EventEntity {
+public class EventEntity implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     public int id;
@@ -22,13 +23,13 @@ public class EventEntity {
     public long endTime;     // millis
 
     public int color;        // lưu index màu card
-
+    
     // Repeat functionality
     public String repeatType;    // "none", "weekly", "daily", "monthly"
     public String dayOfWeek;     // for weekly repeats ("monday", "tuesday", etc.)
     @ColumnInfo(name = "reminder")
     public int reminder = 0;
-
+    
     // Course-related fields (optional, for course-type events)
     public String teacher;       // teacher name for course events
     public String room;          // room location for course events
@@ -53,7 +54,7 @@ public class EventEntity {
         this.isCourse = false;
         this.reminder = 0;
     }
-
+    
     // Constructor for course events
     @Ignore
     public EventEntity(String title, String teacher, String room, String dayOfWeek, long startTime, long endTime) {
@@ -84,24 +85,24 @@ public class EventEntity {
     public long getEndTime() { return endTime; }
 
     public void setEndTime(long endTime) { this.endTime = endTime; }
-    //    public String getTimezone() { return timezone; }
+//    public String getTimezone() { return timezone; }
     public int getReminder() { return reminder; }
     public void setReminder(int reminder) { this.reminder = reminder; }
     public int getColor() { return color; }
     public void setColor(int color) { this.color = color; }
-
+    
     public String getRepeatType() { return repeatType; }
     public void setRepeatType(String repeatType) { this.repeatType = repeatType; }
-
+    
     public String getDayOfWeek() { return dayOfWeek; }
     public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
-
+    
     public String getTeacher() { return teacher; }
     public void setTeacher(String teacher) { this.teacher = teacher; }
-
+    
     public String getRoom() { return room; }
     public void setRoom(String room) { this.room = room; }
-
+    
     public boolean isCourse() { return isCourse; }
     public void setIsCourse(boolean isCourse) { this.isCourse = isCourse; }
     public String getStartTimeFormatted() {
@@ -118,3 +119,4 @@ public class EventEntity {
         return sdf.format(new Date(timeMillis));
     }
 }
+

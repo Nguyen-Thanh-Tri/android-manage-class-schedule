@@ -1,6 +1,5 @@
 package com.mtp.shedule;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -28,7 +27,7 @@ import com.mtp.shedule.fragment.CalendarFragment;
 import com.mtp.shedule.fragment.ExamsFragment;
 import com.mtp.shedule.fragment.SettingsFragment;
 import com.mtp.shedule.fragment.TeachersFragment;
-import com.mtp.shedule.fragment.TimeTableFragment;
+import com.mtp.shedule.fragment.CourseFragment;
 
 import java.util.Objects;
 
@@ -79,8 +78,8 @@ public class MainActivity extends AppCompatActivity {
             String title = Objects.requireNonNull(item.getTitle()).toString();
             Fragment newFragment = null;
 
-            if (id == R.id.nav_timetable && !(currentFragment instanceof TimeTableFragment)) {
-                newFragment = new TimeTableFragment();
+            if (id == R.id.nav_timetable && !(currentFragment instanceof CourseFragment)) {
+                newFragment = new CourseFragment();
             } else if (id == R.id.nav_exams && !(currentFragment instanceof ExamsFragment)) {
                 newFragment = new ExamsFragment();
             } else if (id == R.id.nav_teachers && !(currentFragment instanceof TeachersFragment)) {
