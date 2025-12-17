@@ -14,7 +14,7 @@ import java.util.List;
 public interface EventDao {
 
     @Insert
-    void insertEvent(EventEntity event);
+    long insertEvent(EventEntity event);
 
     @Query("SELECT * FROM events WHERE startTime BETWEEN :start AND :end")
     List<EventEntity> getEventsInRange(long start, long end);
@@ -33,17 +33,21 @@ public interface EventDao {
     void updateEvent(EventEntity event);
     @Query("SELECT * FROM events WHERE startTime BETWEEN :weekStart AND :weekEnd")
     List<EventEntity> getEventsByWeek(long weekStart, long weekEnd);
-    
+
     // Methods for repeating events
     @Query("SELECT * FROM events WHERE repeatType = 'weekly'")
     List<EventEntity> getWeeklyRepeatingEvents();
-    
+
     @Query("SELECT * FROM events WHERE isCourse = 1")
     List<EventEntity> getCourseEvents();
-    
+
     @Query("SELECT * FROM events WHERE repeatType != 'none' AND repeatType IS NOT NULL")
     List<EventEntity> getAllRepeatingEvents();
-    
+
     @Query("SELECT * FROM events WHERE id = :id")
     EventEntity getEventById(int id);
+
+    @Query("SELECT * FROM events")
+    List<EventEntity> getAllEvents();
+
 }
