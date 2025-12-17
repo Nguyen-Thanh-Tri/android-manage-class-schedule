@@ -262,6 +262,22 @@ public class AddEventActivity extends AppCompatActivity {
         EventEntity event = buildEventFromInput();
         if (event == null) return;
 
+        // Nếu là Weekly, tính lại ngày để đảm bảo vào đúng thứ
+        if ("weekly".equals(event.getRepeatType())) {
+            Calendar temp = Calendar.getInstance();
+            temp.setTimeInMillis(event.getStartTime());
+
+            Calendar correctedStart = getNextOccurringDayOfWeek(
+                    event.getDayOfWeek(),
+                    temp.get(Calendar.HOUR_OF_DAY),
+                    temp.get(Calendar.MINUTE)
+            );
+
+            long duration = event.getEndTime() - event.getStartTime();
+            event.setStartTime(correctedStart.getTimeInMillis());
+            event.setEndTime(correctedStart.getTimeInMillis() + duration);
+        }
+
         new Thread(() -> {
             long newId = db.eventDao().insertEvent(event);
             event.setId((int)newId);
@@ -550,6 +566,34 @@ public class AddEventActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Notification permission denied", Toast.LENGTH_LONG).show();
             }
+        }
+    }
+
+    private Calendar getNextOccurringDayOfWeek(String dayName, int hour, int minute) {
+        int targetDay = parseDayOfWeekString(dayName);
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, hour);
+        cal.set(Calendar.MINUTE, minute);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        // Nếu Thứ hiện tại không khớp HOẶC (khớp Thứ nhưng giờ đã qua), tìm ngày kế tiếp
+        if (cal.get(Calendar.DAY_OF_WEEK) != targetDay || cal.getTimeInMillis() <= System.currentTimeMillis()) {
+            do {
+                cal.add(Calendar.DAY_OF_YEAR, 1);
+            } while (cal.get(Calendar.DAY_OF_WEEK) != targetDay);
+        }
+        return cal;
+    }
+    private int parseDayOfWeekString(String day) {
+        switch (day.toLowerCase().trim()) {
+            case "sunday": return Calendar.SUNDAY;
+            case "tuesday": return Calendar.TUESDAY;
+            case "wednesday": return Calendar.WEDNESDAY;
+            case "thursday": return Calendar.THURSDAY;
+            case "friday": return Calendar.FRIDAY;
+            case "saturday": return Calendar.SATURDAY;
+            default: return Calendar.MONDAY;
         }
     }
 }
