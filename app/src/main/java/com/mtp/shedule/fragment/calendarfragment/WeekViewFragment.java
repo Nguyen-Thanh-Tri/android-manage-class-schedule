@@ -55,6 +55,8 @@ public class WeekViewFragment extends Fragment {
     FloatingActionButton fabAddEvent;
     int selectedDayOfMonth = -1;
     ConnDatabase db;
+    private View currentTimeLine;
+    private final android.os.Handler timelineHandler = new android.os.Handler();
 
     @Nullable
     @Override
@@ -86,7 +88,9 @@ public class WeekViewFragment extends Fragment {
 
         view.post(() ->{
             drawTimeAxisLabels();
+            initCurrentTimeLine();
             loadInitialEvents();
+            timelineHandler.post(timelineRunnable);
         });
 
         return view;
@@ -97,6 +101,12 @@ public class WeekViewFragment extends Fragment {
         super.onResume();
         // Refresh events when fragment becomes visible again
         refreshEvents();
+        timelineHandler.post(timelineRunnable);
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+        timelineHandler.removeCallbacks(timelineRunnable); // Dừng cập nhật khi không xem app
     }
 
     private void setupFragmentResultListeners() {
@@ -711,10 +721,10 @@ public class WeekViewFragment extends Fragment {
     }
 
     private void removeOldEvents() {
-        // Xóa event cũ
         for (int i = eventDrawingArea.getChildCount() - 1; i >= 0; i--) {
             View v = eventDrawingArea.getChildAt(i);
-            if (v.getTag() != null && v.getTag().toString().startsWith("event_")) {
+            Object tag = v.getTag();
+            if (tag != null && tag.toString().startsWith("event_")) {
                 eventDrawingArea.removeView(v);
             }
         }
@@ -781,5 +791,75 @@ public class WeekViewFragment extends Fragment {
         return (dayOfMonth == today.get(Calendar.DAY_OF_MONTH)) &&
                 (monthIndex == today.get(Calendar.MONTH)) &&
                 (year == today.get(Calendar.YEAR));
+    }
+
+    private final Runnable timelineRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateCurrentTimeLine();
+            // Cập nhật lại mỗi 60 giây
+            timelineHandler.postDelayed(this, 60000);
+        }
+    };
+    private void initCurrentTimeLine() {
+        if (currentTimeLine != null) eventDrawingArea.removeView(currentTimeLine);
+
+        float density = getResources().getDisplayMetrics().density;
+
+        // Tạo container cho line và circle
+        currentTimeLine = new View(requireContext());
+        currentTimeLine.setBackgroundColor(Color.parseColor("#2196F3")); // Màu xanh dương
+        currentTimeLine.setTag("current_time_line");
+
+        ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(
+                ConstraintLayout.LayoutParams.MATCH_PARENT, // Sẽ set width động theo cột
+                (int) (1.5f * density) // Độ dày 2dp
+        );
+        lp.topToTop = ConstraintLayout.LayoutParams.PARENT_ID;
+        lp.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+
+        currentTimeLine.setLayoutParams(lp);
+        currentTimeLine.setZ(10f);
+        eventDrawingArea.addView(currentTimeLine);
+    }
+    private void updateCurrentTimeLine() {
+        if (!isAdded() || eventDrawingArea == null || currentTimeLine == null) return;
+
+        Calendar now = Calendar.getInstance();
+        long nowMillis = now.getTimeInMillis();
+
+        // Kiểm tra xem tuần hiện tại đang xem có chứa ngày "Hôm nay" không
+        Calendar weekStart = (Calendar) currentWeekStart.clone();
+        Calendar weekEnd = (Calendar) currentWeekStart.clone();
+        weekEnd.add(Calendar.DAY_OF_MONTH, 7);
+
+        if (nowMillis < weekStart.getTimeInMillis() || nowMillis >= weekEnd.getTimeInMillis()) {
+            currentTimeLine.setVisibility(View.GONE);
+            return;
+        }
+
+        currentTimeLine.setVisibility(View.VISIBLE);
+
+        float density = getResources().getDisplayMetrics().density;
+        float hourHeightPx = HOUR_HEIGHT_DP * density;
+
+        // Vị trí Y (Giờ hiện tại)
+        int hour = now.get(Calendar.HOUR_OF_DAY);
+        int minute = now.get(Calendar.MINUTE);
+        float positionY = (hour + minute / 60f) * hourHeightPx;
+
+        // Vị trí X của dấu chấm tròn (Cột ngày hiện tại)
+        int width = eventDrawingArea.getWidth();
+        int rightPaddingPx = (int) (10 * density);
+        float colWidth = (float) (width - rightPaddingPx) / DAYS_IN_WEEK;
+
+        // Tính xem hôm nay là ngày thứ mấy trong tuần đang hiển thị (0-6)
+        long diff = now.get(Calendar.DAY_OF_YEAR) - currentWeekStart.get(Calendar.DAY_OF_YEAR);
+        // Xử lý trường hợp lệch năm
+        if (diff < 0) diff += now.getActualMaximum(Calendar.DAY_OF_YEAR);
+        int dayIndex = (int) diff;
+
+        // Cập nhật vị trí đường kẻ (Chỉ cần di chuyển Y)
+        currentTimeLine.setTranslationY(positionY);
     }
 }
