@@ -18,6 +18,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 
 import com.mtp.shedule.MainActivity;
+import com.mtp.shedule.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -149,23 +150,20 @@ public class ReminderForegroundService extends Service {
 
         // Build notification với nút Huỷ
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, EVENT_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setSmallIcon(R.drawable.ic_clock) // Đảm bảo icon hợp lệ
                 .setContentTitle("🔔 " + eventTitle)
                 .setContentText("Bắt đầu lúc: " + startTimeFormatted)
                 .setSubText("🎵 Đang phát nhạc chuông...")
-                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setPriority(NotificationCompat.PRIORITY_MAX) // Mức ưu tiên cao nhất
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .setOngoing(true) // Không thể vuốt xoá
-                .setAutoCancel(false) // Không tự động xoá khi click
+                .setOngoing(true)    // Không cho phép vuốt xóa
+                .setAutoCancel(false) // Click vào không tự biến mất
+                .setFullScreenIntent(openAppPendingIntent, true) // Hiện Popup khi màn hình đang khóa
                 .setContentIntent(openAppPendingIntent)
-                .setSound(null) // Tắt sound mặc định vì dùng RingtonePlayer
+                .setSound(null)
                 .setVibrate(new long[]{0, 500, 200, 500})
-                // THÊM NÚT HUỶ
-                .addAction(
-                        android.R.drawable.ic_delete,
-                        "Huỷ ⏹️",
-                        stopPendingIntent
-                );
+                .setStyle(new NotificationCompat.BigTextStyle().bigText("Sự kiện sắp bắt đầu. Nhấn Hủy để dừng nhạc."))
+                .addAction(android.R.drawable.ic_delete, "Huỷ ⏹️", stopPendingIntent);
 
         // Hiển thị
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
