@@ -1,5 +1,6 @@
 package com.mtp.shedule;
 
+import static android.os.Build.VERSION_CODES.R;
 import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 
 import android.annotation.SuppressLint;
