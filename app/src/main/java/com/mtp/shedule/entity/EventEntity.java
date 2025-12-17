@@ -1,16 +1,18 @@
 package com.mtp.shedule.entity;
 
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import com.mtp.shedule.R;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 @Entity(tableName = "events")
-public class EventEntity {
+public class EventEntity implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     public int id;
@@ -25,6 +27,8 @@ public class EventEntity {
     // Repeat functionality
     public String repeatType;    // "none", "weekly", "daily", "monthly"
     public String dayOfWeek;     // for weekly repeats ("monday", "tuesday", etc.)
+    @ColumnInfo(name = "reminder")
+    public int reminder = 0;
     
     // Course-related fields (optional, for course-type events)
     public String teacher;       // teacher name for course events
@@ -36,6 +40,7 @@ public class EventEntity {
         this.color = R.drawable.gradient_bg_red;
         this.repeatType = "none";
         this.isCourse = false;
+        this.reminder = 0;
     }
 
     @Ignore
@@ -47,6 +52,7 @@ public class EventEntity {
         this.color = R.drawable.gradient_bg_red;
         this.repeatType = "none";
         this.isCourse = false;
+        this.reminder = 0;
     }
     
     // Constructor for course events
@@ -62,6 +68,7 @@ public class EventEntity {
         this.isCourse = true;
         this.description = "Room: " + room + "\nTeacher: " + teacher;
         this.color = R.drawable.gradient_bg_red;
+        this.reminder = 0;
     }
     public int getId() { return id; }
 
@@ -79,7 +86,8 @@ public class EventEntity {
 
     public void setEndTime(long endTime) { this.endTime = endTime; }
 //    public String getTimezone() { return timezone; }
-//
+    public int getReminder() { return reminder; }
+    public void setReminder(int reminder) { this.reminder = reminder; }
     public int getColor() { return color; }
     public void setColor(int color) { this.color = color; }
     

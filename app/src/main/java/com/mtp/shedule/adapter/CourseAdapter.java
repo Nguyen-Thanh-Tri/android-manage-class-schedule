@@ -17,25 +17,25 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
-import com.mtp.shedule.entity.CourseEntity;
+import com.mtp.shedule.entity.EventEntity;
 
 import java.util.List;
 
 public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseViewHolder> {
 
-    public List<CourseEntity> courseList;
+    public List<EventEntity> courseList;
     public Context context;
     private final ConnDatabase db;
 
 
-    public CourseAdapter(Context context, List<CourseEntity> courseList) {
+    public CourseAdapter(Context context, List<EventEntity> courseList) {
         this.context = context;
         this.courseList = courseList;
         this.db = ConnDatabase.getInstance(context);
     }
 
     public interface OnItemClickListener {
-        void onItemClick(CourseEntity course);
+        void onItemClick(EventEntity course);
     }
 
     private OnItemClickListener listener;
@@ -54,11 +54,11 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull CourseViewHolder holder, int position) {
-        CourseEntity course = courseList.get(position);
+        EventEntity course = courseList.get(position);
         holder.tvCourseTitle.setText(course.getTitle());
         holder.tvTeacher.setText(course.getTeacher());
         holder.tvRoom.setText(course.getRoom());
-        holder.tvTime.setText(course.getTimeStart() + " - " + course.getTimeEnd());
+        holder.tvTime.setText(course.getStartTimeFormatted() + " - " + course.getEndTimeFormatted());
 
 
         holder.itemView.setOnClickListener(v -> {
@@ -71,10 +71,11 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
         holder.itemView.setOnLongClickListener(v -> {
             new AlertDialog.Builder(v.getContext())
                     .setTitle("DELETE")
-                    .setMessage("Are you sure? \"" + course.getTitle() + "\" No?")
+                    .setMessage("Are you sure delete \"" + course.getTitle() + "\"?")
                     .setPositiveButton("Delete", (dialog, which) -> {
                         new Thread(() -> {
-                            db.courseDao().delete(course); // ← Entity
+                            // Dùng EventDao để xóa
+                            db.eventDao().deleteEvent(course);
                             holder.itemView.post(() -> {
                                 courseList.remove(holder.getAdapterPosition());
                                 notifyItemRemoved(holder.getAdapterPosition());
@@ -84,7 +85,7 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
                     })
                     .setNegativeButton("Cancel", null)
                     .show();
-            return true; // Đã xử lý long click
+            return true;
         });
 
         //áp dụng màu cho card view
@@ -103,8 +104,6 @@ public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.CourseView
     public int getItemCount() {
         return courseList.size();
     }
-
-
 
     public static class CourseViewHolder extends RecyclerView.ViewHolder {
         TextView tvCourseTitle, tvTeacher, tvRoom, tvTime;
