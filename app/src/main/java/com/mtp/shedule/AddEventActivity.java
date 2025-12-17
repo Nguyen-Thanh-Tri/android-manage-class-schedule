@@ -9,6 +9,7 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.metrics.Event;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,6 +24,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.internal.TextWatcherAdapter;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 import com.mtp.shedule.notification.NotificationScheduler; // Nếu bạn dùng WorkManager thì đổi import tương ứng
@@ -51,10 +53,12 @@ public class AddEventActivity extends AppCompatActivity {
 
     // --- BIẾN LOGIC ---
     private ConnDatabase db;
+    // Calendar objects for picking date & time
     Calendar startCal = Calendar.getInstance();
     Calendar endCal = Calendar.getInstance();
-    private int selectedColorIndex = 0;
+    private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
 
+    int selectedColor = Color.BLUE; // default
     // --- BIẾN TRẠNG THÁI CHẾ ĐỘ ---
     private boolean isViewMode = false;   // True = Xem/Sửa, False = Thêm mới
     private boolean isEditState = false;  // True = Đang nhập liệu để sửa
@@ -435,6 +439,7 @@ public class AddEventActivity extends AppCompatActivity {
         }
     }
 
+    // Setup spinners for repeat type and day of week
     private void setupSpinners() {
         // Repeat Type
         ArrayAdapter<String> repeatAdapter = new ArrayAdapter<>(this,
