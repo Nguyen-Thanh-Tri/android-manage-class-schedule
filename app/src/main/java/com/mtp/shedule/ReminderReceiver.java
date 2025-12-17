@@ -1,4 +1,4 @@
-package com.mtp.shedule.notification;
+package com.mtp.shedule;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -16,9 +16,6 @@ import android.util.Log;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-
-import com.mtp.shedule.MainActivity;
-import com.mtp.shedule.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

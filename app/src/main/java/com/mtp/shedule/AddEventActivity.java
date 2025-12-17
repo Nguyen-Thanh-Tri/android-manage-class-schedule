@@ -7,9 +7,11 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.metrics.Event;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,9 +22,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.internal.TextWatcherAdapter;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
-import com.mtp.shedule.notification.NotificationScheduler;
 
 import java.util.Calendar;
 import java.util.Locale;

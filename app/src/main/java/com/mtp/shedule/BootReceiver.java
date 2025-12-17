@@ -1,4 +1,4 @@
-package com.mtp.shedule.notification;
+package com.mtp.shedule;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
