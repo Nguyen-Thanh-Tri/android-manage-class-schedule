@@ -4,6 +4,7 @@ import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
 import android.app.TimePickerDialog;
@@ -306,7 +307,9 @@ public class AddCourseDialog extends DialogFragment {
             getDialog().getWindow().setDimAmount(0.6f);
 
             // Popup bo góc trong suốt
-            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(
+                    ContextCompat.getColor(requireContext(), R.color.transparent)
+            ));
 
             // Kích thước
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
