@@ -8,6 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.util.TypedValue;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -95,6 +97,24 @@ public class MainActivity extends AppCompatActivity {
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
         });
+
+        // Xử lý Fragment
+        if (savedInstanceState == null) {
+            // Lần đầu mở App -> Load Calendar
+            replaceFragment(new CalendarFragment());
+            navigationView.setCheckedItem(R.id.nav_calendar);
+            toolbarTitle.setText(getString(R.string.main_screen_title));
+        } else {
+            // Activity được tạo lại (do đổi Theme/Xoay màn hình)
+            // Tìm lại fragment đang hiển thị
+            Fragment restoredFragment = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+
+            if (restoredFragment != null) {
+                currentFragment = restoredFragment;
+                // CẬP NHẬT LẠI MÀU NỀN TẠI ĐÂY
+                updateContainerBackground(restoredFragment);
+            }
+        }
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -104,20 +124,41 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Người dùng đã cấp quyền POST_NOTIFICATIONS.
                 // Có thể tiếp tục logic đặt lịch báo thức.
-                Toast.makeText(this, "Đã cấp quyền thông báo.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Notification permission has been granted.", Toast.LENGTH_SHORT).show();
             } else {
                 // Người dùng từ chối quyền POST_NOTIFICATIONS.
-                Toast.makeText(this, "Không thể hiện thông báo nhắc nhở nếu không cấp quyền.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Notification will be not displayed if permission is not granted.", Toast.LENGTH_LONG).show();
             }
         }
     }
     // ---------------- Helper method thay fragment ----------------
     private void replaceFragment(Fragment fragment) {
         currentFragment = fragment;
+
+        updateContainerBackground(fragment);
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .commit();
+    }
+    private void updateContainerBackground(Fragment fragment) {
+        FrameLayout container = findViewById(R.id.fragment_container);
+        if (container == null) return;
+
+        if (fragment instanceof SettingsFragment) {
+            // Nếu là Setting -> Màu Cam
+            container.setBackgroundResource(R.color.orange);
+        } else {
+            // Nếu là Fragment khác -> Màu mặc định theo Theme
+            TypedValue typedValue = new TypedValue();
+            getTheme().resolveAttribute(android.R.attr.windowBackground, typedValue, true);
+            if (typedValue.type >= TypedValue.TYPE_FIRST_COLOR_INT && typedValue.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+                container.setBackgroundColor(typedValue.data);
+            } else {
+                container.setBackgroundResource(typedValue.resourceId);
+            }
+        }
     }
     private void requestBatteryOptimizationExemption() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

@@ -11,6 +11,7 @@ import android.os.Build;
 import android.util.Log;
 
 import com.mtp.shedule.R;
+import com.mtp.shedule.utils.AppSettings;
 
 public class RingtonePlayer {
     private static final String TAG = "RingtonePlayer";
@@ -23,9 +24,17 @@ public class RingtonePlayer {
     public static void play(Context context) {
         try {
             stop();
-            mediaPlayer = new MediaPlayer();
-            Uri soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.cat1);
 
+            // 1. Lấy URI từ AppSettings
+            AppSettings settings = new AppSettings(context);
+            Uri soundUri = settings.getRingtoneUri();
+
+            // Fallback: Nếu URI null (trường hợp hãn hữu), dùng file mặc định
+            if (soundUri == null) {
+                soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.cat1);
+            }
+
+            mediaPlayer = new MediaPlayer();
             mediaPlayer.setDataSource(context, soundUri);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

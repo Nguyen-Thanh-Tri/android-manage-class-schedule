@@ -6,6 +6,7 @@
     <string name="position_department">Position / Department</string>
     <string name="phone_number">Phone Number</string>
     <string name="email">Email</string>
+    <string name="notification_sound">Notification Sound</string>
 
     <string-array name="repeat_options">
         <item>None</item>

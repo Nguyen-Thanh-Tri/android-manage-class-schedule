@@ -57,8 +57,8 @@
         android:layout_height="wrap_content"
         android:text="Save Exam"
         android:layout_marginTop="24dp"
-        android:backgroundTint="#FFA500"
-        android:textColor="#FFFFFF"/>
+        android:backgroundTint="@color/orange"
+        android:textColor="@color/white"/>
 
     <Button
         android:id="@+id/btnCancelExam"
@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:text="Cancel"
         android:layout_marginTop="8dp"
-        android:backgroundTint="#B0B0B0"
-        android:textColor="#FFFFFF"/>
+        android:backgroundTint="@color/cool_gray"
+        android:textColor="@color/white"/>
 
 </LinearLayout>
