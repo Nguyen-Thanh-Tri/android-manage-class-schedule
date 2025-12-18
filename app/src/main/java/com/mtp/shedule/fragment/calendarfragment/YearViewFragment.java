@@ -1,7 +1,6 @@
 package com.mtp.shedule.fragment.calendarfragment;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -9,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
 import androidx.gridlayout.widget.GridLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -86,9 +87,9 @@ public class YearViewFragment extends Fragment {
 
         boolean isCurrentMonth = (monthIndex == currentMonth) && (year == currentYear);
         if (isCurrentMonth) {
-            tvTitle.setTextColor(Color.parseColor("#2196F3")); // blue
+            tvTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.azure)); // blue
         } else {
-            tvTitle.setTextColor(Color.BLACK);
+            tvTitle.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
             tvTitle.setBackground(null);
         }
 
@@ -139,16 +140,16 @@ public class YearViewFragment extends Fragment {
 
         // Xử lý màu sắc
         if (isActualDay) {
-            tv.setTextColor(Color.BLACK);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
             if (isToday) {
                 tv.setBackgroundResource(R.drawable.bg_current_day_for_year);
-                tv.setTextColor(Color.BLACK);
+                tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
             } else {
                 tv.setBackground(null);
             }
         } else {
             // Ô trống
-            tv.setTextColor(Color.TRANSPARENT);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.transparent));
         }
         return tv;
     }

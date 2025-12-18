@@ -130,8 +130,8 @@
             android:text="Cancel"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="4dp"
-            android:backgroundTint="#FF0000"
-            android:textColor="#FFFFFF"/>
+            android:backgroundTint="@color/fire_engine_red"
+            android:textColor="@color/white"/>
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
@@ -145,8 +145,8 @@
             android:text="Save"
             android:layout_marginTop="12dp"
             android:layout_marginEnd="4dp"
-            android:backgroundTint="#FFA500"
-            android:textColor="#FFFFFF"/>
+            android:backgroundTint="@color/orange"
+            android:textColor="@color/white"/>
     </LinearLayout>
 </LinearLayout>
 

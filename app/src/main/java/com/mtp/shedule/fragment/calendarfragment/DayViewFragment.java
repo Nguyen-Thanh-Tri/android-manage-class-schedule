@@ -4,7 +4,6 @@ import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -394,11 +393,11 @@ public class DayViewFragment extends Fragment {
 
         if (isToday) {
             tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
-            tv.setTextColor(Color.WHITE);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
         } else {
             tv.setBackgroundResource(R.drawable.bg_select_day_for_month);
-            tv.setTextColor(Color.WHITE);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
             // Nếu đang xem tháng/năm hiện tại, tìm và đổi text ngày hôm nay thành xanh
             if (monthIndex == todayMonth && year == todayYear) {
@@ -425,14 +424,14 @@ public class DayViewFragment extends Fragment {
     private void applyDefaultDayStyle(TextView tv, boolean isActualDay, boolean isToday, int column) {
         if (!isActualDay) {
             tv.setText(""); // ô trống
-            tv.setTextColor(Color.TRANSPARENT);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.transparent));
             tv.setBackground(null);
             return;
         }
 
         if (isToday) {
             tv.setBackgroundResource(R.drawable.bg_current_day_for_month); // giữ drawable hiện tại cho "today"
-            tv.setTextColor(Color.WHITE);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
             return;
         }
@@ -441,7 +440,7 @@ public class DayViewFragment extends Fragment {
             tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.dard_grey));
             tv.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
         } else {
-            tv.setTextColor(Color.BLACK);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
             tv.setTypeface(Typeface.SANS_SERIF);
         }
         tv.setBackground(null);
@@ -555,7 +554,7 @@ public class DayViewFragment extends Fragment {
                 TextView eventView = new TextView(requireContext());
                 eventView.setText(e.title);
                 eventView.setTextSize(12);
-                eventView.setTextColor(Color.WHITE);
+                eventView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
                 eventView.setGravity(Gravity.TOP | Gravity.START);
                 eventView.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
                 eventView.setPadding(12, 8, 12, 8);
@@ -614,7 +613,7 @@ public class DayViewFragment extends Fragment {
 
         float density = getResources().getDisplayMetrics().density;
         currentTimeLine = new View(requireContext());
-        currentTimeLine.setBackgroundColor(Color.parseColor("#2196F3")); // Màu xanh dương
+        currentTimeLine.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.azure)); // Màu xanh dương
         currentTimeLine.setTag("current_time_line");
 
         ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(

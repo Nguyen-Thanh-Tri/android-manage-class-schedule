@@ -4,9 +4,11 @@ import static com.mtp.shedule.SelectColorDialog.COLOR_MAPPING_DRAWABLE;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -165,18 +167,23 @@ public class AddCourseDialog extends DialogFragment {
         String startStr = etStartTime.getText().toString().trim();
         String endStr = etEndTime.getText().toString().trim();
         String dayOfWeek = spinnerDay.getSelectedItem().toString();
-
+        // 1. Parse giờ bắt đầu
         String[] sParts = startStr.split(":");
         int startH = Integer.parseInt(sParts[0]);
         int startM = Integer.parseInt(sParts[1]);
-
+        // 2. Tính ngày bắt đầu chính xác
         Calendar startCal = getNextOccurringDayOfWeek(dayOfWeek, startH, startM);
 
-        // Tính mốc kết thúc dựa trên mốc bắt đầu đã tìm được
+        // 3. Tính ngày kết thúc
         Calendar endCal = (Calendar) startCal.clone();
         String[] eParts = endStr.split(":");
-        endCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(eParts[0]));
-        endCal.set(Calendar.MINUTE, Integer.parseInt(eParts[1]));
+        int endH = Integer.parseInt(eParts[0]);
+        int endM = Integer.parseInt(eParts[1]);
+
+        endCal.set(Calendar.HOUR_OF_DAY, endH);
+        endCal.set(Calendar.MINUTE, endM);
+        endCal.set(Calendar.SECOND, 0);
+        endCal.set(Calendar.MILLISECOND, 0);
 
         if (endCal.before(startCal)) {
             Toast.makeText(requireContext(), "End time must be after start time", Toast.LENGTH_SHORT).show();
@@ -193,7 +200,10 @@ public class AddCourseDialog extends DialogFragment {
         eventToSave.setIsCourse(true);
         eventToSave.setRepeatType("weekly");
         eventToSave.setDayOfWeek(dayOfWeek);
+        eventToSave.setReminder(60);
         eventToSave.setDescription("Teacher: " + teacher + "\nRoom: " + room);
+
+        Context appContext = requireContext().getApplicationContext();
 
         new Thread(() -> {
             if (isEditMode) {
@@ -203,9 +213,9 @@ public class AddCourseDialog extends DialogFragment {
                 long id = db.eventDao().insertEvent(eventToSave);
                 eventToSave.setId((int) id);
             }
-            NotificationScheduler.scheduleReminder(requireContext(), eventToSave);
+            NotificationScheduler.scheduleReminder(appContext, eventToSave);
             requireActivity().runOnUiThread(() -> {
-                Toast.makeText(requireContext(), isEditMode ? "Updated" : "Added", Toast.LENGTH_SHORT).show();
+                Toast.makeText(appContext, isEditMode ? "Updated" : "Added", Toast.LENGTH_SHORT).show();
                 dismiss();
             });
         }).start();
@@ -306,7 +316,9 @@ public class AddCourseDialog extends DialogFragment {
             getDialog().getWindow().setDimAmount(0.6f);
 
             // Popup bo góc trong suốt
-            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(
+                    ContextCompat.getColor(requireContext(), R.color.transparent)
+            ));
 
             // Kích thước
             DisplayMetrics displayMetrics = getResources().getDisplayMetrics();

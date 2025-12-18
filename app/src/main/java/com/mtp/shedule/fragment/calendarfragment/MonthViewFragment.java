@@ -4,12 +4,8 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -692,7 +688,7 @@ public class MonthViewFragment extends Fragment {
     private void applyDefaultDayStyle(TextView tv, boolean isActualDay, boolean isToday, int column) {
         if (!isActualDay) {
             tv.setText(""); // ô trống
-            tv.setTextColor(Color.TRANSPARENT);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.transparent));
             tv.setBackground(null);
             return;
         }
@@ -708,7 +704,7 @@ public class MonthViewFragment extends Fragment {
             tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.dard_grey));
             tv.setTypeface(Typeface.SANS_SERIF, Typeface.NORMAL);
         } else {
-            tv.setTextColor(Color.BLACK);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
             tv.setTypeface(Typeface.SANS_SERIF);
         }
         tv.setBackground(null);
@@ -734,7 +730,7 @@ public class MonthViewFragment extends Fragment {
 
         if (isToday && day != selectedDay.get(Calendar.DAY_OF_MONTH)) {
             tv.setBackgroundResource(R.drawable.bg_current_day_for_month);
-            tv.setTextColor(Color.WHITE);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
         } else {
             applyDefaultDayStyle(tv, true, false, column); // màu xám theo cột
@@ -748,11 +744,11 @@ public class MonthViewFragment extends Fragment {
 
         if (isToday) {
             tv.setBackgroundResource(R.drawable.bg_current_day_for_month); // Nền đặc
-            tv.setTextColor(Color.WHITE);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
         } else {
             tv.setBackgroundResource(R.drawable.bg_select_day_for_month); // Nền rỗng/xám
-            tv.setTextColor(Color.BLACK);
+            tv.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
             tv.setTypeface(Typeface.DEFAULT_BOLD);
 
             // Nếu có ngày "Hôm nay" đang hiện trên lưới, reset màu chữ cho nó (vì nó bị mất focus)
