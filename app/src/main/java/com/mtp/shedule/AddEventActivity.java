@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -56,7 +57,6 @@ public class AddEventActivity extends AppCompatActivity {
     Calendar startCal = Calendar.getInstance();
     Calendar endCal = Calendar.getInstance();
     private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
-
     int selectedColor = Color.BLUE; // default
     // --- BIẾN TRẠNG THÁI CHẾ ĐỘ ---
     private boolean isViewMode = false;   // True = Xem/Sửa, False = Thêm mới
@@ -67,6 +67,9 @@ public class AddEventActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_event);
+
+        resetSeconds(startCal);
+        resetSeconds(endCal);
 
         db = ConnDatabase.getInstance(this);
 
@@ -96,13 +99,21 @@ public class AddEventActivity extends AppCompatActivity {
         isViewMode = intent.getBooleanExtra("is_view_mode", false);
 
         if (isViewMode) {
-            // --- CHẾ ĐỘ XEM / SỬA ---
-            currentEvent = (EventEntity) intent.getSerializableExtra("event_item");
-            if (currentEvent != null) {
-                populateData();    // Đổ dữ liệu vào ô
-                setupViewModeUI(); // Cài đặt giao diện Xem (Delete/Edit)
+            // Trường hợp 1: Truyền Object (Từ màn hình chính bấm vào)
+            if (intent.hasExtra("event_item")) {
+                currentEvent = (EventEntity) intent.getSerializableExtra("event_item");
+                if (currentEvent != null) {
+                    populateData();
+                    setupViewModeUI();
+                }
             }
-        } else {
+            // Trường hợp 2: Truyền ID (Từ Thông báo bấm vào)
+            else if (intent.hasExtra("target_event_id")) {
+                int targetId = intent.getIntExtra("target_event_id", -1);
+                loadEventFromDb(targetId); // Hàm mới viết thêm bên dưới
+            }
+        }
+        else {
             // --- CHẾ ĐỘ THÊM MỚI (Mặc định) ---
             endCal.add(Calendar.HOUR_OF_DAY, 1);
             updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
@@ -113,6 +124,28 @@ public class AddEventActivity extends AppCompatActivity {
 
         // 4. CÀI ĐẶT LISTENER
         setupListeners();
+    }
+    private void resetSeconds(Calendar cal) {
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+    }
+    private void loadEventFromDb(int eventId) {
+        // Ẩn tạm giao diện hoặc hiện loading nếu cần
+        new Thread(() -> {
+            // Tìm sự kiện trong DB
+            EventEntity event = db.eventDao().getEventById(eventId);
+
+            runOnUiThread(() -> {
+                if (event != null) {
+                    currentEvent = event;
+                    populateData();     // Đổ dữ liệu lên màn hình
+                    setupViewModeUI();  // Cài đặt nút Sửa/Xóa
+                } else {
+                    Toast.makeText(this, "Event is not exist or is deleted", Toast.LENGTH_SHORT).show();
+                    finish(); // Đóng màn hình nếu không tìm thấy
+                }
+            });
+        }).start();
     }
 
     // ==========================================
@@ -181,6 +214,10 @@ public class AddEventActivity extends AppCompatActivity {
         // Thời gian
         startCal.setTimeInMillis(currentEvent.getStartTime());
         endCal.setTimeInMillis(currentEvent.getEndTime());
+
+        resetSeconds(startCal);
+        resetSeconds(endCal);
+
         updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
         updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
 
@@ -222,6 +259,10 @@ public class AddEventActivity extends AppCompatActivity {
         }
 
         String desc = etDescription.getText().toString().trim();
+
+        resetSeconds(startCal);
+        resetSeconds(endCal);
+
         long start = startCal.getTimeInMillis();
         long end = endCal.getTimeInMillis();
 
@@ -266,10 +307,13 @@ public class AddEventActivity extends AppCompatActivity {
             Calendar temp = Calendar.getInstance();
             temp.setTimeInMillis(event.getStartTime());
 
+            int hour = temp.get(Calendar.HOUR_OF_DAY);
+            int minute = temp.get(Calendar.MINUTE);
+
             Calendar correctedStart = getNextOccurringDayOfWeek(
                     event.getDayOfWeek(),
-                    temp.get(Calendar.HOUR_OF_DAY),
-                    temp.get(Calendar.MINUTE)
+                    hour,
+                    minute
             );
 
             long duration = event.getEndTime() - event.getStartTime();
@@ -277,12 +321,16 @@ public class AddEventActivity extends AppCompatActivity {
             event.setEndTime(correctedStart.getTimeInMillis() + duration);
         }
 
+        Context appContext = getApplicationContext();
+
         new Thread(() -> {
             long newId = db.eventDao().insertEvent(event);
             event.setId((int)newId);
 
+            // LOG: Kiểm tra xem ID đã sinh ra chưa
+            android.util.Log.e("AddEvent", "Inserted Event ID: " + newId + ", Reminder: " + event.getReminder());
             // Đặt lịch thông báo
-            NotificationScheduler.scheduleReminder(this, event);
+            NotificationScheduler.scheduleReminder(appContext, event);
 
             runOnUiThread(() -> {
                 Toast.makeText(this, "Event saved!", Toast.LENGTH_SHORT).show();
@@ -388,6 +436,7 @@ public class AddEventActivity extends AppCompatActivity {
     private void pickStartDate() {
         new DatePickerDialog(this, (view, year, month, day) -> {
             startCal.set(year, month, day);
+            resetSeconds(startCal);
             updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
             autoUpdateEndTime(true);
 
@@ -404,6 +453,7 @@ public class AddEventActivity extends AppCompatActivity {
         new TimePickerDialog(this, (view, hour, minute) -> {
             startCal.set(Calendar.HOUR_OF_DAY, hour);
             startCal.set(Calendar.MINUTE, minute);
+            resetSeconds(startCal);
             updateDateTimeButtons(startCal, btnStartDate, btnStartTime);
             autoUpdateEndTime(true);
             updateSaveButtonState();
@@ -423,6 +473,7 @@ public class AddEventActivity extends AppCompatActivity {
         new TimePickerDialog(this, (view, hour, minute) -> {
             endCal.set(Calendar.HOUR_OF_DAY, hour);
             endCal.set(Calendar.MINUTE, minute);
+            resetSeconds(startCal);
             updateDateTimeButtons(endCal, btnEndDate, btnEndTime);
             validateAndAdjustEndTime();
             updateSaveButtonState();
@@ -572,23 +623,19 @@ public class AddEventActivity extends AppCompatActivity {
         int targetDay = parseDayOfWeekString(dayName);
         Calendar cal = Calendar.getInstance(Locale.getDefault());
 
-        // Lưu thời điểm "ngay bây giờ" để so sánh
-        long now = System.currentTimeMillis();
-
         // Thiết lập cho ngày hôm nay với giờ/phút đã chọn
         cal.set(Calendar.HOUR_OF_DAY, hour); // 0h sẽ là 0
         cal.set(Calendar.MINUTE, minute);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
-        // LOGIC QUAN TRỌNG:
-        // Nếu hôm nay đúng là Thứ đó NHƯNG giờ đã trôi qua (ví dụ đặt 0h10 lúc đang là 0h15)
-        // HOẶC hôm nay không phải Thứ đó.
-        if (cal.getTimeInMillis() <= now || cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
-            // Tìm ngày tiếp theo khớp với Thứ đó
-            do {
-                cal.add(Calendar.DAY_OF_YEAR, 1);
-            } while (cal.get(Calendar.DAY_OF_WEEK) != targetDay);
+        // Lưu thời điểm "ngay bây giờ" để so sánh
+        long now = System.currentTimeMillis();
+
+        // Logic tìm ngày
+        // Nếu ngày đã chọn < hiện tại HOẶC khác thứ mong muốn -> Tăng ngày lên
+        while (cal.getTimeInMillis() <= now || cal.get(Calendar.DAY_OF_WEEK) != targetDay) {
+            cal.add(Calendar.DAY_OF_YEAR, 1);
         }
 
         return cal;
