@@ -19,6 +19,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.TeacherEntity;
@@ -170,7 +171,7 @@ public class AddTeacherDialog extends DialogFragment {
     public void onStart() {
         super.onStart();
         if (getDialog() != null && getDialog().getWindow() != null) {
-            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(requireContext(), R.color.transparent)));
             DisplayMetrics dm = getResources().getDisplayMetrics();
             getDialog().getWindow().setLayout((int)(dm.widthPixels * 0.85), WindowManager.LayoutParams.WRAP_CONTENT);
         }

@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:textColor="?attr/colorOnSurface"
+        android:textColor="@color/black"
         android:letterSpacing="0.01"
         android:fontFamily="sans-serif-medium"/>
 
@@ -26,7 +26,7 @@
         app:cardCornerRadius="12dp"
         app:cardElevation="0dp"
         app:strokeWidth="1dp"
-        app:strokeColor="?attr/colorOutline">
+        app:strokeColor="@color/battleship_gray">
 
         <GridLayout
             android:id="@+id/gridColors"
@@ -44,6 +44,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Save"
+        app:backgroundTint="@color/orange"
+        android:textColor="@color/white"
         android:layout_marginTop="24dp"
         style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
 </LinearLayout>
