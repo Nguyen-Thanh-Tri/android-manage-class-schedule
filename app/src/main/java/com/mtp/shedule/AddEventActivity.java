@@ -9,7 +9,6 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.media.metrics.Event;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,8 +22,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
-import com.google.android.material.internal.TextWatcherAdapter;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 import com.mtp.shedule.notification.NotificationScheduler; // Nếu bạn dùng WorkManager thì đổi import tương ứng
@@ -122,7 +121,7 @@ public class AddEventActivity extends AppCompatActivity {
 
     private void setupAddModeUI() {
         btnCancel.setText("Cancel");
-        btnCancel.setTextColor(Color.BLACK);
+        btnCancel.setTextColor(ContextCompat.getColor(this, R.color.black));
         btnSave.setText("Save");
 
         btnCancel.setOnClickListener(v -> finish());
@@ -134,7 +133,7 @@ public class AddEventActivity extends AppCompatActivity {
     private void setupViewModeUI() {
         // Nút Trái: DELETE (Màu đỏ)
         btnCancel.setText("Delete");
-        btnCancel.setTextColor(Color.RED);
+        btnCancel.setTextColor(ContextCompat.getColor(this, R.color.fire_engine_red));
         btnCancel.setOnClickListener(v -> deleteEvent());
 
         // Nút Phải: EDIT
@@ -154,7 +153,7 @@ public class AddEventActivity extends AppCompatActivity {
 
             // Nút Cancel đổi chức năng thành "Hủy sửa"
             btnCancel.setText("Cancel");
-            btnCancel.setTextColor(Color.BLACK);
+            btnCancel.setTextColor(ContextCompat.getColor(this, R.color.black));
             btnCancel.setOnClickListener(v -> {
                 // Hủy sửa -> Quay lại chế độ xem
                 isEditState = false;

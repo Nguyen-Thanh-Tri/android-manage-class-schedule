@@ -58,7 +58,7 @@
             android:layout_weight="15"
             android:layout_gravity="center"
             android:text="16:32  17:32"
-            android:textColor="#3F51B5"
+            android:textColor="@color/iris"
             android:textSize="14sp"
             android:layout_marginStart="12dp"
             card_view:layout_constraintTop_toBottomOf="@id/tvTitle"
