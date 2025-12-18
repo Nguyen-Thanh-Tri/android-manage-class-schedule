@@ -7,52 +7,62 @@ import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
 
-import com.mtp.shedule.AddEventActivity;
 import com.mtp.shedule.entity.EventEntity;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class NotificationScheduler {
     private static final String TAG = "NotifScheduler";
 
     public static void scheduleReminder(Context context, EventEntity event) {
+        Log.e(TAG, ">>> START scheduleReminder for Event ID: " + event.getId());
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) {
             Log.e(TAG, "AlarmManager is null");
             return;
         }
 
-        // Kiểm tra quyền SCHEDULE_EXACT_ALARM (Android 12+)
+        // 1.Kiểm tra quyền SCHEDULE_EXACT_ALARM (Android 12+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (!alarmManager.canScheduleExactAlarms()) {
-                Log.e(TAG, "Không có quyền SCHEDULE_EXACT_ALARM!");
+                Log.e(TAG, "Missing Permission: SCHEDULE_EXACT_ALARM!");
                 return;
             }
         }
 
-        // Kiểm tra reminder
-        if (event.getReminder() <= 0) {
+        // 2.Kiểm tra reminder
+        if (event.getReminder() < 0) {
+            Log.d(TAG, "Event has no reminder set. Skipping.");
             cancelReminder(context, event.getId());
             return;
         }
 
-        // Tính toán thời gian
-        long reminderMinutes = (long) event.getReminder();
-        long reminderMillis = reminderMinutes * 60 * 1000;
-        long triggerAtMillis = event.getStartTime() - reminderMillis;
+        // 3.Tính toán thời gian (logic 24h/00:00)
+        long reminderMillis = (long) event.getReminder() * 60 * 1000;
+        long eventStartTime = event.getStartTime();
+        long triggerAtMillis = eventStartTime - reminderMillis;
         long currentTime = System.currentTimeMillis();
 
-        // Log để kiểm tra độ lệch thời gian
-        Log.d(TAG, "EventID: " + event.getId() +
-                " | Trigger: " + triggerAtMillis +
-                " | Current: " + currentTime +
-                " | Diff: " + (triggerAtMillis - currentTime) + "ms");
+        // --- DEBUG THỜI GIAN (Quan trọng để fix lỗi 00:00) ---
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault());
+        String eventTimeStr = sdf.format(new Date(eventStartTime));
+        String triggerTimeStr = sdf.format(new Date(triggerAtMillis));
+        String currentStr = sdf.format(new Date(currentTime));
 
-        // Nếu thời điểm kích hoạt đã trôi qua, không đặt lịch
+        Log.d(TAG, " Event Time:   " + eventTimeStr + " (Raw: " + eventStartTime + ")");
+        Log.d(TAG, " Trigger Time: " + triggerTimeStr + " (Raw: " + triggerAtMillis + ")");
+        Log.d(TAG, " Current Time: " + currentStr);
+        Log.d(TAG, " Reminder: " + event.getReminder() + " minutes before");
+
+        // 4.Nếu thời điểm kích hoạt đã trôi qua, không đặt lịch
         if (triggerAtMillis <= currentTime) {
             Log.w(TAG, "Trigger time is in the past. Ignoring.");
             return;
         }
 
-        // 3. Chuẩn bị PendingIntent gửi tới Receiver (để hiện thông báo)
+        // 5.Tạo Intent
         Intent intent = new Intent(context, ReminderReceiver.class);
         intent.putExtra("EVENT_ID", event.getId());
         intent.putExtra("EVENT_TITLE", event.getTitle());
@@ -71,8 +81,7 @@ public class NotificationScheduler {
                 flags
         );
 
-        // 4. Đặt lịch với  setExactAndAllowWhileIdle() THAY VÌ setAlarmClock()
-        // Lý do: setAlarmClock() cần quyền cao hơn và có thể bị block trên một số thiết bị
+        // 6.Đặt lịch
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
@@ -87,7 +96,7 @@ public class NotificationScheduler {
                         triggerAtMillis,
                         pendingIntent
                 );
-                Log.i(TAG, "Scheduled using setExact for ID: " + event.getId());
+                Log.i(TAG, "SUCCESS: Alarm scheduled for" + event.getId());
             }
         } catch (SecurityException e) {
             Log.e(TAG, "SecurityException: " + e.getMessage());
