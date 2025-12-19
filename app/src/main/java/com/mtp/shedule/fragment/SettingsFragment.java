@@ -24,6 +24,8 @@ import androidx.fragment.app.Fragment;
 
 import com.mtp.shedule.R;
 import com.mtp.shedule.utils.AppSettings;
+import com.mtp.shedule.BuildConfig;
+
 
 public class SettingsFragment extends Fragment {
 
@@ -59,6 +61,9 @@ public class SettingsFragment extends Fragment {
         btnRingtone = view.findViewById(R.id.btnRingtone);
         tvCurrentTheme = view.findViewById(R.id.tvCurrentTheme);
         tvRingtoneName = view.findViewById(R.id.tvRingtoneName);
+
+        TextView tvAppVersion = view.findViewById(R.id.tvAppVersion);
+        tvAppVersion.setText(BuildConfig.VERSION_NAME);
 
         setupUI();
 
