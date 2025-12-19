@@ -16,6 +16,7 @@
         android:maxSdkVersion="32" />
 
     <uses-permission android:name="oplus.permission.OPLUS_COMPONENT_SAFE" />
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
 
     <application
         android:name=".MyApplication"

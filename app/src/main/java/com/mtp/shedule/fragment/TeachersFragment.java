@@ -21,6 +21,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.ImageButton;
 import android.widget.Toast;
+import android.content.Intent;
+import android.net.Uri;
+import com.mtp.shedule.entity.TeacherEntity;
 
 public class TeachersFragment extends Fragment {
 
@@ -46,6 +49,10 @@ public class TeachersFragment extends Fragment {
         // Click để xem chi tiết
         adapter.setOnItemClickListener(teacher ->
                 AddTeacherDialog.newInstance(teacher).show(getParentFragmentManager(), "view"));
+
+        adapter.setOnItemLongClickListener(teacher -> {
+            openDialApp(teacher);
+        });
 
         // Lắng nghe LiveData
         db.teacherDao().getAllTeachers().observe(getViewLifecycleOwner(), list -> adapter.updateList(list));
@@ -104,4 +111,16 @@ public class TeachersFragment extends Fragment {
             view.clearFocus();
         }
     }
+
+    private void openDialApp(TeacherEntity teacher) {
+        if (teacher.getPhone() == null || teacher.getPhone().isEmpty()) {
+            Toast.makeText(requireContext(), "Không có số điện thoại", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse("tel:" + teacher.getPhone()));
+        startActivity(intent);
+    }
+
 }
