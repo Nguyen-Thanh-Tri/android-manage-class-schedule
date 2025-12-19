@@ -6,7 +6,7 @@
             android:icon="@drawable/time_table" />
         <item
             android:id="@+id/nav_timetable"
-            android:title="Time Table"
+            android:title="Course"
             android:icon="@drawable/time_table" />
 <!--        <item-->
 <!--            android:id="@+id/nav_exams"-->
