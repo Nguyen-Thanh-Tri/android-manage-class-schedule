@@ -49,6 +49,8 @@ public class DayViewFragment extends Fragment {
     private static final int HOURS_IN_DAY = 24;
     private static final float HOUR_HEIGHT_DP = 70;
     private static final float EVENT_SIDE_MARGIN_DP = 1f;
+    private static final int TIME_AXIS_WIDTH_DP = 35;
+    private static final int WEEK_HEADER_SPACER = 28;
     FloatingActionButton fabAddEvent;
     private LiveData<List<EventEntity>> currentDayEventsLiveData;
     private ConnDatabase db;
@@ -206,6 +208,7 @@ public class DayViewFragment extends Fragment {
 
         eventDrawingArea.addView(lineZero, lpZero);
 
+        int timeAxisWidthPx = (int) (TIME_AXIS_WIDTH_DP * density);
         // vẽ nhãn giờ
         for (int hour = 0; hour <= HOURS_IN_DAY; hour++) {
             TextView tvTime = new TextView(requireContext());
@@ -218,7 +221,7 @@ public class DayViewFragment extends Fragment {
             tvTime.setPadding((int)(6 * density), 0, (int)(6 * density), 0);
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    timeAxisWidthPx,
                     hourHeightPx
             );
 
@@ -307,6 +310,10 @@ public class DayViewFragment extends Fragment {
     }
     private void displayWeek() {
         gridWeekDays.removeAllViews();
+        //8 cột, 1 cột rỗng + 7 ngày
+        gridWeekDays.setColumnCount(8);
+        gridWeekDays.addView(createHeaderSpacer());
+
         Calendar dayIterator = (Calendar) currentWeekStart.clone();
         TextView todayView = null;
 
@@ -320,7 +327,7 @@ public class DayViewFragment extends Fragment {
             TextView tvDay = createWeekDayTextView(
                     String.valueOf(day),
                     true,
-                    i,
+                    i+1,
                     dayOfMonth,
                     monthIndex,
                     year
@@ -338,6 +345,23 @@ public class DayViewFragment extends Fragment {
                 lastSelectedDayView = todayView; // Gán TextView của ngày hôm nay
             }
         }
+    }
+    private View createHeaderSpacer() {
+        View spacer = new View(requireContext());
+
+        // Tính pixel từ dp (phải khớp với TIME_AXIS_WIDTH_DP ở trên)
+        float density = getResources().getDisplayMetrics().density;
+        int widthPx = (int) (WEEK_HEADER_SPACER * density);
+
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        // Cột 0, không có trọng số (weight) để giữ kích thước cố định
+        params.columnSpec = GridLayout.spec(0);
+        params.rowSpec = GridLayout.spec(0);
+        params.width = widthPx;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+
+        spacer.setLayoutParams(params);
+        return spacer;
     }
     private TextView createWeekDayTextView(String text, boolean isActualDay, int cellIndex,
                                            int dayOfMonth, int monthIndex, int year) {
