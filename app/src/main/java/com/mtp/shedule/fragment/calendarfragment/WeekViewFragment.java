@@ -528,7 +528,6 @@ public class WeekViewFragment extends Fragment {
         return spacer;
     }
     private void findWeekStart() {
-
         // Đặt ngày bắt đầu tuần là Chủ Nhật
         currentWeekStart.setFirstDayOfWeek(Calendar.SUNDAY);
         // Tìm ngày Chủ Nhật gần nhất
