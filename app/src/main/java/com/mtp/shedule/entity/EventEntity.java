@@ -37,7 +37,7 @@ public class EventEntity implements Serializable {
 
     // Default constructor for Room
     public EventEntity() {
-        this.color = R.drawable.gradient_bg_red;
+        this.color = 0;
         this.repeatType = "none";
         this.isCourse = false;
         this.reminder = 0;
@@ -49,7 +49,7 @@ public class EventEntity implements Serializable {
         this.description = description;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.color = R.drawable.gradient_bg_red;
+        this.color = 0;
         this.repeatType = "none";
         this.isCourse = false;
         this.reminder = 0;
@@ -67,7 +67,7 @@ public class EventEntity implements Serializable {
         this.repeatType = "weekly";
         this.isCourse = true;
         this.description = "Room: " + room + "\nTeacher: " + teacher;
-        this.color = R.drawable.gradient_bg_red;
+        this.color = 0;
         this.reminder = 0;
     }
     public int getId() { return id; }
