@@ -50,6 +50,8 @@ public class WeekViewFragment extends Fragment {
     // Hằng số cho chiều cao một giờ (ví dụ: 70dp)
     private static final int HOURS_IN_DAY = 24;
     private static final float HOUR_HEIGHT_DP = 70;
+    private static final int TIME_AXIS_WIDTH_DP = 35;
+    private static final int WEEK_HEADER_SPACER = 28;
     TextView lastSelectedDayView = null;
     FloatingActionButton fabAddEvent;
     int selectedDayOfMonth = -1;
@@ -413,7 +415,7 @@ public class WeekViewFragment extends Fragment {
         lpZero.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
 
         eventDrawingArea.addView(lineZero, lpZero);
-
+        int timeAxisWidthPx = (int) (TIME_AXIS_WIDTH_DP * density);
         // vẽ nhãn giờ
         for (int hour = 0; hour <= HOURS_IN_DAY; hour++) {
             TextView tvTime = new TextView(requireContext());
@@ -426,7 +428,7 @@ public class WeekViewFragment extends Fragment {
             tvTime.setPadding((int)(6 * density), 0, (int)(6 * density), 0);
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    timeAxisWidthPx,
                     hourHeightPx
             );
 
@@ -507,6 +509,24 @@ public class WeekViewFragment extends Fragment {
             }
         });
     }
+    //Chèn khoảng trống vào đầu để đều với timeaxis
+    private View createHeaderSpacer() {
+        View spacer = new View(requireContext());
+
+        // Tính pixel từ dp (phải khớp với TIME_AXIS_WIDTH_DP ở trên)
+        float density = getResources().getDisplayMetrics().density;
+        int widthPx = (int) (WEEK_HEADER_SPACER * density);
+
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        // Cột 0, không có trọng số (weight) để giữ kích thước cố định
+        params.columnSpec = GridLayout.spec(0);
+        params.rowSpec = GridLayout.spec(0);
+        params.width = widthPx;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+
+        spacer.setLayoutParams(params);
+        return spacer;
+    }
     private void findWeekStart() {
         // Đặt ngày bắt đầu tuần là Chủ Nhật
         currentWeekStart.setFirstDayOfWeek(Calendar.SUNDAY);
@@ -524,6 +544,11 @@ public class WeekViewFragment extends Fragment {
     
     private void displayWeek() {
         gridWeekDays.removeAllViews();
+
+        //8 cột, 1 cột rỗng + 7 ngày
+        gridWeekDays.setColumnCount(8);
+        gridWeekDays.addView(createHeaderSpacer());
+
         Calendar dayIterator = (Calendar) currentWeekStart.clone();
 
         for (int i = 0; i < DAYS_IN_WEEK; i++) {
@@ -535,7 +560,7 @@ public class WeekViewFragment extends Fragment {
             TextView tvDay = createWeekDayTextView(
                     String.valueOf(dayOfMonth),
                     true,
-                    i,
+                    i+1,
                     dayOfMonth,
                     monthIndex,
                     year
