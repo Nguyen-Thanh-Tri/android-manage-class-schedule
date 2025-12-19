@@ -53,25 +53,28 @@ public class YearViewFragment extends Fragment {
         tvYear.setText(String.format(Locale.getDefault(), "%d Year", TARGET_YEAR));
 
         // Lặp qua 12 ô tháng
-        for (int i = 0; i < grid.getChildCount(); i++) {
+        for (int i = 0; i < 12; i++) {
+            View monthCell = inflater.inflate(R.layout.mini_month_cell, grid, false);
 
-            final View monthCell = grid.getChildAt(i);
-            final int monthIndex = i;
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
 
-            // Điền dữ liệu ngày tháng vào ô
-            populateMonth(monthIndex, monthCell, TARGET_YEAR);
-            // Gắn sự kiện click (chuyển tab)
-            monthCell.setOnClickListener(v -> {
-                // TODO: Logic highlight ô đã click (Tùy chọn)
+            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            params.width = 0;
 
-                // Chuyển sang Tab Month (vị trí 1)
-                if (listener != null) {
-                    Bundle data = new Bundle();
-                    data.putInt("SELECTED_MONTH_INDEX", monthIndex);
-                    data.putInt("SELECTED_YEAR", TARGET_YEAR);
-                    listener.onSwitchTo(1, data);
-                }
-            });
+            // Chiều dọc: KHÔNG DÙNG WEIGHT (để tránh lỗi dãn dòng)
+            params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED);
+            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
+
+            // Margin cho đẹp (Trái, Trên, Phải, Dưới)
+            params.setMargins(8, 8, 8, 24);
+
+            monthCell.setLayoutParams(params);
+
+            // 3. Thêm vào Grid
+            grid.addView(monthCell);
+
+            // 4. Điền dữ liệu cho tháng này
+            populateMonth(i, monthCell, TARGET_YEAR);
         }
         return view;
     }
@@ -122,13 +125,14 @@ public class YearViewFragment extends Fragment {
     // HÀM TẠO TEXTVIEW CHO NGÀY
     private TextView createDayTextView(String text, boolean isActualDay, boolean isToday) {
         TextView tv = new TextView(requireContext());
+
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
 
         params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f); // Trọng số 1 cho cột
         params.width = 0;
 
         //ĐẶT TRỌNG SỐ HÀNG (MỚI)
-        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED);
         params.height = GridLayout.LayoutParams.WRAP_CONTENT;
 
         tv.setLayoutParams(params);

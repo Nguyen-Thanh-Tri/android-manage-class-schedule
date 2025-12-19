@@ -61,9 +61,14 @@ public class SettingsFragment extends Fragment {
         btnRingtone = view.findViewById(R.id.btnRingtone);
         tvCurrentTheme = view.findViewById(R.id.tvCurrentTheme);
         tvRingtoneName = view.findViewById(R.id.tvRingtoneName);
-
         TextView tvAppVersion = view.findViewById(R.id.tvAppVersion);
+        LinearLayout btnCheckUpdate = view.findViewById(R.id.btnCheckUpdate);
+
         tvAppVersion.setText(BuildConfig.VERSION_NAME);
+        btnCheckUpdate.setOnClickListener(v -> {
+            // Gọi class UpdateChecker mà chúng ta vừa tạo
+            com.mtp.shedule.helper.UpdateChecker.checkForUpdate(requireActivity());
+        });
 
         setupUI();
 

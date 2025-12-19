@@ -69,9 +69,12 @@
         android:layout_marginVertical="8dp"/>
 
     <LinearLayout
+        android:id="@+id/btnCheckUpdate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true"
         android:background="@drawable/rounded_edittext"
         android:padding="12dp">
 
