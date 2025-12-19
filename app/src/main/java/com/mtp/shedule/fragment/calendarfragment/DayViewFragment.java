@@ -51,6 +51,8 @@ public class DayViewFragment extends Fragment {
     private static final int TIME_AXIS_WIDTH_DP = 35;
     private static final int WEEK_HEADER_SPACER = 28;
     private static final float EVENT_SIDE_MARGIN_DP = 1f;
+    private static final int TIME_AXIS_WIDTH_DP = 35;
+    private static final int WEEK_HEADER_SPACER = 28;
     FloatingActionButton fabAddEvent;
     private LiveData<List<EventEntity>> currentDayEventsLiveData;
     private ConnDatabase db;

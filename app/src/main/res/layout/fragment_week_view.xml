@@ -30,7 +30,9 @@
             android:paddingBottom="8dp"
             android:background="@color/pale_gray"
             android:id="@+id/week_day_header">
-
+            <TextView
+                android:layout_width="33dp"
+                android:layout_height="wrap_content"/>
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
