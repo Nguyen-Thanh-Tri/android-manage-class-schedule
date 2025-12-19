@@ -20,11 +20,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.mtp.shedule.adapter.TeacherAutoCompleteAdapter;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 import com.mtp.shedule.notification.NotificationScheduler;
@@ -36,10 +38,12 @@ import java.util.Locale;
 
 public class AddCourseDialog extends DialogFragment {
 
-    EditText etTitle, etTeacher, etRoom, etStartTime, etEndTime;
+    EditText etTitle, etRoom, etStartTime, etEndTime;
+    AutoCompleteTextView etTeacher;
     Spinner spinnerDay;
     Button btnSave, btnCancel, btnSelectColor;
     private ConnDatabase db;
+    private TeacherAutoCompleteAdapter teacherAdapter;
 
     private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
     private static final String ARG_EVENT_ITEM = "event_item";
@@ -79,6 +83,18 @@ public class AddCourseDialog extends DialogFragment {
         spinnerDay.setAdapter(adapter);
 
         db = ConnDatabase.getInstance(requireContext());
+
+        // Setup teacher AutoComplete
+        teacherAdapter = new TeacherAutoCompleteAdapter(requireContext());
+        etTeacher.setAdapter(teacherAdapter);
+        etTeacher.setThreshold(1);
+
+        // Load teachers from database
+        db.teacherDao().getAllTeachers().observe(this, teachers -> {
+            if (teachers != null) {
+                teacherAdapter.updateTeachers(teachers);
+            }
+        });
 
         // Đăng ký TextWatcher cho validation
         etTitle.addTextChangedListener(validationWatcher);
