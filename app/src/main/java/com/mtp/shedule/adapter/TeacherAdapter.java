@@ -32,6 +32,15 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
+    public interface OnItemLongClickListener {
+        void onItemLongClick(TeacherEntity teacher);
+    }
+
+    private OnItemLongClickListener longClickListener;
+
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longClickListener = listener;
+    }
 
     public TeacherAdapter(Context context) {
         this.context = context;
@@ -71,6 +80,13 @@ public class TeacherAdapter extends RecyclerView.Adapter<TeacherAdapter.TeacherV
         holder.tvPosition.setText(t.getPosition());
         holder.tvPhone.setText(t.getPhone());
         holder.tvEmail.setText(t.getEmail());
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onItemLongClick(t);
+                return true;
+            }
+            return false;
+        });
 
         int colorIdx = t.getColor();
         holder.cardView.setBackgroundResource(COLOR_MAPPING_DRAWABLE[colorIdx]);
