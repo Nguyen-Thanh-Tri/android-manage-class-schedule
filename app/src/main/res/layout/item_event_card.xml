@@ -16,6 +16,7 @@
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:background="@android:color/white">
+
         <View
             android:id="@+id/color_indicator"
             android:layout_width="4dp"
@@ -66,6 +67,13 @@
             card_view:layout_constraintEnd_toEndOf="parent" />
 
         </LinearLayout>
-
     </androidx.constraintlayout.widget.ConstraintLayout>
+    <ImageView
+        android:id="@+id/ivRepeatIndicator"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:src="@drawable/ic_corner_triangle"
+        android:visibility="gone"
+        android:contentDescription="Repeat Indicator"
+         />
 </androidx.cardview.widget.CardView>

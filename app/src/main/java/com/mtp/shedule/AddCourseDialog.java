@@ -20,11 +20,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.mtp.shedule.adapter.TeacherAutoCompleteAdapter;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
 import com.mtp.shedule.notification.NotificationScheduler;
@@ -36,10 +38,12 @@ import java.util.Locale;
 
 public class AddCourseDialog extends DialogFragment {
 
-    EditText etTitle, etTeacher, etRoom, etStartTime, etEndTime;
+    EditText etTitle, etRoom, etStartTime, etEndTime;
+    AutoCompleteTextView etTeacher;
     Spinner spinnerDay;
     Button btnSave, btnCancel, btnSelectColor;
     private ConnDatabase db;
+    private TeacherAutoCompleteAdapter teacherAdapter;
 
     private int selectedColorIndex = 0; // Mặc định là Index 0 (Red)
     private static final String ARG_EVENT_ITEM = "event_item";
@@ -80,6 +84,18 @@ public class AddCourseDialog extends DialogFragment {
 
         db = ConnDatabase.getInstance(requireContext());
 
+        // Setup teacher AutoComplete
+        teacherAdapter = new TeacherAutoCompleteAdapter(requireContext());
+        etTeacher.setAdapter(teacherAdapter);
+        etTeacher.setThreshold(1);
+
+        // Load teachers from database
+        db.teacherDao().getAllTeachers().observe(this, teachers -> {
+            if (teachers != null) {
+                teacherAdapter.updateTeachers(teachers);
+            }
+        });
+
         // Đăng ký TextWatcher cho validation
         etTitle.addTextChangedListener(validationWatcher);
         etTeacher.addTextChangedListener(validationWatcher);
@@ -101,8 +117,8 @@ public class AddCourseDialog extends DialogFragment {
         setupModeUI();
 
         // Listeners
-        etStartTime.setOnClickListener(v -> showTimePicker(etStartTime, true));
-        etEndTime.setOnClickListener(v -> showTimePicker(etEndTime, false));
+        etStartTime.setOnClickListener(v -> showTimePicker(etStartTime));
+        etEndTime.setOnClickListener(v -> showTimePicker(etEndTime));
         btnCancel.setOnClickListener(v -> dismiss());
 
         btnSelectColor.setOnClickListener(v ->{
@@ -291,19 +307,11 @@ public class AddCourseDialog extends DialogFragment {
         btnSave.setAlpha(isAllFilled ? 1.0f : 0.5f);
     }
 
-    private void showTimePicker(EditText editText, boolean isStartTime) {
+    private void showTimePicker(EditText editText) {
         Calendar c = Calendar.getInstance();
         new TimePickerDialog(requireContext(), (view, hour, minute) -> {
             String time = String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
             editText.setText(time);
-
-            if (isStartTime) {
-                int endH = (hour + 1) % 24;
-                etEndTime.setText(String.format(Locale.getDefault(), "%02d:%02d", endH, minute));
-            } else {
-                int startH = (hour - 1 < 0) ? 23 : hour - 1;
-                etStartTime.setText(String.format(Locale.getDefault(), "%02d:%02d", startH, minute));
-            }
         }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show();
     }
 

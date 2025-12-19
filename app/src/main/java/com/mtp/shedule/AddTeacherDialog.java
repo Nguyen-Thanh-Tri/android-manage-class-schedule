@@ -40,7 +40,11 @@ public class AddTeacherDialog extends DialogFragment {
         dialog.setArguments(args);
         return dialog;
     }
-
+    // Gmail hợp lệ
+    public static boolean isValidGmail(String email) {
+        if (email == null) return false;
+        return email.matches("^[A-Za-z0-9._%+-]+@gmail\\.com$");
+    }
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -125,11 +129,19 @@ public class AddTeacherDialog extends DialogFragment {
 
     private void validateFields() {
         if (isViewOnly) return;
-        boolean isValid = !etName.getText().toString().trim().isEmpty() &&
-                !etPhone.getText().toString().trim().isEmpty() &&
-                !etEmail.getText().toString().trim().isEmpty();
-        btnSave.setEnabled(isValid);
-        btnSave.setAlpha(isValid ? 1.0f : 0.5f);
+
+        String name = etName.getText().toString().trim();
+        String phone = etPhone.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
+
+        boolean isValidName = !name.isEmpty();
+        boolean isValidEmail = isValidGmail(email);
+
+        if (!isValidEmail) etEmail.setError("Email phải là Gmail hợp lệ");
+
+        boolean isValidAll = isValidName  && isValidEmail;
+        btnSave.setEnabled(isValidAll);
+        btnSave.setAlpha(isValidAll ? 1.0f : 0.5f);
     }
 
     private void saveAction() {

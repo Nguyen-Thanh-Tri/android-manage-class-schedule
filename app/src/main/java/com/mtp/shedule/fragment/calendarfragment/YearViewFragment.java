@@ -7,8 +7,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.gridlayout.widget.GridLayout;
 import androidx.annotation.NonNull;
@@ -24,13 +26,21 @@ import java.util.Locale;
 
 public class YearViewFragment extends Fragment {
     private CalendarInteractionListener listener;
-    private static final int TARGET_YEAR = 2025;
-
+    private int displayYear;
     Calendar calendar = Calendar.getInstance();
     int currentDay = calendar.get(Calendar.DAY_OF_MONTH);
     int currentMonth = calendar.get(Calendar.MONTH);
     int currentYear = calendar.get(Calendar.YEAR);
-
+    // View components
+    private GridLayout gridMonths;
+    private TextView tvYear;
+    private LayoutInflater mInflater;
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Mặc định lấy năm hiện tại khi mở App
+        displayYear = currentYear;
+    }
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -47,39 +57,79 @@ public class YearViewFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_year_view, container, false);
+        mInflater = inflater;
 
-        GridLayout grid = view.findViewById(R.id.gridMonths);
-        TextView tvYear = view.findViewById(R.id.tvYear);
-        tvYear.setText(String.format(Locale.getDefault(), "%d Year", TARGET_YEAR));
+        gridMonths = view.findViewById(R.id.gridMonths);
+        tvYear = view.findViewById(R.id.tvYear);
+
+        tvYear.setOnClickListener(v -> showYearPickerDialog());
+
+        refreshYearView();
+
+        return view;
+    }
+    private void refreshYearView() {
+        tvYear.setText(String.format(Locale.getDefault(), "%d Year", displayYear));
+        gridMonths.removeAllViews(); // Xóa sạch lịch cũ
 
         // Lặp qua 12 ô tháng
-        for (int i = 0; i < grid.getChildCount(); i++) {
+        for (int i = 0; i < 12; i++) {
+            View monthCell = mInflater.inflate(R.layout.mini_month_cell, gridMonths, false);
 
-            final View monthCell = grid.getChildAt(i);
-            final int monthIndex = i;
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            params.width = 0;
+            params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED);
+            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
+            params.setMargins(8, 8, 8, 24);
+            monthCell.setLayoutParams(params);
 
-            // Điền dữ liệu ngày tháng vào ô
-            populateMonth(monthIndex, monthCell, TARGET_YEAR);
-            // Gắn sự kiện click (chuyển tab)
+            gridMonths.addView(monthCell);
+
+            // Fill Data
+            populateMonth(i, monthCell, displayYear);
+
+            // Click direct to MonthView
+            final int selectedMonth = i;
             monthCell.setOnClickListener(v -> {
-                // TODO: Logic highlight ô đã click (Tùy chọn)
-
-                // Chuyển sang Tab Month (vị trí 1)
                 if (listener != null) {
                     Bundle data = new Bundle();
-                    data.putInt("SELECTED_MONTH_INDEX", monthIndex);
-                    data.putInt("SELECTED_YEAR", TARGET_YEAR);
+                    data.putInt("SELECTED_MONTH_INDEX", selectedMonth);
+                    data.putInt("SELECTED_YEAR", displayYear);
+
                     listener.onSwitchTo(1, data);
                 }
             });
+            // ----------------------------------------------------
         }
-        return view;
     }
+    private void showYearPickerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        View dialogView = mInflater.inflate(R.layout.dialog_only_year_picker, null);
+        builder.setView(dialogView);
 
+        final NumberPicker yearPicker = dialogView.findViewById(R.id.pickerYear);
+
+        // Cấu hình chọn năm (Ví dụ: +/- 100 năm so với hiện tại)
+        yearPicker.setMinValue(1900);
+        yearPicker.setMaxValue(2100);
+        yearPicker.setValue(displayYear);
+        yearPicker.setWrapSelectorWheel(false);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            displayYear = yearPicker.getValue();
+            // Vẽ lại lưới lịch
+            refreshYearView();
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.create().show();
+    }
     private void populateMonth(int monthIndex, View monthCellView, int year) {
-        // Lấy tham chiếu các View bên trong ô tháng
         TextView tvTitle = monthCellView.findViewById(R.id.tvMonthTitle);
         GridLayout gridDays = monthCellView.findViewById(R.id.gridDaysInMonth);
+
+        gridDays.setColumnCount(7);
 
         String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -122,13 +172,14 @@ public class YearViewFragment extends Fragment {
     // HÀM TẠO TEXTVIEW CHO NGÀY
     private TextView createDayTextView(String text, boolean isActualDay, boolean isToday) {
         TextView tv = new TextView(requireContext());
+
         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
 
         params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f); // Trọng số 1 cho cột
         params.width = 0;
 
         //ĐẶT TRỌNG SỐ HÀNG (MỚI)
-        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED);
         params.height = GridLayout.LayoutParams.WRAP_CONTENT;
 
         tv.setLayoutParams(params);

@@ -8,12 +8,17 @@ android {
 
     defaultConfig {
         applicationId = "com.mtp.shedule"
-        minSdk = 35
+        minSdk = 26
+        //noinspection OldTargetApi
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -34,7 +39,7 @@ android {
 dependencies {
     implementation("androidx.gridlayout:gridlayout:1.0.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
-
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
