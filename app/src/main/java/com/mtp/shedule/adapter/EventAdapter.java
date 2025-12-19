@@ -8,6 +8,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,7 +19,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.mtp.shedule.R;
 import com.mtp.shedule.database.ConnDatabase;
 import com.mtp.shedule.entity.EventEntity;
-import com.mtp.shedule.fragment.calendarfragment.MonthViewFragment;
 
 import java.util.List;
 
@@ -28,6 +28,20 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     private final Context context;
     final ConnDatabase db;
 
+    private final int[] EVENT_COLORS_HEX = {
+            0xFFE91E63, // Red
+            0xFF4CAF50, // Green
+            0xFFF44336, // RedOrange
+            0xFFFF9800, // Orange
+            0xFFFFEB3B, // Yellow
+            0xFF9C27B0, // Purple
+            0xFF2196F3, // Blue
+            0xFF673AB7, // DeepPurple
+            0xFF00BCD4, // Cyan
+            0xFF8BC34A, // LightGreen
+            0xFFFF5722, // DeepOrange
+            0xFF009688  // Teal
+    };
 
     public EventAdapter(Context context, List<EventEntity> eventList) {
         this.context = context;
@@ -144,6 +158,30 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         }
         // Set background color
         holder.colorIndicator.setBackgroundResource(drawableResId);
+
+        // HIGHLIGHT IF IS COURSE
+        boolean isWeekly = "weekly".equals(event.getRepeatType()) || event.isCourse();
+        if (isWeekly) {
+            holder.ivRepeatIndicator.setVisibility(View.VISIBLE);
+
+            // Lấy màu dựa trên index lưu trong DB
+            int colorValue;
+
+            if (colorIndex >= 0 && colorIndex < EVENT_COLORS_HEX.length) {
+                colorValue = EVENT_COLORS_HEX[colorIndex];
+            } else {
+                colorValue = EVENT_COLORS_HEX[0]; // Màu mặc định nếu index lỗi
+            }
+
+            // Tô màu cho tam giác
+            holder.ivRepeatIndicator.setColorFilter(colorValue);
+            holder.colorIndicator.setVisibility(View.GONE);
+
+        } else {
+            holder.colorIndicator.setVisibility(View.VISIBLE);
+            holder.colorIndicator.setBackgroundResource(drawableResId);
+            holder.ivRepeatIndicator.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -155,6 +193,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         TextView tvTitle, tvTime;
         CardView cardView;
         View colorIndicator;
+        ImageView ivRepeatIndicator;
+
+
 
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -162,6 +203,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             tvTime = itemView.findViewById(R.id.tvTime);
             cardView = (CardView) itemView;
             colorIndicator = itemView.findViewById(R.id.color_indicator);
+            ivRepeatIndicator = itemView.findViewById(R.id.ivRepeatIndicator);
         }
     }
 }

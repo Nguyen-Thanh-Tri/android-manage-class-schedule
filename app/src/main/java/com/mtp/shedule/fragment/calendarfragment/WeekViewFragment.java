@@ -544,7 +544,6 @@ public class WeekViewFragment extends Fragment {
     
     private void displayWeek() {
         gridWeekDays.removeAllViews();
-
         //8 cột, 1 cột rỗng + 7 ngày
         gridWeekDays.setColumnCount(8);
         gridWeekDays.addView(createHeaderSpacer());

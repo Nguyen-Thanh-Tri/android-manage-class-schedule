@@ -48,6 +48,8 @@ public class DayViewFragment extends Fragment {
     TextView lastSelectedDayView = null;
     private static final int HOURS_IN_DAY = 24;
     private static final float HOUR_HEIGHT_DP = 70;
+    private static final int TIME_AXIS_WIDTH_DP = 35;
+    private static final int WEEK_HEADER_SPACER = 28;
     private static final float EVENT_SIDE_MARGIN_DP = 1f;
     private static final int TIME_AXIS_WIDTH_DP = 35;
     private static final int WEEK_HEADER_SPACER = 28;
