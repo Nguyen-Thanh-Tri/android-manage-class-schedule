@@ -4,12 +4,13 @@ plugins {
 
 android {
     namespace = "com.mtp.shedule"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.mtp.shedule"
-        minSdk = 35
-        targetSdk = 36
+        minSdk = 26
+        //noinspection OldTargetApi
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
