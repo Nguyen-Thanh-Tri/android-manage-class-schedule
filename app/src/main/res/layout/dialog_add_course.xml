@@ -27,12 +27,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingBottom="10dp">
-        <EditText
+        <AutoCompleteTextView
             android:id="@+id/etTeacher"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:paddingTop="10dp"
-            android:hint="Teacher Name"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:hint="Teacher Name (type or select)"
+            android:completionThreshold="1"
             android:background="@drawable/rounded_edittext"/>
     </LinearLayout>
 
