@@ -101,8 +101,8 @@ public class AddCourseDialog extends DialogFragment {
         setupModeUI();
 
         // Listeners
-        etStartTime.setOnClickListener(v -> showTimePicker(etStartTime, true));
-        etEndTime.setOnClickListener(v -> showTimePicker(etEndTime, false));
+        etStartTime.setOnClickListener(v -> showTimePicker(etStartTime));
+        etEndTime.setOnClickListener(v -> showTimePicker(etEndTime));
         btnCancel.setOnClickListener(v -> dismiss());
 
         btnSelectColor.setOnClickListener(v ->{
@@ -291,19 +291,11 @@ public class AddCourseDialog extends DialogFragment {
         btnSave.setAlpha(isAllFilled ? 1.0f : 0.5f);
     }
 
-    private void showTimePicker(EditText editText, boolean isStartTime) {
+    private void showTimePicker(EditText editText) {
         Calendar c = Calendar.getInstance();
         new TimePickerDialog(requireContext(), (view, hour, minute) -> {
             String time = String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
             editText.setText(time);
-
-            if (isStartTime) {
-                int endH = (hour + 1) % 24;
-                etEndTime.setText(String.format(Locale.getDefault(), "%02d:%02d", endH, minute));
-            } else {
-                int startH = (hour - 1 < 0) ? 23 : hour - 1;
-                etStartTime.setText(String.format(Locale.getDefault(), "%02d:%02d", startH, minute));
-            }
         }, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE), true).show();
     }
 
