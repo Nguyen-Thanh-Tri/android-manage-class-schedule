@@ -24,7 +24,7 @@ import okhttp3.Response;
 public class UpdateChecker {
 
 
-    private static final String URL_VERSION = "https://github.com/Nguyen-Thanh-Tri/android-manage-class-schedule/blob/main/version.json";
+    private static final String URL_VERSION = "https://raw.githubusercontent.com/Nguyen-Thanh-Tri/android-manage-class-schedule/refs/heads/main/version.json";
 
     public static void checkForUpdate(Activity activity) {
         // 1. Hiện Loading để người dùng biết đang check
@@ -48,8 +48,8 @@ public class UpdateChecker {
                     JSONObject jsonObject = new JSONObject(jsonData);
 
                     int newVersionCode = jsonObject.getInt("versionCode");
-                    String downloadLink = jsonObject.getString("link");
-                    String changeLog = jsonObject.optString("changeLog", "");
+                    String downloadLink = jsonObject.getString("downloadUrl");
+                    String changeLog = jsonObject.optString("changelog", "");
 
                     // 3. Lấy version hiện tại
                     int currentVersionCode = getAppVersionCode(activity);

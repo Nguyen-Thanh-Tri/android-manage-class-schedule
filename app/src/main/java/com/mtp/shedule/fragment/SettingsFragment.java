@@ -1,11 +1,12 @@
 package com.mtp.shedule.fragment;
 
+import com.mtp.shedule.helper.UpdateChecker;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.MediaPlayer;
-import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -67,7 +68,7 @@ public class SettingsFragment extends Fragment {
         tvAppVersion.setText(BuildConfig.VERSION_NAME);
         btnCheckUpdate.setOnClickListener(v -> {
             // Gọi class UpdateChecker mà chúng ta vừa tạo
-            com.mtp.shedule.helper.UpdateChecker.checkForUpdate(requireActivity());
+            UpdateChecker.checkForUpdate(requireActivity());
         });
 
         setupUI();
