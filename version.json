@@ -1,6 +1,9 @@
 {
-  "versionCode": 2,
+  "versionCode": 3,
   "versionName": "1.1.0",
-  "downloadUrl": "https://github.com/Nguyen-Thanh-Tri/android-manage-class-schedule/releases/download/App/Schedule.apk",
-  "changelog": "- Fix bug: Year View crash UI\n -Setting tab\n -Direct to PhoneApp when hold card in teacher"
+  "downloadUrl": "https://github.com/Nguyen-Thanh-Tri/android-manage-class-schedule/releases/download/App1.1.0/Schedule1.1.0.apk",
+  "changelog": "- FIX: Not direct When choose anyMonth from YearView to MonthView\n -FEAT: Timepicker for YearView(only pick year) and MonthView(only pick year and month)"
 }
+
+
+
