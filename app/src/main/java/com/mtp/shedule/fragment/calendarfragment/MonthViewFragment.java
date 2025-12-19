@@ -16,8 +16,11 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.gridlayout.widget.GridLayout;
+
+import android.widget.NumberPicker;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -144,6 +147,10 @@ public class MonthViewFragment extends Fragment {
 
         setupDragHandle();
 
+        tvMonthHeader.setOnClickListener(v -> {
+            showMonthYearPickerDialog(); // Gọi hàm tự viết ở bước 2
+        });
+
         // --- SETUP LIVEDATA OBSERVER ---
         db.eventDao().getAllEventsLiveData().observe(getViewLifecycleOwner(), events -> {
             // 1. Cập nhật Cache
@@ -193,6 +200,44 @@ public class MonthViewFragment extends Fragment {
         outState.putInt("state_month_index", currentMonthIndex);
         outState.putInt("state_year", currentYear);
         outState.putSerializable("state_view", currentState);
+    }
+
+    private void showMonthYearPickerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_month_year_picker, null);
+        builder.setView(dialogView);
+
+        final NumberPicker monthPicker = dialogView.findViewById(R.id.pickerMonth);
+        final NumberPicker yearPicker = dialogView.findViewById(R.id.pickerYear);
+
+        // --- CẤU HÌNH THÁNG (0 - 11) ---
+        monthPicker.setMinValue(0);
+        monthPicker.setMaxValue(11);
+        // Hiển thị tên tháng thay vì số (Jan, Feb...)
+        String[] months = new java.text.DateFormatSymbols().getShortMonths();
+        monthPicker.setDisplayedValues(months);
+        monthPicker.setValue(currentMonthIndex); // Chọn tháng hiện tại
+        monthPicker.setWrapSelectorWheel(true); // Cho phép cuộn tròn
+
+        // --- CẤU HÌNH NĂM ---
+        int thisYear = Calendar.getInstance().get(Calendar.YEAR);
+        yearPicker.setMinValue(1900);
+        yearPicker.setMaxValue(2100);
+        yearPicker.setValue(currentYear); // Chọn năm hiện tại
+        yearPicker.setWrapSelectorWheel(false); // Năm thì không nên cuộn tròn
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            int selectedMonth = monthPicker.getValue();
+            int selectedYear = yearPicker.getValue();
+
+            // Gọi hàm cập nhật lịch có sẵn của bạn
+            updateMonth(selectedMonth, selectedYear);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.create().show();
     }
 
     @SuppressLint("NotifyDataSetChanged")
