@@ -78,8 +78,6 @@ public class MainActivity extends AppCompatActivity {
 
             if (id == R.id.nav_timetable && !(currentFragment instanceof CourseFragment)) {
                 newFragment = new CourseFragment();
-            } else if (id == R.id.nav_exams && !(currentFragment instanceof ExamsFragment)) {
-                newFragment = new ExamsFragment();
             } else if (id == R.id.nav_teachers && !(currentFragment instanceof TeachersFragment)) {
                 newFragment = new TeachersFragment();
             } else if (id == R.id.nav_settings && !(currentFragment instanceof SettingsFragment)) {
