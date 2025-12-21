@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -216,8 +217,13 @@ public class AddCourseDialog extends DialogFragment {
         eventToSave.setIsCourse(true);
         eventToSave.setRepeatType("weekly");
         eventToSave.setDayOfWeek(dayOfWeek);
-        eventToSave.setReminder(60);
-        eventToSave.setDescription("Teacher: " + teacher + "\nRoom: " + room);
+//        eventToSave.setReminder(60);
+        eventToSave.setReminder(0);  // "When event occurs"
+
+// LOG ĐỂ DEBUG
+//        Log.d("CourseReminder", " Course created - Title: " + eventToSave.getTitle() +
+//                ", Reminder: " + eventToSave.getReminder() + " minutes (Trigger: When event occurs)");
+//        eventToSave.setDescription("Teacher: " + teacher + "\nRoom: " + room);
 
         Context appContext = requireContext().getApplicationContext();
 

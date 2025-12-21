@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -248,6 +249,19 @@ public class AddEventActivity extends AppCompatActivity {
             spinnerRepeatType.setSelection(0); // None
             layoutCourseFields.setVisibility(View.GONE);
         }
+        // FIX: Debug reminder value
+        int reminderMinutes = currentEvent.getReminder(); // Đổi tên biến từ minutes thành reminderMinutes
+        Log.d("ReminderDebug", "Loading reminder for event " + currentEvent.getId() + ": " + reminderMinutes + " minutes");
+
+        int selectedIndex = 0; // Mặc định là "When event occurs"
+        for (int i = 0; i < REMINDER_VALUES_MINUTES.length; i++) {
+            if (REMINDER_VALUES_MINUTES[i] == reminderMinutes) {
+                selectedIndex = i;
+                break;
+            }
+        }
+        spinnerRemind.setSelection(selectedIndex);
+        Log.d("ReminderDebug", "Set spinner to index: " + selectedIndex + " (value: " + REMINDER_VALUES_MINUTES[selectedIndex] + ")");
     }
 
     // 2. LẤY DỮ LIỆU TỪ GIAO DIỆN RA OBJECT
@@ -278,8 +292,20 @@ public class AddEventActivity extends AppCompatActivity {
         event.setEndTime(end);
         event.setColor(selectedColorIndex);
 
+//        int selectedReminderIndex = spinnerRemind.getSelectedItemPosition();
+//        event.setReminder(REMINDER_VALUES_MINUTES[selectedReminderIndex]);
         int selectedReminderIndex = spinnerRemind.getSelectedItemPosition();
-        event.setReminder(REMINDER_VALUES_MINUTES[selectedReminderIndex]);
+        // THÊM VALIDATION: đảm bảo index hợp lệ
+        if (selectedReminderIndex < 0 || selectedReminderIndex >= REMINDER_VALUES_MINUTES.length) {
+            selectedReminderIndex = 0; // default
+        }
+        int reminderMinutes = REMINDER_VALUES_MINUTES[selectedReminderIndex];
+
+        // THÊM DEBUG LOG
+        Log.d("ReminderDebug", "Saving reminder - Index: " + selectedReminderIndex +
+                ", Minutes: " + reminderMinutes);
+
+        event.setReminder(reminderMinutes);
 
         if (spinnerRepeatType.getSelectedItemPosition() == 1) { // Weekly
             event.setRepeatType("weekly");

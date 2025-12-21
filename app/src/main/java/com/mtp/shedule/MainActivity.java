@@ -1,5 +1,6 @@
 package com.mtp.shedule;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -158,23 +159,55 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    private void requestBatteryOptimizationExemption() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Intent intent = new Intent();
-            String packageName = getPackageName();
-            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+//    private void requestBatteryOptimizationExemption() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//            Intent intent = new Intent();
+//            String packageName = getPackageName();
+//            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+//
+//            if (pm != null && !pm.isIgnoringBatteryOptimizations(packageName)) {
+//                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+//                intent.setData(Uri.parse("package:" + packageName));
+//                startActivity(intent);
+//
+//                Toast.makeText(this,
+//                        "Vui lòng tắt tối ưu pin để nhận thông báo đúng giờ",
+//                        Toast.LENGTH_LONG).show();
+//            }
+//        }
+//    }
+private void requestBatteryOptimizationExemption() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        String packageName = getPackageName();
 
-            if (pm != null && !pm.isIgnoringBatteryOptimizations(packageName)) {
-                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                intent.setData(Uri.parse("package:" + packageName));
-                startActivity(intent);
-
-                Toast.makeText(this,
-                        "Vui lòng tắt tối ưu pin để nhận thông báo đúng giờ",
-                        Toast.LENGTH_LONG).show();
-            }
+        if (powerManager != null && !powerManager.isIgnoringBatteryOptimizations(packageName)) {
+            // Hiển thị Dialog giải thích rõ ràng hơn
+            new AlertDialog.Builder(this)
+                    .setTitle("⚡ Tối ưu hóa pin")
+                    .setMessage("Để thông báo hoạt động đúng giờ (không bị trễ), bạn cần tắt tối ưu hóa pin cho ứng dụng này.\n\n" +
+                            "Nếu không, thông báo có thể bị trễ đến 15 phút hoặc không hiển thị.")
+                    .setPositiveButton("Đi đến cài đặt", (dialog, which) -> {
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                            intent.setData(Uri.parse("package:" + packageName));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            // Fallback: Mở cài đặt app
+                            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                            intent.setData(Uri.parse("package:" + packageName));
+                            startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton("Để sau", (dialog, which) -> {
+                        // Nhắc nhở lần sau
+                        Toast.makeText(this, "Bạn có thể bật lại trong Cài đặt > Ứng dụng", Toast.LENGTH_LONG).show();
+                    })
+                    .setCancelable(false)
+                    .show();
         }
     }
+}
 
 
 }
